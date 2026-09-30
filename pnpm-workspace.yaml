@@ -1,0 +1,35 @@
+packages:
+  - apps/*
+  - packages/*
+
+# 哪些依赖允许/禁止执行安装脚本（pnpm 默认一律不执行）。
+# esbuild、sass-embedded 需要下载/链接本机二进制，放行；
+# @parcel/watcher 自带各平台预编译产物，不需要执行其脚本，显式禁用以避免安装报错。
+allowBuilds:
+  esbuild: true
+  sass-embedded: true
+  '@parcel/watcher': false
+
+# 新版本「冷却期」白名单：这些版本发布太新，显式允许使用（pnpm 自动生成，勿手改）
+minimumReleaseAgeExclude:
+  - sass-embedded-all-unknown@1.105.1
+  - sass-embedded-android-arm64@1.105.1
+  - sass-embedded-android-arm@1.105.1
+  - sass-embedded-android-riscv64@1.105.1
+  - sass-embedded-android-x64@1.105.1
+  - sass-embedded-darwin-arm64@1.105.1
+  - sass-embedded-darwin-x64@1.105.1
+  - sass-embedded-linux-arm64@1.105.1
+  - sass-embedded-linux-arm@1.105.1
+  - sass-embedded-linux-musl-arm64@1.105.1
+  - sass-embedded-linux-musl-arm@1.105.1
+  - sass-embedded-linux-musl-riscv64@1.105.1
+  - sass-embedded-linux-musl-x64@1.105.1
+  - sass-embedded-linux-riscv64@1.105.1
+  - sass-embedded-linux-x64@1.105.1
+  - sass-embedded-unknown-all@1.105.1
+  - sass-embedded-win32-arm64@1.105.1
+  - sass-embedded-win32-x64@1.105.1
+  - sass-embedded@1.105.1
+  - sass@1.105.1
+  - vuetify@4.2.3

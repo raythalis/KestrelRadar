@@ -1,0 +1,22 @@
+{
+  "name": "kestrel",
+  "version": "0.1.0",
+  "private": true,
+  "description": "个人信息监听与事件响应（monorepo 根）",
+  "packageManager": "pnpm@12.8.1",
+  "engines": {
+    "node": "^22.18.0 || >=24.12.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter kestrel-web dev",
+    "build": "pnpm -r --if-present build",
+    "type-check": "pnpm -r --if-present type-check",
+    "test:unit": "pnpm -r --if-present test:unit",
+    "lint": "pnpm -r --if-present lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.9.6"
+  }
+}
