@@ -1,0 +1,9 @@
+# 依赖与构建产物
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# vite 插件自动生成（每次 dev/build 都会重写，不参与格式化）
+src/auto-imports.d.ts
+src/components.d.ts

@@ -1,0 +1,12 @@
+# 构建产物与依赖
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# 生成物（由 vite 插件自动生成，不参与格式化）
+apps/web/src/auto-imports.d.ts
+apps/web/src/components.d.ts
+
+# 本地专用内容不参与格式化
+local/

@@ -79,7 +79,9 @@ onMounted(() => {
         size="small"
         variant="tonal"
         :color="workspace.dataSource === 'api' ? 'success' : 'warning'"
-        :prepend-icon="workspace.dataSource === 'api' ? 'mdi-cloud-check-outline' : 'mdi-flask-outline'"
+        :prepend-icon="
+          workspace.dataSource === 'api' ? 'mdi-cloud-check-outline' : 'mdi-flask-outline'
+        "
       >
         {{ dataSourceLabel }}
       </v-chip>
