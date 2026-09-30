@@ -4,9 +4,16 @@ dist/
 coverage/
 *.tsbuildinfo
 
-# 生成物（由 vite 插件自动生成，不参与格式化）
+# 生成物：锁文件（pnpm 自动生成，不参与格式化）
+pnpm-lock.yaml
+
+# 生成物：vite 插件自动生成（每次 dev/build 重写）
 apps/web/src/auto-imports.d.ts
 apps/web/src/components.d.ts
+
+# 文档：散文排版人工维护，不做机器重排
+*.md
+docs/
 
 # 本地专用内容不参与格式化
 local/

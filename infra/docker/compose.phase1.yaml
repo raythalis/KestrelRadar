@@ -1,7 +1,0 @@
-services:
-  radar-v2:
-    build: .
-    # Phase 1 local validation only. No published port or production credentials.
-    volumes:
-      - ./data:/data
-    restart: "no"

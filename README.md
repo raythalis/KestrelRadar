@@ -39,22 +39,26 @@ kestrel/
 
 ```bash
 cd apps/web
-npm run format        # 按上述规范格式化
-npm run format:check  # 只检查不修改（CI 用）
+pnpm format           # 按上述规范格式化（等价于根目录 pnpm format）
+pnpm format:check     # 只检查不修改（CI 用）
 ```
 
 ## 开发
 
+包管理器 **pnpm**（工作区统一安装）。版本已在 `package.json` 的 `packageManager` 固定，
+用 corepack 会自动切换到该版本：
+
 ```bash
-cd apps/web
-npm install
-npm run dev          # 开发服务器（HMR）
-npm run type-check   # 类型检查
-npm run test:unit    # 单元测试
-npm run build        # 类型检查 + 生产构建
-npm run lint         # oxlint + ESLint
-npm run format       # Prettier
+pnpm install         # 在仓库根目录执行一次，安装全部子项目依赖
+pnpm dev             # 开发服务器（HMR）
+pnpm type-check      # 类型检查
+pnpm test:unit       # 单元测试
+pnpm build           # 类型检查 + 生产构建
+pnpm lint            # oxlint + ESLint
+pnpm format          # Prettier 格式化
 ```
+
+单独操作某个子项目：`pnpm --filter kestrel-web <script>`。
 
 ## 当前状态
 
