@@ -1,25 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+// 路由表随界面阶段（M5）一起长；骨架期只有入口页。
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'dashboard',
-      component: () => import('@/views/DashboardView.vue'),
-      meta: { titleKey: 'nav.dashboard', icon: 'mdi-view-dashboard-outline' },
-    },
-    {
-      path: '/groups',
-      name: 'groups',
-      component: () => import('@/views/GroupsView.vue'),
-      meta: { titleKey: 'nav.groups', icon: 'mdi-folder-multiple-outline' },
-    },
-    {
-      path: '/settings',
-      name: 'settings',
-      component: () => import('@/views/SettingsView.vue'),
-      meta: { titleKey: 'nav.settings', icon: 'mdi-cog-outline' },
+      name: 'home',
+      component: () => import('@/views/HomeView.vue'),
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],

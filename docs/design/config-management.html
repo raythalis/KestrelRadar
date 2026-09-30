@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kestrel · 配置管理（设计稿）</title>
+    <style>
+      :root {
+        --bg: #0d1017;
+        --rail: #12151d;
+        --panel: #161a23;
+        --panel-2: #1c212c;
+        --border: #262c38;
+        --border-soft: #1f2530;
+        --text: #e7eaf1;
+        --muted: #9aa4b6;
+        --muted-2: #6b7488;
+        --accent: #f0a34a;
+        --accent-soft: rgba(240, 163, 74, 0.14);
+        --blue: #6ea8fe;
+        --ok: #46c07a;
+        --warn: #e0a33e;
+        --err: #e2685f;
+        --radius: 12px;
+        --shadow: 0 1px 0 rgba(255, 255, 255, 0.02) inset, 0 8px 24px rgba(0, 0, 0, 0.25);
+      }
+      html[data-theme='light'] {
+        --bg: #f4f5f8;
+        --rail: #ffffff;
+        --panel: #ffffff;
+        --panel-2: #f7f8fb;
+        --border: #e2e6ee;
+        --border-soft: #edf0f5;
+        --text: #1b1f27;
+        --muted: #6a7383;
+        --accent: #c97a12;
+        --accent-soft: rgba(201, 122, 18, 0.12);
+        --blue: #2f6fd0;
+        --ok: #1f9d5b;
+        --warn: #b7791f;
+        --err: #c9534a;
+        --shadow: 0 1px 2px rgba(20, 25, 35, 0.06), 0 8px 24px rgba(20, 25, 35, 0.06);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        width: 1360px;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.5 'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .app {
+        display: flex;
+        min-height: 900px;
+      }
+
+      /* ---------- 左侧导航 ---------- */
+      .rail {
+        width: 208px;
+        flex: 0 0 208px;
+        background: var(--rail);
+        border-right: 1px solid var(--border-soft);
+        padding: 18px 12px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 4px 8px 18px;
+      }
+      .brand-mark {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        background: linear-gradient(140deg, var(--accent), #d9762f);
+        display: grid;
+        place-items: center;
+        color: #1b1206;
+        font-weight: 800;
+        font-size: 13px;
+      }
+      .brand-name {
+        font-weight: 650;
+        letter-spacing: 0.2px;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 10px;
+        border-radius: 9px;
+        color: var(--muted);
+        margin-bottom: 2px;
+      }
+      .nav-item.active {
+        background: var(--accent-soft);
+        color: var(--text);
+        font-weight: 600;
+      }
+      .nav-item svg {
+        flex: 0 0 16px;
+        opacity: 0.9;
+      }
+
+      /* ---------- 顶栏 ---------- */
+      main {
+        flex: 1;
+        min-width: 0;
+      }
+      .topbar {
+        height: 54px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 22px;
+        border-bottom: 1px solid var(--border-soft);
+        background: var(--panel);
+      }
+      .crumb {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .crumb b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .spacer {
+        flex: 1;
+      }
+      .seg {
+        display: flex;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        overflow: hidden;
+      }
+      .seg button {
+        background: transparent;
+        border: 0;
+        color: var(--muted);
+        font: inherit;
+        font-size: 12.5px;
+        padding: 5px 11px;
+        cursor: pointer;
+      }
+      .seg button.on {
+        background: var(--panel-2);
+        color: var(--text);
+      }
+      .icon-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--muted);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+      }
+      .icon-btn:hover {
+        color: var(--text);
+      }
+
+      /* ---------- 页面 ---------- */
+      .page {
+        padding: 22px 24px 48px;
+      }
+      .page-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 6px;
+      }
+      .page-head h1 {
+        font-size: 19px;
+        margin: 0 0 4px;
+        letter-spacing: 0.2px;
+      }
+      .page-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .btn {
+        border: 1px solid var(--border);
+        background: var(--panel-2);
+        color: var(--text);
+        font: inherit;
+        font-size: 13px;
+        padding: 7px 12px;
+        border-radius: 9px;
+        cursor: pointer;
+      }
+      .btn.primary {
+        background: var(--accent);
+        border-color: transparent;
+        color: #1b1206;
+        font-weight: 650;
+      }
+      .flow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 12.5px;
+        margin: 14px 0 18px;
+      }
+      .flow .step {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 9px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+      }
+      .flow .step i {
+        font-style: normal;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .flow .arrow {
+        opacity: 0.5;
+      }
+
+      /* ---------- 分组 ---------- */
+      .group {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        margin-bottom: 14px;
+        overflow: hidden;
+      }
+      .group-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 16px;
+      }
+      .group.expanded .group-head {
+        border-bottom: 1px solid var(--border-soft);
+        background: linear-gradient(180deg, var(--panel-2), var(--panel));
+      }
+      .chev {
+        color: var(--muted);
+        width: 14px;
+        text-align: center;
+        cursor: pointer;
+      }
+      .gh-title {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        min-width: 260px;
+      }
+      .gh-title .name {
+        font-weight: 650;
+        letter-spacing: 0.2px;
+      }
+      .gh-title .desc {
+        color: var(--muted);
+        font-size: 12.5px;
+      }
+      .counts {
+        display: flex;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .counts span {
+        padding: 2px 8px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--panel-2);
+      }
+      .gh-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 12.5px;
+      }
+      .gh-actions span {
+        cursor: pointer;
+      }
+      .gh-actions span:hover {
+        color: var(--text);
+      }
+      .gh-actions .danger:hover {
+        color: var(--err);
+      }
+
+      /* 开关 */
+      .sw {
+        width: 34px;
+        height: 19px;
+        border-radius: 999px;
+        background: var(--border);
+        position: relative;
+        flex: 0 0 34px;
+        cursor: pointer;
+      }
+      .sw::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: #fff;
+        transition: 0.15s;
+      }
+      .sw.on {
+        background: var(--ok);
+      }
+      .sw.on::after {
+        left: 17px;
+      }
+
+      /* ---------- 三列 ---------- */
+      .cols {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0;
+      }
+      .col {
+        min-width: 0;
+        padding: 14px 14px 20px;
+        border-right: 1px dashed var(--border-soft);
+        min-height: 380px;
+      }
+      .col:last-child {
+        border-right: 0;
+      }
+      .col-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 3px;
+      }
+      .col-title {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-weight: 650;
+      }
+      .col-title svg {
+        color: var(--accent);
+      }
+      .col-count {
+        font-size: 11.5px;
+        color: var(--muted);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 0 7px;
+      }
+      .col-add {
+        margin-left: auto;
+        font-size: 12.5px;
+        color: var(--muted);
+        border: 1px solid var(--border);
+        background: transparent;
+        border-radius: 8px;
+        padding: 4px 9px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .col-add:hover {
+        color: var(--text);
+        border-color: var(--muted);
+      }
+      .col-sub {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 0 0 12px;
+      }
+
+      /* 卡片 */
+      .card {
+        border: 1px solid var(--border);
+        background: var(--panel-2);
+        border-radius: 11px;
+        padding: 11px 12px;
+        margin-bottom: 10px;
+      }
+      .card.off {
+        opacity: 0.55;
+      }
+      .card-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 7px;
+      }
+      .chip {
+        font-size: 11.5px;
+        padding: 1px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        background: var(--panel);
+        white-space: nowrap;
+      }
+      .chip.accent {
+        color: var(--accent);
+        border-color: rgba(240, 163, 74, 0.35);
+        background: var(--accent-soft);
+      }
+      .chip.blue {
+        color: var(--blue);
+        border-color: rgba(110, 168, 254, 0.32);
+        background: rgba(110, 168, 254, 0.1);
+      }
+      .card-top .sw {
+        margin-left: auto;
+      }
+      .card-title {
+        overflow-wrap: anywhere;
+        font-size: 13.5px;
+        font-weight: 600;
+        word-break: break-all;
+        margin-bottom: 6px;
+      }
+      .card-title .sub {
+        display: block;
+        font-weight: 400;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 2px;
+        word-break: break-all;
+      }
+      .meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex: 0 0 7px;
+      }
+      .dot.ok {
+        background: var(--ok);
+      }
+      .dot.err {
+        background: var(--err);
+      }
+      .dot.warn {
+        background: var(--warn);
+      }
+      .hint {
+        margin-top: 8px;
+        font-size: 12px;
+        border-radius: 8px;
+        padding: 6px 8px;
+        display: flex;
+        gap: 6px;
+      }
+      .hint.err {
+        color: #f0a7a1;
+        background: rgba(226, 104, 95, 0.12);
+        border: 1px solid rgba(226, 104, 95, 0.28);
+      }
+      .hint.warn {
+        color: #ecc98a;
+        background: rgba(224, 163, 62, 0.12);
+        border: 1px solid rgba(224, 163, 62, 0.28);
+      }
+      .kws {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin: 8px 0 7px;
+      }
+      .kws .chip.pos {
+        color: var(--text);
+        border-color: var(--border);
+      }
+      .kws .chip.neg {
+        color: var(--muted);
+        border-style: dashed;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      .row .val {
+        color: var(--text);
+      }
+      .select {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 6px 9px;
+        font-size: 12.5px;
+        color: var(--text);
+        margin-top: 6px;
+      }
+      .select .ph {
+        color: var(--muted);
+      }
+      .select .plus {
+        margin-left: auto;
+        color: var(--accent);
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .select .caret {
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .footnote {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 20px;
+      }
+      .footnote b {
+        color: var(--text);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <!-- ============ 左侧导航 ============ -->
+      <aside class="rail">
+        <div class="brand">
+          <div class="brand-mark">K</div>
+          <div class="brand-name">Kestrel</div>
+        </div>
+
+        <div class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="3" y="3" width="7" height="9" rx="2" />
+            <rect x="14" y="3" width="7" height="5" rx="2" />
+            <rect x="14" y="12" width="7" height="9" rx="2" />
+            <rect x="3" y="16" width="7" height="5" rx="2" />
+          </svg>
+          仪表盘
+        </div>
+        <div class="nav-item active">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M4 6h16M4 12h16M4 18h10" />
+            <circle cx="18" cy="18" r="2.6" />
+          </svg>
+          配置管理
+        </div>
+        <div class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7Z" />
+            <path d="M10.5 20a2 2 0 0 0 3 0" />
+          </svg>
+          通知渠道
+        </div>
+        <div class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="6" y="6" width="12" height="12" rx="3" />
+            <path d="M10 2v3M14 2v3M10 19v3M14 19v3M2 10h3M2 14h3M19 10h3M19 14h3" />
+          </svg>
+          LLM
+        </div>
+        <div class="nav-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2" />
+          </svg>
+          高级设置
+        </div>
+      </aside>
+
+      <main>
+        <!-- ============ 顶栏：主题 + 语言 ============ -->
+        <div class="topbar">
+          <div class="crumb">配置管理</div>
+          <div class="spacer"></div>
+          <div class="seg" id="themeSeg">
+            <button data-theme="light">☀ 白天</button>
+            <button data-theme="dark" class="on">🌙 黑夜</button>
+            <button data-theme="auto">跟随系统</button>
+          </div>
+          <div class="seg">
+            <button class="on">中文</button>
+            <button>EN</button>
+          </div>
+        </div>
+
+        <div class="page">
+          <div class="page-head">
+            <div>
+              <h1>配置管理</h1>
+              <p>每个分组是一条独立的关注线：左列决定去哪儿找内容，中列决定什么算命中，右列决定怎么通知你。</p>
+            </div>
+            <div style="margin-left: auto"><button class="btn primary">+ 新增分组</button></div>
+          </div>
+
+          <div class="flow">
+            <span class="step"><i>1</i> 发现：内容从哪来</span>
+            <span class="arrow">→</span>
+            <span class="step"><i>2</i> 监听：什么算命中</span>
+            <span class="arrow">→</span>
+            <span class="step"><i>3</i> 动作：命中后怎么办</span>
+            <span class="arrow" style="margin-left: auto">每列都可以放多条，监听之间是「或」</span>
+          </div>
+
+          <!-- ============ 折叠的分组 ============ -->
+          <section class="group">
+            <div class="group-head">
+              <span class="chev">▸</span>
+              <div class="gh-title">
+                <span class="name">科技与硬件</span>
+                <span class="desc">芯片、外设、值得关注的价格</span>
+              </div>
+              <div class="counts">
+                <span>3 发现</span><span>1 监听</span><span>1 动作</span>
+              </div>
+              <div class="gh-actions">
+                <span class="chip">已停用</span>
+                <span>编辑</span>
+                <span class="danger">删除</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- ============ 展开的分组 ============ -->
+          <section class="group expanded">
+            <div class="group-head">
+              <span class="chev">▾</span>
+              <div class="gh-title">
+                <span class="name">AI 行业动态</span>
+                <span class="desc">模型发布、开源项目、论文与行业新闻</span>
+              </div>
+              <div class="counts">
+                <span>4 发现</span><span>2 监听</span><span>2 动作</span>
+              </div>
+              <div class="gh-actions">
+                <span class="sw on" title="整个分组启用"></span>
+                <span>编辑</span>
+                <span class="danger">删除</span>
+              </div>
+            </div>
+
+            <div class="cols">
+              <!-- ---------- 左：发现 ---------- -->
+              <div class="col">
+                <div class="col-head">
+                  <span class="col-title">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="M20 20l-3.5-3.5" />
+                    </svg>
+                    发现
+                  </span>
+                  <span class="col-count">4</span>
+                  <button class="col-add">+ 添加</button>
+                </div>
+                <p class="col-sub">内容从哪来：RSSHub 路由 / 网页地址 / RSS 源 / 关键词</p>
+
+                <div class="card">
+                  <div class="card-top">
+                    <span class="chip accent">RSSHub 路由</span>
+                    <span class="sw on"></span>
+                  </div>
+                  <div class="card-title">/github/trending/daily/any<span class="sub">GitHub 每日趋势</span></div>
+                  <div class="meta"><span class="dot ok"></span> 试抓成功 · 3 分钟前</div>
+                </div>
+
+                <div class="card">
+                  <div class="card-top">
+                    <span class="chip accent">RSSHub 路由</span>
+                    <span class="sw on"></span>
+                  </div>
+                  <div class="card-title">/weibo/user/1234567890<span class="sub">参数：用户 ID</span></div>
+                  <div class="meta"><span class="dot ok"></span> 试抓成功 · 3 分钟前</div>
+                </div>
+
+                <div class="card">
+                  <div class="card-top">
+                    <span class="chip blue">RSS 源</span>
+                    <span class="sw on"></span>
+                  </div>
+                  <div class="card-title">https://openai.com/blog/rss.xml</div>
+                  <div class="meta"><span class="dot ok"></span> 试抓成功 · 12 分钟前</div>
+                </div>
+
+                <div class="card">
+                  <div class="card-top">
+                    <span class="chip">网页地址</span>
+                    <span class="sw on"></span>
+                  </div>
+                  <div class="card-title">https://www.anthropic.com/news</div>
+                  <div class="meta"><span class="dot err"></span> 试抓失败 · 12 分钟前</div>
+                  <div class="hint err">⚠ 这个页面拿不到条目列表，建议换成它的 RSS 源或 RSSHub 路由</div>
+                </div>
+              </div>
+
+              <!-- ---------- 中：监听 ---------- -->
+              <div class="col">
+                <div class="col-head">
+                  <span class="col-title">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                      <path d="M4 12a8 8 0 0 1 8-8" />
+                      <path d="M4 17a13 13 0 0 1 13-13" />
+                      <circle cx="5" cy="19" r="1.6" />
+                    </svg>
+                    监听
+                  </span>
+                  <span class="col-count">2</span>
+                  <button class="col-add">+ 添加</button>
+                </div>
+                <p class="col-sub">什么算命中：两条监听之间是「或」关系</p>
+
+                <div class="card">
+                  <div class="card-top">
+                    <span class="chip accent">算法 + LLM</span>
+                    <span class="sw on"></span>
+                  </div>
+                  <div class="card-title">模型与产品发布</div>
+                  <div class="kws">
+                    <span class="chip pos">发布</span>
+                    <span class="chip pos">正式版</span>
+                    <span class="chip pos">开源</span>
+                    <span class="chip neg">招聘</span>
+                    <span class="chip neg">课程</span>
+                  </div>
+                  <div class="row">匹配方式 <span class="val">任意命中</span> · 排除词 <span class="val">追加全局排除词 ✓</span></div>
+                  <div class="row">命中后 → <span class="val">即时推送</span></div>
+                </div>
+
+                <div class="card">
+                  <div class="card-top">
+                    <span class="chip">跟随全局模式</span>
+                    <span class="sw on"></span>
+                  </div>
+                  <div class="card-title">论文与工具链</div>
+                  <div class="kws">
+                    <span class="chip pos">arxiv</span>
+                    <span class="chip pos">vLLM</span>
+                  </div>
+                  <div class="row">匹配方式 <span class="val">全部命中</span></div>
+                  <div class="hint warn">⚠ 还没有绑定动作，命中后不会有任何通知</div>
+                </div>
+              </div>
+
+              <!-- ---------- 右：动作 ---------- -->
+              <div class="col">
+                <div class="col-head">
+                  <span class="col-title">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                      <path d="M4 5h16v10H8l-4 4Z" />
+                    </svg>
+                    动作
+                  </span>
+                  <span class="col-count">2</span>
+                  <button class="col-add">+ 添加</button>
+                </div>
+                <p class="col-sub">命中后怎么办：即时推送 或 每天汇总一次</p>
+
+                <div class="card">
+                  <div class="card-top">
+                    <span class="chip accent">发现即发</span>
+                    <span class="sw on"></span>
+                  </div>
+                  <div class="card-title">即时推送<span class="sub">模板：标题 + 摘要 + 原文链接</span></div>
+                  <div class="select">
+                    <span class="dot ok"></span>
+                    <span>场景-助手 · Telegram</span>
+                    <span class="plus" title="新建渠道">+</span>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <div class="card-top">
+                    <span class="chip blue">每天汇总</span>
+                    <span class="sw on"></span>
+                  </div>
+                  <div class="card-title">早报汇总<span class="sub">每天 09:00</span></div>
+                  <div class="select">
+                    <span class="ph">未选择渠道</span>
+                    <span class="plus" title="新建渠道">+</span>
+                    <span class="caret">▾</span>
+                  </div>
+                  <div class="hint warn">⚠ 选一个通知渠道才能生效；点右侧「+」到通知渠道页新建</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <p class="footnote">
+            <b>说明</b>：折叠的分组只显示一行摘要（名称、简介、三列计数），同一时刻只展开一个分组；卡片里的红色/黄色提示就是异常显示的位置（试抓失败、监听无动作、动作无渠道）。
+          </p>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const seg = document.getElementById('themeSeg')
+      seg.addEventListener('click', (e) => {
+        const btn = e.target.closest('button')
+        if (!btn) return
+        seg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === btn))
+        const t = btn.dataset.theme
+        if (t === 'auto') {
+          const dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+        } else {
+          document.documentElement.dataset.theme = t
+        }
+      })
+    </script>
+  </body>
+</html>
