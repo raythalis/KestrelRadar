@@ -30,6 +30,7 @@ export interface EventMember {
   discoveryName: string
   title: string
   url: string | null
+  summary: string
   addedAt: string
 }
 
@@ -95,7 +96,7 @@ export function createEventRepo(db: Db) {
       order by events.last_item_at desc limit 200`,
   )
   const selectMembers = db.prepare(
-    `select ei.item_id, ei.discovery_id, ei.added_at, i.title, i.url, d.name as discovery_name
+    `select ei.item_id, ei.discovery_id, ei.added_at, i.title, i.url, i.summary, d.name as discovery_name
        from event_items ei
        join items i on i.id = ei.item_id
        join discoveries d on d.id = ei.discovery_id
@@ -103,6 +104,9 @@ export function createEventRepo(db: Db) {
       order by ei.added_at, i.title`,
   )
   const selectMemberItem = db.prepare('select event_id from event_items where item_id = ? limit 1')
+  const selectEventIdsForItems = db.prepare(
+    'select item_id, event_id from event_items where item_id in (select value from json_each(?))',
+  )
   const selectMemberSources = db.prepare(
     'select distinct discovery_id from event_items where event_id = ?',
   )
@@ -184,6 +188,7 @@ export function createEventRepo(db: Db) {
         discovery_name: string
         title: string
         url: string | null
+        summary: string
         added_at: string
       }[]
       return rows.map((row) => ({
@@ -192,6 +197,7 @@ export function createEventRepo(db: Db) {
         discoveryName: row.discovery_name,
         title: row.title,
         url: row.url,
+        summary: row.summary,
         addedAt: row.added_at,
       }))
     },
@@ -200,6 +206,16 @@ export function createEventRepo(db: Db) {
     memberEventId(itemId: string): string | undefined {
       const row = selectMemberItem.get(itemId) as unknown as { event_id: string } | undefined
       return row?.event_id
+    },
+
+    /** 一批条目分别属于哪个事件 */
+    eventIdsForItems(itemIds: string[]): Map<string, string> {
+      if (itemIds.length === 0) return new Map()
+      const rows = selectEventIdsForItems.all(JSON.stringify(itemIds)) as unknown as {
+        item_id: string
+        event_id: string
+      }[]
+      return new Map(rows.map((row) => [row.item_id, row.event_id]))
     },
 
     memberDiscoveryIds(eventId: string): Set<string> {

@@ -14,6 +14,7 @@ interface ActionRow {
   cron_expression: string | null
   template: string
   include_delivered: number
+  merge_messages: number
   enabled: number
   created_at: string
   updated_at: string
@@ -29,6 +30,7 @@ function toAction(row: ActionRow): Action {
     cronExpression: row.cron_expression,
     template: row.template,
     includeDelivered: toBool(row.include_delivered),
+    mergeMessages: toBool(row.merge_messages),
     enabled: toBool(row.enabled),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -39,12 +41,13 @@ export function createActionRepo(db: Db) {
   const selectAll = db.prepare('select * from actions order by created_at, id')
   const selectOne = db.prepare('select * from actions where id = ?')
   const insertOne = db.prepare(
-    `insert into actions (id, group_id, name, trigger_type, channel_id, cron_expression, template, include_delivered, enabled, created_at, updated_at)
-     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `insert into actions (id, group_id, name, trigger_type, channel_id, cron_expression, template,
+       include_delivered, merge_messages, enabled, created_at, updated_at)
+     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
   const updateOne = db.prepare(
     `update actions set name = ?, trigger_type = ?, channel_id = ?, cron_expression = ?, template = ?,
-       include_delivered = ?, enabled = ?, updated_at = ? where id = ?`,
+       include_delivered = ?, merge_messages = ?, enabled = ?, updated_at = ? where id = ?`,
   )
 
   function find(id: string): ActionRow | undefined {
@@ -73,6 +76,7 @@ export function createActionRepo(db: Db) {
         input.cronExpression,
         input.template,
         fromBool(input.includeDelivered),
+        fromBool(input.mergeMessages),
         fromBool(input.enabled),
         now,
         now,
@@ -92,6 +96,7 @@ export function createActionRepo(db: Db) {
         patch.cronExpression === undefined ? current.cron_expression : patch.cronExpression,
         patch.template ?? current.template,
         fromBool(patch.includeDelivered ?? toBool(current.include_delivered)),
+        fromBool(patch.mergeMessages ?? toBool(current.merge_messages)),
         fromBool(patch.enabled ?? toBool(current.enabled)),
         nowIso(),
         id,

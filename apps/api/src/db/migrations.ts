@@ -205,6 +205,35 @@ export const MIGRATIONS: readonly Migration[] = [
       create index idx_event_items_event on event_items (event_id);
     `,
   },
+  {
+    name: '006-delivery',
+    sql: `
+      alter table actions add column merge_messages integer not null default 1;
+
+      create table deliveries (
+        id text primary key,
+        action_id text not null references actions (id) on delete cascade,
+        channel_id text not null references channels (id) on delete cascade,
+        trigger_type text not null check (trigger_type in ('instant', 'digest')),
+        event_ids text not null default '[]',
+        status text not null check (status in ('sent', 'failed')),
+        message text not null default '',
+        error text,
+        created_at text not null
+      );
+      create index idx_deliveries_action on deliveries (action_id, created_at);
+      create index idx_deliveries_created on deliveries (created_at);
+
+      create table delivered_items (
+        action_id text not null references actions (id) on delete cascade,
+        item_id text not null references items (id) on delete cascade,
+        delivery_id text not null references deliveries (id) on delete cascade,
+        created_at text not null,
+        primary key (action_id, item_id)
+      );
+      create index idx_delivered_items_item on delivered_items (item_id);
+    `,
+  },
 ]
 
 export function runMigrations(conn: DatabaseSync): void {

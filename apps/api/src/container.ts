@@ -7,6 +7,10 @@ import { createCollector, type Collector } from './modules/collection/collector.
 import { createScheduler, type Scheduler } from './modules/collection/scheduler.ts'
 import { createDiscoveryRepo } from './modules/discoveries/discovery.repo.ts'
 import { createDiscoveryService } from './modules/discoveries/discovery.service.ts'
+import { createChannelBatcher, type ChannelBatcher } from './modules/delivery/batch.ts'
+import { createDeliveryRepo, type DeliveryRepo } from './modules/delivery/delivery.repo.ts'
+import { createDeliveryService, type DeliveryService } from './modules/delivery/delivery.service.ts'
+import { createWebhookSender, type DeliverySender } from './modules/delivery/sender.ts'
 import { createEventRepo, type EventRepo } from './modules/events/event.repo.ts'
 import { createEventService } from './modules/events/event.service.ts'
 import { createGroupRepo } from './modules/groups/group.repo.ts'
@@ -35,6 +39,9 @@ export interface Container {
   judgments: JudgmentRepo
   events: EventRepo
   merger: ReturnType<typeof createEventService>
+  deliveries: DeliveryRepo
+  delivery: DeliveryService
+  batcher: ChannelBatcher
   judge: ReturnType<typeof createJudgeService>
   collector: Collector
   scheduler: Scheduler
@@ -45,6 +52,10 @@ export interface ContainerOptions {
   log?: (level: 'info' | 'warn', message: string) => void
   /** 判定用的模型实现；不传就是「还没配模型」，走降级开关 */
   llm?: JudgeLlm
+  /** 投递用的发送器；不传就是真的往 Webhook 发 */
+  sender?: DeliverySender
+  /** 渠道合并窗口；测试里给一个很短的窗口 */
+  batcher?: ChannelBatcher
 }
 
 /** 装配处：repo 与 service 的依赖关系只在这里写一次 */
@@ -60,6 +71,7 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
   const itemRepo = createItemRepo(db)
   const judgmentRepo = createJudgmentRepo(db)
   const eventRepo = createEventRepo(db)
+  const deliveryRepo = createDeliveryRepo(db)
 
   const settings = createSettingsService(settingsRepo)
 
@@ -80,6 +92,24 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     groups: groupRepo,
     items: itemRepo,
     settings,
+  })
+
+  const sender = options.sender ?? createWebhookSender()
+  const batcher = options.batcher ?? createChannelBatcher(sender)
+  const delivery = createDeliveryService({
+    actions: actionRepo,
+    monitors: monitorRepo,
+    groups: groupRepo,
+    discoveries: discoveryRepo,
+    items: itemRepo,
+    judgments: judgmentRepo,
+    events: eventRepo,
+    deliveries: deliveryRepo,
+    channels: channelRepo,
+    settings,
+    sender,
+    batcher,
+    log: options.log,
   })
 
   const collector = createCollector({
@@ -105,6 +135,19 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
       } catch (error) {
         options.log?.('warn', `归并失败：${(error as Error).message}`)
       }
+      // 「发现即发」的动作：归并完顺手投递一次
+      try {
+        const groupId = discoveryRepo.get(discoveryId)?.groupId
+        if (groupId) {
+          const outcomes = await delivery.deliverInstantForGroup(groupId)
+          for (const outcome of outcomes) {
+            if (outcome.messageCount > 0) options.log?.('info', `投递完成：${outcome.message}`)
+            else if (!outcome.ok) options.log?.('warn', `投递异常：${outcome.message}`)
+          }
+        }
+      } catch (error) {
+        options.log?.('warn', `投递失败：${(error as Error).message}`)
+      }
     },
   })
 
@@ -117,6 +160,20 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
         cronExpression: discovery.cronExpression,
         enabled: discovery.enabled && (groupRepo.get(discovery.groupId)?.enabled ?? false),
       })),
+    // 汇总动作：每天 HH:MM 那种，到点投递
+    digestTargets: () =>
+      actionRepo.list().map((action) => ({
+        id: action.id,
+        cronExpression: action.cronExpression ?? '',
+        enabled:
+          action.enabled &&
+          action.triggerType === 'digest' &&
+          (groupRepo.get(action.groupId)?.enabled ?? false),
+      })),
+    onDigest: async (actionId) => {
+      const outcome = await delivery.deliverForAction(actionId, 'digest')
+      if (outcome.messageCount > 0) options.log?.('info', `汇总投递完成：${outcome.message}`)
+    },
     concurrency: () => settings.get().concurrency,
     onResult: (outcome) => {
       const name = discoveryRepo.get(outcome.discoveryId)?.name ?? outcome.discoveryId
@@ -140,6 +197,9 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     judgments: judgmentRepo,
     events: eventRepo,
     merger,
+    deliveries: deliveryRepo,
+    delivery,
+    batcher,
     judge,
     collector,
     scheduler,

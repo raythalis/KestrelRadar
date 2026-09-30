@@ -139,6 +139,8 @@ export const actionSchema = z.object({
   template: z.string().max(4000),
   /** 汇总动作是否包含已即时推送过的内容 */
   includeDelivered: z.boolean(),
+  /** 一次发送里多条命中合并成一条消息（关掉就是一条一条发） */
+  mergeMessages: z.boolean(),
   enabled: z.boolean(),
 })
 export type Action = z.infer<typeof actionSchema>
@@ -151,6 +153,7 @@ export const createActionInputSchema = z.object({
   cronExpression: z.string().max(120).nullable().default(null),
   template: z.string().max(4000).default(''),
   includeDelivered: z.boolean().default(false),
+  mergeMessages: z.boolean().default(true),
   enabled: z.boolean().default(true),
 })
 export const updateActionInputSchema = createActionInputSchema.omit({ groupId: true }).partial()

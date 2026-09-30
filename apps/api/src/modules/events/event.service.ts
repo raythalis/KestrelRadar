@@ -4,10 +4,11 @@ import type { Item, ItemRepo } from '../items/item.repo.ts'
 import type { SettingsService } from '../settings/settings.service.ts'
 import type { Event, EventRepo } from './event.repo.ts'
 import {
-  containsProgressSignal,
+  hasNewVersionNumber,
   isSimilarEnough,
   MERGE_WINDOW_HOURS,
   normalizeUrl,
+  progressSignals,
   titleSimilarity,
 } from './similarity.ts'
 
@@ -57,8 +58,17 @@ export function createEventService(deps: EventServiceDeps) {
    */
   function isProgress(event: Event, item: Item, discoveryId: string): boolean {
     if (event.status !== 'delivered') return false
+    // 同一来源重复转载、换个人转述同一件事：都不算进展
     if (deps.events.memberDiscoveryIds(event.id).has(discoveryId)) return false
-    return containsProgressSignal(`${item.title} ${item.summary}`)
+
+    const existing = deps.events
+      .listItems(event.id)
+      .map((member) => `${member.title} ${member.summary}`)
+      .join(' ')
+    const text = `${item.title} ${item.summary}`
+    // 只有「这件事之前没提过」的进展信号才算数：原封不动转述一遍不算
+    if (progressSignals(text).some((word) => !existing.includes(word))) return true
+    return hasNewVersionNumber(text) && !hasNewVersionNumber(existing)
   }
 
   return {

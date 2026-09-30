@@ -54,6 +54,11 @@ export function createChannelRepo(db: Db) {
       return row ? toChannel(row) : undefined
     },
 
+    /** 发送时才用一次：密钥不进任何返回体 */
+    getSecret(id: string): string | null {
+      return find(id)?.secret ?? null
+    },
+
     create(input: CreateChannelInput): Channel {
       const now = nowIso()
       const id = randomUUID()

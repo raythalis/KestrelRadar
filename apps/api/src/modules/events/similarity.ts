@@ -76,9 +76,8 @@ export function hasNewVersionNumber(text: string): boolean {
   return /\bv?\d+\.\d+(?:\.\d+)?\b/.test(text)
 }
 
-/** 有没有「明确的新进展」信号 */
-export function containsProgressSignal(text: string): boolean {
+/** 这段内容里出现了哪些进展信号词（用来跟事件里已有的内容比对，只有「新出现的」才算进展） */
+export function progressSignals(text: string): string[] {
   const lowered = text.toLowerCase()
-  if (PROGRESS_KEYWORDS.some((word) => lowered.includes(word))) return true
-  return hasNewVersionNumber(text)
+  return PROGRESS_KEYWORDS.filter((word) => lowered.includes(word))
 }

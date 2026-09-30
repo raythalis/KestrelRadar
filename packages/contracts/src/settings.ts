@@ -32,6 +32,8 @@ export const settingsSchema = z.object({
   requestTimeoutSeconds: z.number().int().min(5).max(300),
   /** 失败重试次数 */
   maxRetries: z.number().int().min(0).max(5),
+  /** 界面与默认消息模板的语言 */
+  language: z.enum(['zh', 'en']),
   /** 时区：system 表示跟随系统 */
   timezone: z.string().min(1).max(60),
 })
@@ -56,6 +58,7 @@ export const SETTINGS_DEFAULTS: Settings = {
   dailyDeliveryLimit: 0,
   requestTimeoutSeconds: 30,
   maxRetries: 2,
+  language: 'zh',
   timezone: 'system',
 }
 

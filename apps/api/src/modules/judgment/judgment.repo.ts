@@ -57,6 +57,10 @@ export function createJudgmentRepo(db: Db) {
     'select * from judgments where monitor_id = ? order by created_at desc, id',
   )
   const selectJudgedItemIds = db.prepare('select item_id from judgments where monitor_id = ?')
+  const selectPassItemIds = db.prepare(
+    `select distinct item_id from judgments
+      where decision = 'pass' and monitor_id in (select value from json_each(?))`,
+  )
 
   return {
     /** 一条内容对一条监听只判一次：重复调用靠库的唯一约束兜住 */
@@ -79,6 +83,15 @@ export function createJudgmentRepo(db: Db) {
 
     listByMonitor(monitorId: string): Judgment[] {
       return (selectByMonitor.all(monitorId) as unknown as JudgmentRow[]).map(toJudgment)
+    },
+
+    /** 这批监听判为「留下」的条目（投递的候选来源） */
+    passItemIds(monitorIds: string[]): Set<string> {
+      if (monitorIds.length === 0) return new Set()
+      const rows = selectPassItemIds.all(JSON.stringify(monitorIds)) as unknown as {
+        item_id: string
+      }[]
+      return new Set(rows.map((row) => row.item_id))
     },
 
     /** 这条监听已经判过的条目 id，用来跳过重复判定 */

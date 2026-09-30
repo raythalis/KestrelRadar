@@ -356,7 +356,7 @@ describe('进展信号（决定要不要再推一次）', () => {
     addItem(
       c,
       discoveries.B,
-      { title: '某网盘宣布将停服（附细节）', url: 'https://b.example.com/2', discovery: 'B' },
+      { title: '某网盘官方：停服时间已确定', url: 'https://a.example.com/1', discovery: 'B' },
       T0,
     )
     await c.merger.mergePendingItems(discoveries.B)
