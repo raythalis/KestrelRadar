@@ -7,6 +7,8 @@ import { createCollector, type Collector } from './modules/collection/collector.
 import { createScheduler, type Scheduler } from './modules/collection/scheduler.ts'
 import { createDiscoveryRepo } from './modules/discoveries/discovery.repo.ts'
 import { createDiscoveryService } from './modules/discoveries/discovery.service.ts'
+import { createEventRepo, type EventRepo } from './modules/events/event.repo.ts'
+import { createEventService } from './modules/events/event.service.ts'
 import { createGroupRepo } from './modules/groups/group.repo.ts'
 import { createGroupService } from './modules/groups/group.service.ts'
 import { createItemRepo, type ItemRepo } from './modules/items/item.repo.ts'
@@ -31,6 +33,8 @@ export interface Container {
   settings: ReturnType<typeof createSettingsService>
   items: ItemRepo
   judgments: JudgmentRepo
+  events: EventRepo
+  merger: ReturnType<typeof createEventService>
   judge: ReturnType<typeof createJudgeService>
   collector: Collector
   scheduler: Scheduler
@@ -55,6 +59,7 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
   const settingsRepo = createSettingsRepo(db)
   const itemRepo = createItemRepo(db)
   const judgmentRepo = createJudgmentRepo(db)
+  const eventRepo = createEventRepo(db)
 
   const settings = createSettingsService(settingsRepo)
 
@@ -69,6 +74,14 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     log: options.log,
   })
 
+  const merger = createEventService({
+    events: eventRepo,
+    discoveries: discoveryRepo,
+    groups: groupRepo,
+    items: itemRepo,
+    settings,
+  })
+
   const collector = createCollector({
     discoveries: discoveryRepo,
     items: itemRepo,
@@ -80,6 +93,17 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
         if (written > 0) options.log?.('info', `判定完成：新判 ${written} 条`)
       } catch (error) {
         options.log?.('warn', `判定失败：${(error as Error).message}`)
+      }
+      try {
+        const merged = await merger.mergePendingItems(discoveryId)
+        if (merged.created > 0 || merged.merged > 0) {
+          options.log?.(
+            'info',
+            `归并完成：新建事件 ${merged.created} 个，并入已有事件 ${merged.merged} 条`,
+          )
+        }
+      } catch (error) {
+        options.log?.('warn', `归并失败：${(error as Error).message}`)
       }
     },
   })
@@ -114,6 +138,8 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     settings,
     items: itemRepo,
     judgments: judgmentRepo,
+    events: eventRepo,
+    merger,
     judge,
     collector,
     scheduler,

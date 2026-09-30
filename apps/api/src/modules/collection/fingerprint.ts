@@ -31,7 +31,7 @@ function normalizeText(text: string): string {
 }
 
 /** 归一化链接：去追踪参数、统一大小写、去掉末尾斜杠与锚点、参数排序 */
-function normalizeUrl(raw: string): string | null {
+export function normalizeUrl(raw: string): string | null {
   try {
     const url = new URL(raw.trim())
     const tracking: string[] = []

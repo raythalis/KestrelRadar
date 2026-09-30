@@ -32,13 +32,24 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     { prefix: API_PREFIX },
   )
 
+  let maintenance: NodeJS.Timeout | undefined
+
   if (options.enableScheduler !== false) {
     app.addHook('onReady', async () => {
       container.scheduler.start()
+      // 事件归档这类打扫活儿每小时跑一遍，顺带在启动时先清一次
+      const sweep = (): void => {
+        const archived = container.merger.archiveStale()
+        if (archived > 0) app.log.info(`事件归档：${archived} 个`)
+      }
+      sweep()
+      maintenance = setInterval(sweep, 60 * 60 * 1000)
+      maintenance.unref()
     })
   }
 
   app.addHook('onClose', async () => {
+    if (maintenance) clearInterval(maintenance)
     container.scheduler.stop()
     db.close()
   })

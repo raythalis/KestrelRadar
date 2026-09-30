@@ -174,6 +174,37 @@ export const MIGRATIONS: readonly Migration[] = [
       create index idx_judgments_item on judgments (item_id);
     `,
   },
+  {
+    name: '005-events',
+    sql: `
+      create table events (
+        id text primary key,
+        group_id text not null references groups (id) on delete cascade,
+        title text not null,
+        url text,
+        url_key text,
+        first_item_at text not null,
+        last_item_at text not null,
+        status text not null default 'new' check (status in ('new', 'delivered', 'updated', 'archived')),
+        delivered_at text,
+        created_at text not null,
+        updated_at text not null
+      );
+      create index idx_events_group on events (group_id, status);
+      create index idx_events_last_item on events (last_item_at);
+      create index idx_events_url_key on events (group_id, url_key);
+
+      create table event_items (
+        event_id text not null references events (id) on delete cascade,
+        item_id text not null references items (id) on delete cascade,
+        discovery_id text not null references discoveries (id) on delete cascade,
+        added_at text not null,
+        primary key (event_id, item_id)
+      );
+      create index idx_event_items_item on event_items (item_id);
+      create index idx_event_items_event on event_items (event_id);
+    `,
+  },
 ]
 
 export function runMigrations(conn: DatabaseSync): void {
