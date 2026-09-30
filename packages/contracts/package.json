@@ -1,0 +1,19 @@
+{
+  "name": "@kestrel/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "前后端共享的类型与校验契约（唯一来源）",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.0"
+  }
+}

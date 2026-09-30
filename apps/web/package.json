@@ -19,6 +19,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@kestrel/contracts": "workspace:*",
     "@mdi/font": "^7.4.47",
     "axios": "^1.20.0",
     "pinia": "^4.0.3",

@@ -1,0 +1,216 @@
+import { z } from 'zod'
+
+import {
+  actionTriggerSchema,
+  channelTypeSchema,
+  discoveryKindSchema,
+  monitorModeSchema,
+  providerKindSchema,
+  sensitivitySchema,
+} from './enums.ts'
+
+const idSchema = z.string().min(1)
+const timestampSchema = z.string()
+const commonRead = {
+  id: idSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+}
+
+/** 分组：一件关注的事，下面挂发现 / 监听 / 动作 */
+export const groupSchema = z.object({
+  ...commonRead,
+  name: z.string().min(1).max(60),
+  description: z.string().max(500),
+  enabled: z.boolean(),
+})
+export type Group = z.infer<typeof groupSchema>
+
+export const createGroupInputSchema = groupSchema.pick({ name: true }).extend({
+  description: z.string().max(500).default(''),
+  enabled: z.boolean().default(true),
+})
+export const updateGroupInputSchema = groupSchema
+  .pick({ name: true, description: true, enabled: true })
+  .partial()
+export type CreateGroupInput = z.infer<typeof createGroupInputSchema>
+export type UpdateGroupInput = z.infer<typeof updateGroupInputSchema>
+
+/** 发现：去哪儿看（一条路由 / 一个地址） */
+export const discoverySchema = z.object({
+  ...commonRead,
+  groupId: idSchema,
+  name: z.string().min(1).max(60),
+  kind: discoveryKindSchema,
+  /** RSSHub 路由、RSS 地址或网页地址，原样保存 */
+  target: z.string().min(1).max(1000),
+  /** RSSHub 访问密钥，可为空；接口不回显明文，只给 hasAccessKey */
+  hasAccessKey: z.boolean(),
+  cronExpression: z.string().min(1).max(120),
+  enabled: z.boolean(),
+})
+export type Discovery = z.infer<typeof discoverySchema>
+
+export const createDiscoveryInputSchema = z.object({
+  groupId: idSchema,
+  name: z.string().min(1).max(60),
+  kind: discoveryKindSchema,
+  target: z.string().min(1).max(1000),
+  accessKey: z.string().max(200).optional(),
+  cronExpression: z.string().min(1).max(120),
+  enabled: z.boolean().default(true),
+})
+export const updateDiscoveryInputSchema = z.object({
+  name: z.string().min(1).max(60).optional(),
+  kind: discoveryKindSchema.optional(),
+  target: z.string().min(1).max(1000).optional(),
+  accessKey: z.string().max(200).nullable().optional(),
+  cronExpression: z.string().min(1).max(120).optional(),
+  enabled: z.boolean().optional(),
+})
+export type CreateDiscoveryInput = z.infer<typeof createDiscoveryInputSchema>
+export type UpdateDiscoveryInput = z.infer<typeof updateDiscoveryInputSchema>
+
+/** 监听：留下什么 */
+export const monitorSchema = z.object({
+  ...commonRead,
+  groupId: idSchema,
+  name: z.string().min(1).max(60),
+  mode: monitorModeSchema,
+  sensitivity: sensitivitySchema,
+  /** 语义化意图描述，仅 algorithm_llm 模式生效 */
+  intentText: z.string().max(500),
+  includeKeywords: z.array(z.string().min(1).max(100)).max(200),
+  excludeKeywords: z.array(z.string().min(1).max(100)).max(200),
+  useGlobalExcludes: z.boolean(),
+  enabled: z.boolean(),
+  /** 非空表示「只走这几个动作」，为空表示跟随分组 */
+  actionIds: z.array(idSchema),
+})
+export type Monitor = z.infer<typeof monitorSchema>
+
+export const createMonitorInputSchema = z.object({
+  groupId: idSchema,
+  name: z.string().min(1).max(60),
+  mode: monitorModeSchema.default('follow_global'),
+  sensitivity: sensitivitySchema.default('medium'),
+  intentText: z.string().max(500).default(''),
+  includeKeywords: z.array(z.string().min(1).max(100)).max(200).default([]),
+  excludeKeywords: z.array(z.string().min(1).max(100)).max(200).default([]),
+  useGlobalExcludes: z.boolean().default(true),
+  enabled: z.boolean().default(true),
+  actionIds: z.array(idSchema).default([]),
+})
+export const updateMonitorInputSchema = createMonitorInputSchema.omit({ groupId: true }).partial()
+export type CreateMonitorInput = z.infer<typeof createMonitorInputSchema>
+export type UpdateMonitorInput = z.infer<typeof updateMonitorInputSchema>
+
+/** 动作：怎么发（即时 / 汇总），发到哪个渠道 */
+export const actionSchema = z.object({
+  ...commonRead,
+  groupId: idSchema,
+  name: z.string().min(1).max(60),
+  triggerType: actionTriggerSchema,
+  channelId: idSchema,
+  /** 仅汇总动作需要 */
+  cronExpression: z.string().max(120).nullable(),
+  template: z.string().max(4000),
+  /** 汇总动作是否包含已即时推送过的内容 */
+  includeDelivered: z.boolean(),
+  enabled: z.boolean(),
+})
+export type Action = z.infer<typeof actionSchema>
+
+export const createActionInputSchema = z.object({
+  groupId: idSchema,
+  name: z.string().min(1).max(60),
+  triggerType: actionTriggerSchema.default('instant'),
+  channelId: idSchema,
+  cronExpression: z.string().max(120).nullable().default(null),
+  template: z.string().max(4000).default(''),
+  includeDelivered: z.boolean().default(false),
+  enabled: z.boolean().default(true),
+})
+export const updateActionInputSchema = createActionInputSchema.omit({ groupId: true }).partial()
+export type CreateActionInput = z.infer<typeof createActionInputSchema>
+export type UpdateActionInput = z.infer<typeof updateActionInputSchema>
+
+/** 渠道：往哪儿发 */
+export const channelSchema = z.object({
+  ...commonRead,
+  name: z.string().min(1).max(60),
+  type: channelTypeSchema,
+  /** 非密钥类参数（webhook 地址、chat id 等）；密钥只存库不回显 */
+  config: z.record(z.string(), z.string()),
+  hasSecret: z.boolean(),
+  enabled: z.boolean(),
+})
+export type Channel = z.infer<typeof channelSchema>
+
+export const createChannelInputSchema = z.object({
+  name: z.string().min(1).max(60),
+  type: channelTypeSchema,
+  config: z.record(z.string(), z.string()).default({}),
+  secret: z.string().max(500).optional(),
+  enabled: z.boolean().default(true),
+})
+export const updateChannelInputSchema = z.object({
+  name: z.string().min(1).max(60).optional(),
+  type: channelTypeSchema.optional(),
+  config: z.record(z.string(), z.string()).optional(),
+  /** 传字符串 = 覆盖，传 null = 清空，不传 = 不动 */
+  secret: z.string().max(500).nullable().optional(),
+  enabled: z.boolean().optional(),
+})
+export type CreateChannelInput = z.infer<typeof createChannelInputSchema>
+export type UpdateChannelInput = z.infer<typeof updateChannelInputSchema>
+
+/** 模型供应商与模型清单 */
+export const modelProviderSchema = z.object({
+  ...commonRead,
+  name: z.string().min(1).max(60),
+  kind: providerKindSchema,
+  baseUrl: z.string().min(1).max(500),
+  hasApiKey: z.boolean(),
+  enabled: z.boolean(),
+  sortOrder: z.number().int(),
+})
+export type ModelProvider = z.infer<typeof modelProviderSchema>
+
+export const createModelProviderInputSchema = z.object({
+  name: z.string().min(1).max(60),
+  kind: providerKindSchema,
+  baseUrl: z.string().min(1).max(500),
+  apiKey: z.string().max(500).optional(),
+  enabled: z.boolean().default(true),
+  sortOrder: z.number().int().default(0),
+})
+export const updateModelProviderInputSchema = z.object({
+  name: z.string().min(1).max(60).optional(),
+  kind: providerKindSchema.optional(),
+  baseUrl: z.string().min(1).max(500).optional(),
+  /** 传字符串 = 覆盖，传 null = 清空，不传 = 不动 */
+  apiKey: z.string().max(500).nullable().optional(),
+  enabled: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+})
+export type CreateModelProviderInput = z.infer<typeof createModelProviderInputSchema>
+export type UpdateModelProviderInput = z.infer<typeof updateModelProviderInputSchema>
+
+export const modelSchema = z.object({
+  ...commonRead,
+  providerId: idSchema,
+  modelName: z.string().min(1).max(200),
+  enabled: z.boolean(),
+  sortOrder: z.number().int(),
+})
+export type Model = z.infer<typeof modelSchema>
+
+export const createModelInputSchema = z.object({
+  modelName: z.string().min(1).max(200),
+  enabled: z.boolean().default(true),
+  sortOrder: z.number().int().default(0),
+})
+export const updateModelInputSchema = createModelInputSchema.partial()
+export type CreateModelInput = z.infer<typeof createModelInputSchema>
+export type UpdateModelInput = z.infer<typeof updateModelInputSchema>

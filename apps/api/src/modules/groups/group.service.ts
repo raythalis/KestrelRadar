@@ -1,0 +1,35 @@
+import type { CreateGroupInput, Group, UpdateGroupInput } from '@kestrel/contracts'
+
+import { AppError } from '../../plugins/errors.ts'
+import type { GroupRepo } from './group.repo.ts'
+
+export function createGroupService(repo: GroupRepo) {
+  function mustGet(id: string): Group {
+    const group = repo.get(id)
+    if (!group) throw AppError.notFound('分组不存在')
+    return group
+  }
+
+  return {
+    list: (): Group[] => repo.list(),
+
+    get: (id: string): Group => mustGet(id),
+
+    create: (input: CreateGroupInput): Group => repo.create(input),
+
+    update: (id: string, patch: UpdateGroupInput): Group => {
+      mustGet(id)
+      const updated = repo.update(id, patch)
+      if (!updated) throw AppError.notFound('分组不存在')
+      return updated
+    },
+
+    /** 分组下的发现 / 监听 / 动作由外键级联删除 */
+    remove: (id: string): void => {
+      mustGet(id)
+      repo.remove(id)
+    },
+  }
+}
+
+export type GroupService = ReturnType<typeof createGroupService>
