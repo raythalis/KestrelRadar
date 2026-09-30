@@ -8,7 +8,11 @@ interface IdParams {
   id: string
 }
 
-export function registerGroupRoutes(app: FastifyInstance, service: GroupService): void {
+export function registerGroupRoutes(
+  app: FastifyInstance,
+  service: GroupService,
+  onScheduleChanged: () => void,
+): void {
   app.get('/groups', async () => service.list())
 
   app.get<{ Params: IdParams }>('/groups/:id', async (request) => service.get(request.params.id))
@@ -20,11 +24,14 @@ export function registerGroupRoutes(app: FastifyInstance, service: GroupService)
 
   app.patch<{ Params: IdParams }>('/groups/:id', async (request) => {
     const patch = parseOrThrow(updateGroupInputSchema, request.body)
-    return service.update(request.params.id, patch)
+    const updated = service.update(request.params.id, patch)
+    onScheduleChanged()
+    return updated
   })
 
   app.delete<{ Params: IdParams }>('/groups/:id', async (request, reply) => {
     service.remove(request.params.id)
+    onScheduleChanged()
     return reply.status(204).send()
   })
 }

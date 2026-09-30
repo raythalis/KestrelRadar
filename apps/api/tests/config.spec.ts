@@ -49,6 +49,9 @@ describe('配置快照接口', () => {
       expect(snapshot.actions).toEqual([])
       expect(snapshot.models).toEqual([])
       expect(snapshot.settings.concurrency).toBe(SETTINGS_DEFAULTS.concurrency)
+      // 卡片上带下次采集时间（由调度器算出来，不入库）
+      expect(typeof snapshot.discoveries[0].nextRunAt).toBe('string')
+      expect(snapshot.discoveries[0]).not.toHaveProperty('hasAccessKey')
       expect(res.body).not.toContain('token-secret')
       expect(res.body).not.toContain('sk-secret')
     } finally {

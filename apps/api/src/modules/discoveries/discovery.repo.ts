@@ -11,7 +11,6 @@ interface DiscoveryRow {
   name: string
   kind: string
   target: string
-  access_key: string | null
   cron_expression: string
   enabled: number
   created_at: string
@@ -46,9 +45,10 @@ function toDiscovery(row: DiscoveryRow): Discovery {
     name: row.name,
     kind: row.kind as Discovery['kind'],
     target: row.target,
-    hasAccessKey: Boolean(row.access_key),
     cronExpression: row.cron_expression,
     enabled: toBool(row.enabled),
+    // 下次采集时间由调度器算，仓储这层不存
+    nextRunAt: null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     lastCheckedAt: row.last_checked_at,
@@ -68,13 +68,12 @@ const SELECT_WITH_COUNT = `select d.*, (select count(*) from items i where i.dis
 export function createDiscoveryRepo(db: Db) {
   const selectAll = db.prepare(`${SELECT_WITH_COUNT} order by d.created_at, d.id`)
   const selectOne = db.prepare(`${SELECT_WITH_COUNT} where d.id = ?`)
-  const selectAccessKey = db.prepare('select access_key from discoveries where id = ?')
   const insertOne = db.prepare(
-    `insert into discoveries (id, group_id, name, kind, target, access_key, cron_expression, enabled, created_at, updated_at)
-     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `insert into discoveries (id, group_id, name, kind, target, cron_expression, enabled, created_at, updated_at)
+     values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
   const updateOne = db.prepare(
-    `update discoveries set name = ?, kind = ?, target = ?, access_key = ?, cron_expression = ?, enabled = ?, updated_at = ?
+    `update discoveries set name = ?, kind = ?, target = ?, cron_expression = ?, enabled = ?, updated_at = ?
      where id = ?`,
   )
   const deleteOne = db.prepare('delete from discoveries where id = ?')
@@ -102,7 +101,6 @@ export function createDiscoveryRepo(db: Db) {
         input.name,
         input.kind,
         input.target,
-        input.accessKey ?? null,
         input.cronExpression,
         fromBool(input.enabled),
         now,
@@ -116,13 +114,10 @@ export function createDiscoveryRepo(db: Db) {
     update(id: string, patch: UpdateDiscoveryInput): Discovery | undefined {
       const current = find(id)
       if (!current) return undefined
-      // 没传 accessKey 表示不动密钥；传 null 表示清空
-      const accessKey = patch.accessKey === undefined ? current.access_key : patch.accessKey
       updateOne.run(
         patch.name ?? current.name,
         patch.kind ?? current.kind,
         patch.target ?? current.target,
-        accessKey,
         patch.cronExpression ?? current.cron_expression,
         fromBool(patch.enabled ?? toBool(current.enabled)),
         nowIso(),
@@ -135,12 +130,6 @@ export function createDiscoveryRepo(db: Db) {
 
     remove(id: string): boolean {
       return deleteOne.run(id).changes > 0
-    },
-
-    /** 采集用：密钥只在这一处读出来，接口永远不回显 */
-    getAccessKey(id: string): string | null {
-      const row = selectAccessKey.get(id) as unknown as { access_key: string | null } | undefined
-      return row?.access_key ?? null
     },
 
     updateState(id: string, state: DiscoveryState): void {

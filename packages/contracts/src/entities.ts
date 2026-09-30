@@ -44,10 +44,10 @@ export const discoverySchema = z.object({
   kind: discoveryKindSchema,
   /** RSSHub 路由、RSS 地址或网页地址，原样保存 */
   target: z.string().min(1).max(1000),
-  /** RSSHub 访问密钥，可为空；接口不回显明文，只给 hasAccessKey */
-  hasAccessKey: z.boolean(),
   cronExpression: z.string().min(1).max(120),
   enabled: z.boolean(),
+  /** 下一次采集时间，由调度器算出来回给界面，不入库 */
+  nextRunAt: z.string().nullable(),
   /** 下面这些是采集状态，跟着卡片一起回给界面 */
   lastCheckedAt: z.string().nullable(),
   routeOk: z.boolean().nullable(),
@@ -76,7 +76,6 @@ export const createDiscoveryInputSchema = z.object({
   name: z.string().min(1).max(60),
   kind: discoveryKindSchema,
   target: z.string().min(1).max(1000),
-  accessKey: z.string().max(200).optional(),
   cronExpression: z.string().min(1).max(120),
   enabled: z.boolean().default(true),
 })
@@ -84,7 +83,6 @@ export const updateDiscoveryInputSchema = z.object({
   name: z.string().min(1).max(60).optional(),
   kind: discoveryKindSchema.optional(),
   target: z.string().min(1).max(1000).optional(),
-  accessKey: z.string().max(200).nullable().optional(),
   cronExpression: z.string().min(1).max(120).optional(),
   enabled: z.boolean().optional(),
 })

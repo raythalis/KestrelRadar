@@ -19,7 +19,12 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
 
   registerErrorHandler(app)
 
-  const container = buildContainer(db)
+  const container = buildContainer(db, {
+    log: (level, message) => {
+      if (level === 'warn') app.log.warn(message)
+      else app.log.info(message)
+    },
+  })
   await app.register(
     async (instance) => {
       registerRoutes(instance, container)

@@ -3,11 +3,9 @@ import type { DiscoveryTestResult } from '@kestrel/contracts'
 import type { SettingsService } from '../settings/settings.service.ts'
 import type { DiscoveryRepo } from '../discoveries/discovery.repo.ts'
 import type { ItemRepo } from '../items/item.repo.ts'
-import { mapWithConcurrency } from '../../utils/concurrency.ts'
 import { buildFingerprint } from './fingerprint.ts'
 import { FeedParseError, parseFeed, type ParsedEntry } from './feed-parser.ts'
 import { FetchError, fetchText } from './fetcher.ts'
-import { isDue } from './scheduler.ts'
 
 export interface CollectOutcome {
   discoveryId: string
@@ -55,9 +53,9 @@ export function createCollector(deps: CollectorDeps) {
       if (!settings.rsshubBaseUrl) return { error: '还没有配置 RSSHub 实例地址（见全局设置）' }
       const base = settings.rsshubBaseUrl.replace(/\/+$/, '')
       const path = discovery.target.startsWith('/') ? discovery.target : `/${discovery.target}`
-      const accessKey = deps.discoveries.getAccessKey(discoveryId)
-      const suffix = accessKey
-        ? `${path.includes('?') ? '&' : '?'}key=${encodeURIComponent(accessKey)}`
+      // 单实例：密钥跟着实例地址一起配在全局设置里
+      const suffix = settings.rsshubAccessKey
+        ? `${path.includes('?') ? '&' : '?'}key=${encodeURIComponent(settings.rsshubAccessKey)}`
         : ''
       return { url: `${base}${path}${suffix}`, kind: 'feed' }
     }
@@ -172,7 +170,7 @@ export function createCollector(deps: CollectorDeps) {
     }
   }
 
-  /** 正式采集：新条目入库，第一次只建基线 */
+  /** 正式采集：新条目入库，第一次只建基线。定时任务与手动测试都走这里。 */
   async function collectDiscovery(discoveryId: string): Promise<CollectOutcome> {
     const discovery = deps.discoveries.get(discoveryId)
     if (!discovery) {
@@ -231,45 +229,7 @@ export function createCollector(deps: CollectorDeps) {
     }
   }
 
-  async function collectMany(discoveryIds: readonly string[]): Promise<CollectOutcome[]> {
-    const settings = deps.settings.get()
-    return mapWithConcurrency(discoveryIds, settings.concurrency, async (id) => {
-      try {
-        return await collectDiscovery(id)
-      } catch (error) {
-        // 单个源炸了不能拖死整轮
-        return {
-          discoveryId: id,
-          ok: false,
-          routeOk: false,
-          contentOk: false,
-          newItemCount: 0,
-          message: (error as Error).message || '采集失败',
-        }
-      }
-    })
-  }
-
-  /** 调度器每轮调用：只跑到期且启用的发现 */
-  async function collectDue(now: Date): Promise<CollectOutcome[]> {
-    const due = deps.discoveries
-      .list()
-      .filter((discovery) =>
-        isDue(
-          {
-            cronExpression: discovery.cronExpression,
-            lastCheckedAt: discovery.lastCheckedAt,
-            enabled: discovery.enabled,
-          },
-          now,
-        ),
-      )
-      .map((discovery) => discovery.id)
-    if (due.length === 0) return []
-    return collectMany(due)
-  }
-
-  return { collectDiscovery, collectMany, collectDue, probeDiscovery }
+  return { collectDiscovery, probeDiscovery }
 }
 
 export type Collector = ReturnType<typeof createCollector>

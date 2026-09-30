@@ -13,6 +13,7 @@ export function registerDiscoveryRoutes(
   app: FastifyInstance,
   service: DiscoveryService,
   collector: Collector,
+  onScheduleChanged: () => void,
 ): void {
   app.get('/discoveries', async () => service.list())
 
@@ -28,16 +29,21 @@ export function registerDiscoveryRoutes(
 
   app.post('/discoveries', async (request, reply) => {
     const input = parseOrThrow(createDiscoveryInputSchema, request.body)
-    return reply.status(201).send(service.create(input))
+    const created = service.create(input)
+    onScheduleChanged()
+    return reply.status(201).send({ ...created, nextRunAt: service.get(created.id).nextRunAt })
   })
 
   app.patch<{ Params: IdParams }>('/discoveries/:id', async (request) => {
     const patch = parseOrThrow(updateDiscoveryInputSchema, request.body)
-    return service.update(request.params.id, patch)
+    const updated = service.update(request.params.id, patch)
+    onScheduleChanged()
+    return service.get(updated.id)
   })
 
   app.delete<{ Params: IdParams }>('/discoveries/:id', async (request, reply) => {
     service.remove(request.params.id)
+    onScheduleChanged()
     return reply.status(204).send()
   })
 }

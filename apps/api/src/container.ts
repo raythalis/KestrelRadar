@@ -31,8 +31,13 @@ export interface Container {
   scheduler: Scheduler
 }
 
+export interface ContainerOptions {
+  /** 采集结果写进服务日志，方便排查 */
+  log?: (level: 'info' | 'warn', message: string) => void
+}
+
 /** 装配处：repo 与 service 的依赖关系只在这里写一次 */
-export function buildContainer(db: Db): Container {
+export function buildContainer(db: Db, options: ContainerOptions = {}): Container {
   const groupRepo = createGroupRepo(db)
   const discoveryRepo = createDiscoveryRepo(db)
   const monitorRepo = createMonitorRepo(db)
@@ -46,9 +51,29 @@ export function buildContainer(db: Db): Container {
   const settings = createSettingsService(settingsRepo)
   const collector = createCollector({ discoveries: discoveryRepo, items: itemRepo, settings })
 
+  const scheduler = createScheduler({
+    collector,
+    // 采集目标 = 自身启用 + 所在分组也启用
+    targets: () =>
+      discoveryRepo.list().map((discovery) => ({
+        id: discovery.id,
+        cronExpression: discovery.cronExpression,
+        enabled: discovery.enabled && (groupRepo.get(discovery.groupId)?.enabled ?? false),
+      })),
+    concurrency: () => settings.get().concurrency,
+    onResult: (outcome) => {
+      const name = discoveryRepo.get(outcome.discoveryId)?.name ?? outcome.discoveryId
+      if (!outcome.ok) {
+        options.log?.('warn', `采集失败：${name} — ${outcome.message}`)
+      } else if (outcome.newItemCount > 0) {
+        options.log?.('info', `采集完成：${name} 新增 ${outcome.newItemCount} 条`)
+      }
+    },
+  })
+
   return {
     groups: createGroupService(groupRepo),
-    discoveries: createDiscoveryService(discoveryRepo, groupRepo),
+    discoveries: createDiscoveryService(discoveryRepo, groupRepo, scheduler),
     monitors: createMonitorService(monitorRepo, groupRepo, actionRepo),
     actions: createActionService(actionRepo, groupRepo, channelRepo),
     channels: createChannelService(channelRepo),
@@ -56,6 +81,6 @@ export function buildContainer(db: Db): Container {
     settings,
     items: itemRepo,
     collector,
-    scheduler: createScheduler({ collector }),
+    scheduler,
   }
 }

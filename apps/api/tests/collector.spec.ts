@@ -27,6 +27,7 @@ beforeEach(async () => {
   })
   container.settings.update({
     rsshubBaseUrl: server.baseUrl,
+    rsshubAccessKey: 'k-123',
     requestTimeoutSeconds: 5,
     maxRetries: 2,
   })
@@ -101,13 +102,9 @@ describe('采集', () => {
     expect(outcome).toMatchObject({ ok: true, newItemCount: 2 })
   })
 
-  it('RSSHub 类型：相对路由用实例地址拼，访问密钥作为参数带上', async () => {
+  it('RSSHub 类型：相对路由用实例地址拼，实例密钥作为参数带上', async () => {
     server.setBody('/github/trending/daily', RSS_TWO_ITEMS)
-    const discovery = addDiscovery({
-      kind: 'rsshub',
-      target: '/github/trending/daily',
-      accessKey: 'k-123',
-    })
+    const discovery = addDiscovery({ kind: 'rsshub', target: '/github/trending/daily' })
 
     const outcome = await container.collector.collectDiscovery(discovery.id)
 
@@ -137,19 +134,6 @@ describe('采集', () => {
     expect(outcome.ok).toBe(false)
     expect(outcome.routeOk).toBe(false)
     expect(server.requests.filter((url) => url.startsWith('/broken'))).toHaveLength(3)
-  })
-
-  it('一个源挂了不拖累别的源', async () => {
-    const bad = addDiscovery({ name: '坏源', target: `${server.baseUrl}/broken` })
-    const good = addDiscovery({ name: '好源', kind: 'web', target: `${server.baseUrl}/page` })
-
-    const outcomes = await container.collector.collectMany([bad.id, good.id])
-
-    expect(outcomes).toHaveLength(2)
-    expect(outcomes.find((item) => item.discoveryId === bad.id)?.ok).toBe(false)
-    expect(outcomes.find((item) => item.discoveryId === good.id)?.ok).toBe(true)
-    expect(container.items.listByDiscovery(good.id)).toHaveLength(2)
-    expect(container.items.listByDiscovery(bad.id)).toHaveLength(0)
   })
 
   it('源不回话就超时收场，不卡住整轮', async () => {

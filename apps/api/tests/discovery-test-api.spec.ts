@@ -47,6 +47,8 @@ describe('发现测试接口', () => {
       // 测试只探测、不入库
       expect(card.itemCount).toBe(0)
       expect(card.baselineEstablishedAt).toBeNull()
+      // 建完就有下一次采集时间
+      expect(typeof card.nextRunAt).toBe('string')
     } finally {
       await cleanup()
       await server.stop()
@@ -83,6 +85,31 @@ describe('发现测试接口', () => {
     } finally {
       await cleanup()
       await server.stop()
+    }
+  })
+
+  it('定时表达式不合法：直接拒绝，并说清哪不对', async () => {
+    const { app, cleanup } = await createTestApp()
+    try {
+      const group = (
+        await app.inject({ method: 'POST', url: '/api/groups', payload: { name: 'G' } })
+      ).json()
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/discoveries',
+        payload: {
+          groupId: group.id,
+          name: '源',
+          kind: 'rss',
+          target: 'https://example.com/feed.xml',
+          cronExpression: '99 99 * * *',
+        },
+      })
+
+      expect(res.statusCode).toBe(400)
+      expect(res.json().error.message).toContain('定时')
+    } finally {
+      await cleanup()
     }
   })
 

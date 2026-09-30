@@ -14,8 +14,10 @@ import { registerSettingsRoutes } from '../modules/settings/settings.routes.ts'
 export function registerRoutes(app: FastifyInstance, container: Container): void {
   app.get('/health', async () => ({ status: 'ok', apiPrefix: API_PREFIX }))
 
-  registerGroupRoutes(app, container.groups)
-  registerDiscoveryRoutes(app, container.discoveries, container.collector)
+  const resync = (): void => container.scheduler.sync()
+
+  registerGroupRoutes(app, container.groups, resync)
+  registerDiscoveryRoutes(app, container.discoveries, container.collector, resync)
   registerMonitorRoutes(app, container.monitors)
   registerActionRoutes(app, container.actions)
   registerChannelRoutes(app, container.channels)

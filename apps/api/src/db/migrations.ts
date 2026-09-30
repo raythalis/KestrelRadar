@@ -144,6 +144,13 @@ export const MIGRATIONS: readonly Migration[] = [
       create index idx_items_source_published on items (source_published_at);
     `,
   },
+  {
+    name: '003-rsshub-key-global',
+    sql: `
+      -- RSSHub 只有一个实例，密钥跟实例地址一起放全局设置，发现上不再单独存
+      alter table discoveries drop column access_key;
+    `,
+  },
 ]
 
 export function runMigrations(conn: DatabaseSync): void {
