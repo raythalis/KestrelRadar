@@ -8,10 +8,30 @@ const { t } = useI18n()
 const workspace = useWorkspaceStore()
 
 const stats = computed(() => [
-  { key: 'groups', label: t('dashboard.stats.groups'), value: workspace.summary.groups, icon: 'mdi-folder-multiple-outline' },
-  { key: 'sources', label: t('dashboard.stats.sources'), value: workspace.summary.sources, icon: 'mdi-rss' },
-  { key: 'watchers', label: t('dashboard.stats.watchers'), value: workspace.summary.watchers, icon: 'mdi-eye-outline' },
-  { key: 'actions', label: t('dashboard.stats.actions'), value: workspace.summary.actions, icon: 'mdi-send-outline' },
+  {
+    key: 'groups',
+    label: t('dashboard.stats.groups'),
+    value: workspace.summary.groups,
+    icon: 'mdi-folder-multiple-outline',
+  },
+  {
+    key: 'sources',
+    label: t('dashboard.stats.sources'),
+    value: workspace.summary.sources,
+    icon: 'mdi-rss',
+  },
+  {
+    key: 'watchers',
+    label: t('dashboard.stats.watchers'),
+    value: workspace.summary.watchers,
+    icon: 'mdi-eye-outline',
+  },
+  {
+    key: 'actions',
+    label: t('dashboard.stats.actions'),
+    value: workspace.summary.actions,
+    icon: 'mdi-send-outline',
+  },
 ])
 </script>
 
@@ -66,11 +86,7 @@ const stats = computed(() => [
             </td>
             <td>{{ group.cards.length }}</td>
             <td>
-              <v-chip
-                size="small"
-                :color="group.enabled ? 'success' : 'default'"
-                variant="tonal"
-              >
+              <v-chip size="small" :color="group.enabled ? 'success' : 'default'" variant="tonal">
                 {{ group.enabled ? t('common.enabled') : t('common.disabled') }}
               </v-chip>
             </td>

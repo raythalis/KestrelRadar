@@ -4,9 +4,10 @@ import { createPinia, setActivePinia } from 'pinia'
 import en from '@/locales/en'
 import zhCN from '@/locales/zh-CN'
 import { countCards, useWorkspaceStore } from '@/stores/workspace'
+import type { AnyCard, Workspace } from '@/types/domain'
 
 vi.mock('@/api/workspace', () => ({
-  fetchWorkspace: vi.fn(async () => {
+  fetchWorkspace: vi.fn<() => Promise<Workspace>>(async () => {
     throw new Error('backend offline')
   }),
 }))
@@ -25,7 +26,7 @@ describe('countCards', () => {
       { id: 'b', kind: 'source' },
       { id: 'c', kind: 'watcher' },
       { id: 'd', kind: 'action' },
-    ] as never
+    ] as AnyCard[]
     expect(countCards(cards)).toEqual({ source: 2, watcher: 1, action: 1 })
   })
 })

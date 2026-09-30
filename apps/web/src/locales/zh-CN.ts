@@ -21,7 +21,8 @@ export default {
   datasource: {
     sample: '示例数据',
     api: '来自后端',
-    sampleHint: '后端 API 尚未接线，当前展示的是内置示例数据，只表示界面结构，不代表真实采集或发送可用。',
+    sampleHint:
+      '后端 API 尚未接线，当前展示的是内置示例数据，只表示界面结构，不代表真实采集或发送可用。',
     apiHint: '数据来自 /api/v2。',
     loadFailed: '读取后端失败，已回退到示例数据：{message}',
   },

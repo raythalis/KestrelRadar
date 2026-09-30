@@ -29,6 +29,20 @@ kestrel/
 - 功能/修复分支：`feat/*`、`fix/*`，从 `develop` 切出，合并回 `develop`。
 - 本地专用内容（本机环境说明、迁移参考代码、脚本）不进版本库。
 
+## 代码风格
+
+由根目录 `.prettierrc.json` 统一约定，全仓库一份配置：
+
+- **字符串一律用单引号**（`singleQuote: true`；Vue/HTML 模板属性由 Prettier 固定为双引号）
+- **不写分号**（`semi: false`）
+- **每行最多 100 列**（`printWidth: 100`）
+
+```bash
+cd apps/web
+npm run format        # 按上述规范格式化
+npm run format:check  # 只检查不修改（CI 用）
+```
+
 ## 开发
 
 ```bash
