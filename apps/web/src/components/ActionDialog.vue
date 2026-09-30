@@ -15,7 +15,8 @@ const name = ref('')
 const triggerType = ref<Action['triggerType']>('instant')
 const channelId = ref('')
 const cronExpression = ref('0 9 * * *')
-const template = ref('')
+/** '' 表示系统内置（跟随界面语言） */
+const templateId = ref('')
 const includeDelivered = ref(false)
 const mergeMessages = ref(true)
 
@@ -30,6 +31,12 @@ const triggerOptions = computed(() =>
 const channelOptions = computed(() =>
   store.channels.map((channel) => ({ value: channel.id, title: channel.name })),
 )
+const templateOptions = computed(() => [
+  { value: '', title: t('action.templateBuiltin') },
+  ...store.templates.map((template) => ({ value: template.id, title: template.name })),
+])
+/** 只读展示：当前选中的模板长什么样 */
+const templateContent = computed(() => store.resolvedTemplateContent(templateId.value || null))
 
 const valid = computed(() => {
   if (name.value.trim().length === 0 || channelId.value.length === 0) return false
@@ -44,7 +51,7 @@ watch(
     triggerType.value = props.action?.triggerType ?? 'instant'
     channelId.value = props.action?.channelId ?? store.channels[0]?.id ?? ''
     cronExpression.value = props.action?.cronExpression ?? '0 9 * * *'
-    template.value = props.action?.template ?? ''
+    templateId.value = props.action?.templateId ?? ''
     includeDelivered.value = props.action?.includeDelivered ?? false
     mergeMessages.value = props.action?.mergeMessages ?? true
   },
@@ -58,7 +65,7 @@ async function submit(): Promise<void> {
     triggerType: triggerType.value,
     channelId: channelId.value,
     cronExpression: triggerType.value === 'digest' ? cronExpression.value.trim() : null,
-    template: template.value,
+    templateId: templateId.value || null,
     includeDelivered: includeDelivered.value,
     mergeMessages: mergeMessages.value,
   }
@@ -72,7 +79,7 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-  <v-dialog v-model="open" max-width="600">
+  <v-dialog v-model="open" max-width="640">
     <v-card data-test="action-dialog">
       <v-card-title class="text-body-1">
         {{ action ? t('action.edit') : t('action.add') }}
@@ -85,12 +92,26 @@ async function submit(): Promise<void> {
           :label="t('action.triggerLabel')"
           data-test="action-trigger-input"
         />
-        <v-select
-          v-model="channelId"
-          :items="channelOptions"
-          :label="t('action.channel')"
-          data-test="action-channel-input"
-        />
+
+        <div class="d-flex align-end ga-2">
+          <v-select
+            v-model="channelId"
+            :items="channelOptions"
+            :label="t('action.channel')"
+            class="flex-grow-1"
+            data-test="action-channel-input"
+          />
+          <v-btn
+            to="/channels"
+            variant="tonal"
+            color="primary"
+            class="mb-1"
+            prepend-icon="mdi-plus"
+            data-test="action-channel-add"
+          >
+            {{ t('action.channelAdd') }}
+          </v-btn>
+        </div>
         <v-alert
           v-if="channelOptions.length === 0"
           type="warning"
@@ -100,6 +121,7 @@ async function submit(): Promise<void> {
         >
           {{ t('action.noChannelsHint') }}
         </v-alert>
+
         <v-text-field
           v-if="triggerType === 'digest'"
           v-model="cronExpression"
@@ -108,14 +130,22 @@ async function submit(): Promise<void> {
           persistent-hint
           data-test="action-cron-input"
         />
-        <v-textarea
-          v-model="template"
+
+        <v-select
+          v-model="templateId"
+          :items="templateOptions"
           :label="t('action.template')"
-          :hint="t('action.templateHint')"
-          rows="4"
-          persistent-hint
           data-test="action-template-input"
         />
+        <v-textarea
+          :model-value="templateContent"
+          :label="t('action.templateContent')"
+          readonly
+          rows="6"
+          class="font-mono mt-1"
+          data-test="action-template-content"
+        />
+
         <v-checkbox
           v-model="mergeMessages"
           :label="t('action.mergeMessages')"

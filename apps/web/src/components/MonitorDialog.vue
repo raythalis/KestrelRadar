@@ -25,12 +25,23 @@ const open = computed({
   set: (value: boolean) => emit('update:modelValue', value),
 })
 
-const modeOptions = computed(() =>
-  (['follow_global', 'algorithm', 'algorithm_llm'] as const).map((value) => ({
-    value,
-    title: t(`monitor.mode.${value}`),
-  })),
+/** 跟随全局时，实际生效的是设置里的全局判定模式 */
+const effectiveMode = computed(() =>
+  mode.value === 'follow_global' ? store.settings.judgeMode : mode.value,
 )
+/** 只有真正会走模型时才需要写意图描述 */
+const showIntent = computed(() => effectiveMode.value === 'algorithm_llm')
+
+const modeOptions = computed(() => [
+  {
+    value: 'follow_global',
+    title: `${t('monitor.mode.follow_global')}（${t('monitor.nowIs')}：${t(
+      `monitor.mode.${store.settings.judgeMode}`,
+    )}）`,
+  },
+  { value: 'algorithm', title: t('monitor.mode.algorithm') },
+  { value: 'algorithm_llm', title: t('monitor.mode.algorithm_llm') },
+])
 const sensitivityOptions = computed(() =>
   (['loose', 'medium', 'strict'] as const).map((value) => ({
     value,
@@ -85,7 +96,7 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-  <v-dialog v-model="open" max-width="600">
+  <v-dialog v-model="open" max-width="620">
     <v-card data-test="monitor-dialog">
       <v-card-title class="text-body-1">
         {{ monitor ? t('monitor.edit') : t('monitor.add') }}
@@ -96,9 +107,11 @@ async function submit(): Promise<void> {
         <v-combobox
           v-model="includeKeywords"
           :label="t('monitor.keywords')"
+          :hint="t('monitor.keywordsHint')"
           multiple
           chips
           closable-chips
+          persistent-hint
           data-test="monitor-keywords-input"
         />
         <v-select
@@ -131,7 +144,7 @@ async function submit(): Promise<void> {
           data-test="monitor-mode-input"
         />
         <v-textarea
-          v-if="mode === 'algorithm_llm'"
+          v-if="showIntent"
           v-model="intentText"
           :label="t('monitor.intent')"
           :hint="t('monitor.intentHint')"
@@ -139,6 +152,16 @@ async function submit(): Promise<void> {
           persistent-hint
           data-test="monitor-intent-input"
         />
+        <v-alert
+          v-else-if="mode === 'follow_global'"
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mb-3 text-caption"
+          data-test="monitor-intent-hint"
+        >
+          {{ t('monitor.intentGlobalHint') }}
+        </v-alert>
         <v-select
           v-model="sensitivity"
           :items="sensitivityOptions"

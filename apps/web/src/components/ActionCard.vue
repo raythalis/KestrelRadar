@@ -13,34 +13,37 @@ const { t } = useI18n()
 
 const triggerLabel = computed(() => t(`action.trigger.${props.action.triggerType}`))
 const channel = computed(() => store.channelName(props.action.channelId))
+const templateName = computed(
+  () => store.templateById(props.action.templateId)?.name ?? t('action.templateBuiltin'),
+)
 const referencedBy = computed(() => store.monitorNamesUsingAction(props.action.id))
 </script>
 
 <template>
-  <v-card variant="tonal" class="pa-3" data-test="action-card">
+  <v-card class="entity-card entity-card--action pa-3" data-test="action-card">
     <div class="d-flex align-center ga-2">
-      <span class="text-body-2 font-weight-medium text-truncate" data-test="action-name">
-        {{ action.name }}
-      </span>
+      <span class="entity-card__title text-truncate" data-test="action-name">{{
+        action.name
+      }}</span>
       <v-spacer />
       <v-switch
         :model-value="action.enabled"
-        color="primary"
-        density="compact"
-        hide-details
         data-test="action-enabled"
         @update:model-value="(value) => store.setActionEnabled(action.id, Boolean(value))"
       />
     </div>
 
-    <div class="text-caption text-medium-emphasis" data-test="action-trigger">
+    <div class="entity-meta" data-test="action-trigger">
       {{ triggerLabel
       }}<template v-if="action.triggerType === 'digest'"> · {{ action.cronExpression }}</template>
     </div>
-
-    <div class="text-caption" data-test="action-channel">
+    <div class="entity-meta" data-test="action-channel">
       {{ t('action.channel') }}{{ channel || t('action.channelMissing') }}
     </div>
+    <div class="entity-meta entity-meta--faint" data-test="action-template">
+      {{ t('action.template') }}{{ templateName }}
+    </div>
+
     <v-alert
       v-if="!channel"
       type="warning"
@@ -52,11 +55,11 @@ const referencedBy = computed(() => store.monitorNamesUsingAction(props.action.i
       {{ t('action.channelMissingHint') }}
     </v-alert>
 
-    <div class="text-caption text-medium-emphasis" data-test="action-referenced">
+    <div class="entity-meta entity-meta--faint mt-1" data-test="action-referenced">
       {{ t('action.referencedBy', { n: referencedBy.length }) }}
     </div>
 
-    <div class="d-flex align-center ga-2 mt-2">
+    <div class="d-flex align-center ga-1 mt-2">
       <v-btn
         size="x-small"
         variant="text"

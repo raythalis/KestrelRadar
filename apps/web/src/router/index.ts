@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import ConfigView from '@/views/ConfigView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
+import SettingsView from '@/views/SettingsView.vue'
 
 // 路由表：仪表盘与配置管理已接入；渠道 / 模型 / 设置先占位。
 const router = createRouter({
@@ -22,12 +23,7 @@ const router = createRouter({
       component: PlaceholderView,
       meta: { titleKey: 'nav.models', noteKey: 'placeholder.models' },
     },
-    {
-      path: '/settings',
-      name: 'settings',
-      component: PlaceholderView,
-      meta: { titleKey: 'nav.settings', noteKey: 'placeholder.settings' },
-    },
+    { path: '/settings', name: 'settings', component: SettingsView },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })

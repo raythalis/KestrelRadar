@@ -27,52 +27,49 @@ async function runTest(): Promise<void> {
 </script>
 
 <template>
-  <v-card variant="tonal" class="pa-3 cable" data-test="discovery-card">
+  <v-card class="entity-card pa-3" data-test="discovery-card">
     <div class="d-flex align-center ga-2">
-      <v-chip size="x-small" label color="primary" data-test="discovery-kind">
+      <v-chip size="x-small" label variant="tonal" color="primary" data-test="discovery-kind">
         {{ kindLabel }}
       </v-chip>
-      <span class="text-body-2 font-weight-medium text-truncate" data-test="discovery-name">
+      <span class="entity-card__title text-truncate" data-test="discovery-name">
         {{ discovery.name }}
       </span>
       <v-spacer />
       <v-switch
         :model-value="discovery.enabled"
-        color="primary"
-        density="compact"
-        hide-details
         data-test="discovery-enabled"
         @update:model-value="(value) => store.setDiscoveryEnabled(discovery.id, Boolean(value))"
       />
     </div>
 
-    <div class="text-caption text-medium-emphasis text-truncate" data-test="discovery-target">
-      {{ discovery.target }}
+    <div class="entity-meta text-truncate" data-test="discovery-target">{{ discovery.target }}</div>
+
+    <div class="mt-2">
+      <TestLamps
+        :route-ok="discovery.routeOk"
+        :content-ok="discovery.contentOk"
+        :message="discovery.lastCheckMessage"
+      />
     </div>
 
-    <TestLamps
-      :route-ok="discovery.routeOk"
-      :content-ok="discovery.contentOk"
-      :message="discovery.lastCheckMessage"
-    />
-
-    <div class="text-caption" data-test="discovery-next-run">
+    <div class="entity-meta mt-2" data-test="discovery-next-run">
+      <v-icon size="13" icon="mdi-clock-outline" />
       {{ t('discovery.nextRun') }}{{ formatDateTime(discovery.nextRunAt) }}
     </div>
-    <div class="text-caption text-medium-emphasis">
+    <div class="entity-meta entity-meta--faint">
       {{ t('discovery.itemCount', { n: discovery.itemCount }) }} · {{ t('discovery.latestItem')
       }}{{ formatDateTime(discovery.latestItemAt) }}
     </div>
-
     <div
       v-if="discovery.baselineEstablishedAt"
-      class="text-caption text-medium-emphasis"
+      class="entity-meta entity-meta--faint"
       data-test="baseline-note"
     >
       {{ t('discovery.baseline', { n: discovery.baselineItemCount ?? 0 }) }}
     </div>
 
-    <div class="d-flex align-center ga-2 mt-2">
+    <div class="d-flex align-center ga-1 mt-2">
       <v-btn
         size="x-small"
         variant="text"

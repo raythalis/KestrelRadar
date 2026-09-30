@@ -146,10 +146,10 @@ async function confirmDelete(): Promise<void> {
 
 <template>
   <div>
-    <div class="d-flex align-center ga-3 mb-4">
+    <div class="page-head">
       <div>
-        <h2 class="text-h6">{{ t('config.title') }}</h2>
-        <p class="text-caption text-medium-emphasis mb-0">{{ t('config.subtitle') }}</p>
+        <h2 class="page-head__title">{{ t('config.title') }}</h2>
+        <p class="page-head__note">{{ t('config.subtitle') }}</p>
       </div>
       <v-spacer />
       <v-btn
@@ -157,15 +157,29 @@ async function confirmDelete(): Promise<void> {
         color="error"
         variant="tonal"
         size="small"
+        prepend-icon="mdi-delete-outline"
         data-test="delete-selected"
         @click="askDeleteSelected"
       >
         {{ t('config.deleteSelected') }}（{{ selected.length }}）
       </v-btn>
-      <v-btn variant="tonal" size="small" data-test="toggle-all" @click="toggleAll">
+      <v-btn
+        variant="text"
+        size="small"
+        :prepend-icon="allExpanded ? 'mdi-unfold-less-horizontal' : 'mdi-unfold-more-horizontal'"
+        data-test="toggle-all"
+        @click="toggleAll"
+      >
         {{ allExpanded ? t('config.collapseAll') : t('config.expandAll') }}
       </v-btn>
-      <v-btn color="primary" size="small" data-test="new-group" @click="openGroupDialog(null)">
+      <v-btn
+        color="primary"
+        size="small"
+        variant="flat"
+        prepend-icon="mdi-plus"
+        data-test="new-group"
+        @click="openGroupDialog(null)"
+      >
         {{ t('config.newGroup') }}
       </v-btn>
     </div>
@@ -182,12 +196,12 @@ async function confirmDelete(): Promise<void> {
 
     <v-skeleton-loader v-if="store.loading && store.groups.length === 0" type="article" />
 
-    <div
-      v-else-if="store.groups.length === 0"
-      class="text-body-2 text-medium-emphasis"
-      data-test="config-empty"
-    >
-      {{ t('config.empty') }}
+    <div v-else-if="store.groups.length === 0" class="empty-state" data-test="config-empty">
+      <v-icon size="22" icon="mdi-folder-outline" />
+      <span>{{ t('config.empty') }}</span>
+      <v-btn color="primary" size="small" class="mt-1" @click="openGroupDialog(null)">
+        {{ t('config.newGroup') }}
+      </v-btn>
     </div>
 
     <div v-else class="d-flex flex-column ga-3">

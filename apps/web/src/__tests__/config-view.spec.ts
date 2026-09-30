@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import type { ConfigSnapshot } from '@kestrel/contracts'
 import { SETTINGS_DEFAULTS } from '@kestrel/contracts'
 import { createPinia } from 'pinia'
+import { createMemoryHistory, createRouter } from 'vue-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as api from '@/api/config'
@@ -78,7 +79,7 @@ const snapshot: ConfigSnapshot = {
       triggerType: 'instant',
       channelId: 'c1',
       cronExpression: null,
-      template: '',
+      templateId: null,
       includeDelivered: false,
       mergeMessages: true,
       enabled: true,
@@ -92,7 +93,7 @@ const snapshot: ConfigSnapshot = {
       triggerType: 'instant',
       channelId: '',
       cronExpression: null,
-      template: '',
+      templateId: null,
       includeDelivered: false,
       mergeMessages: true,
       enabled: true,
@@ -114,6 +115,34 @@ const snapshot: ConfigSnapshot = {
   ],
   modelProviders: [],
   models: [],
+  templates: [
+    {
+      id: 'builtin:zh',
+      name: '系统内置 · 中文',
+      content:
+        '{{badge}}【{{group}}】{{title}}\n备注\n来源 {{sourceCount}} 个：\n{{sources}}\n{{url}}\n命中时间：{{hitAt}}',
+      builtin: true,
+      createdAt: null,
+      updatedAt: null,
+    },
+    {
+      id: 'builtin:en',
+      name: 'Built-in · English',
+      content: '{{badge}}[{{group}}] {{title}}',
+      builtin: true,
+      createdAt: null,
+      updatedAt: null,
+    },
+    {
+      id: 't1',
+      name: '简短版',
+      content: '{{title}} — {{url}}',
+      builtin: false,
+      createdAt: '2026-10-01T00:00:00.000Z',
+      updatedAt: '2026-10-01T00:00:00.000Z',
+    },
+  ],
+
   settings: SETTINGS_DEFAULTS,
 }
 
@@ -251,5 +280,89 @@ describe('配置管理页', () => {
     await switchInput.setValue(false)
     await flushPromises()
     expect(api.updateGroup).toHaveBeenCalledWith('g1', { enabled: false })
+  })
+
+  it('动作弹窗：模板默认是系统内置，下面只读框显示内置内容', async () => {
+    const wrapper = await mountLoaded()
+    await wrapper.find('[data-test="group-toggle"]').trigger('click')
+    await wrapper.find('[data-test="action-edit"]').trigger('click')
+
+    const dialog = wrapper.find('[data-test="action-dialog"]')
+    // 下拉里显示的就是「系统内置（跟随界面语言）」
+    expect(dialog.text()).toContain('系统内置（跟随界面语言）')
+    const preview = dialog.find('[data-test="action-template-content"] textarea')
+    expect((preview.element as HTMLTextAreaElement).value).toContain('{{sourceCount}}')
+    expect(preview.attributes('readonly')).toBeDefined()
+  })
+
+  it('动作弹窗：有跳去通知渠道配置的快捷入口', async () => {
+    vi.mocked(api.fetchConfig).mockResolvedValue(snapshot)
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: { template: '<div />' } },
+        { path: '/channels', component: { template: '<div />' } },
+      ],
+    })
+    await router.push('/')
+    await router.isReady()
+    const wrapper = mount(ConfigView, {
+      global: {
+        plugins: [createPinia(), vuetify, i18n, router],
+        stubs: { 'v-dialog': { template: '<div data-test="dialog-stub"><slot /></div>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('[data-test="group-toggle"]').trigger('click')
+    await wrapper.find('[data-test="action-edit"]').trigger('click')
+
+    const link = wrapper.find('[data-test="action-channel-add"]')
+    expect(link.attributes('href')).toContain('/channels')
+  })
+
+  it('监听弹窗：跟随全局 + 全局纯算法 → 不显示意图描述，给一句说明', async () => {
+    vi.mocked(api.fetchConfig).mockResolvedValue({
+      ...snapshot,
+      monitors: [{ ...snapshot.monitors[0]!, mode: 'follow_global' }],
+    })
+    const wrapper = mountView()
+    await flushPromises()
+    await wrapper.find('[data-test="group-toggle"]').trigger('click')
+    await wrapper.find('[data-test="monitor-edit"]').trigger('click')
+
+    const dialog = wrapper.find('[data-test="monitor-dialog"]')
+    expect(dialog.find('[data-test="monitor-intent-input"]').exists()).toBe(false)
+    const hint = dialog.find('[data-test="monitor-intent-hint"]')
+    expect(hint.exists()).toBe(true)
+    expect(hint.text()).toContain('纯算法')
+  })
+
+  it('监听弹窗：跟随全局 + 全局开了 LLM → 出现意图描述', async () => {
+    vi.mocked(api.fetchConfig).mockResolvedValue({
+      ...snapshot,
+      monitors: [{ ...snapshot.monitors[0]!, mode: 'follow_global' }],
+      settings: { ...snapshot.settings, judgeMode: 'algorithm_llm' },
+    })
+    const wrapper = mountView()
+    await flushPromises()
+    await wrapper.find('[data-test="group-toggle"]').trigger('click')
+    await wrapper.find('[data-test="monitor-edit"]').trigger('click')
+
+    const dialog = wrapper.find('[data-test="monitor-dialog"]')
+    expect(dialog.find('[data-test="monitor-intent-input"]').exists()).toBe(true)
+    expect(dialog.find('[data-test="monitor-intent-hint"]').exists()).toBe(false)
+  })
+
+  it('监听卡片把跟随全局当前生效的模式写出来', async () => {
+    vi.mocked(api.fetchConfig).mockResolvedValue({
+      ...snapshot,
+      monitors: [{ ...snapshot.monitors[0]!, mode: 'follow_global' }],
+      settings: { ...snapshot.settings, judgeMode: 'algorithm_llm' },
+    })
+    const wrapper = mountView()
+    await flushPromises()
+    await wrapper.find('[data-test="group-toggle"]').trigger('click')
+
+    expect(wrapper.find('[data-test="monitor-mode"]').text()).toContain('算法 + LLM')
   })
 })

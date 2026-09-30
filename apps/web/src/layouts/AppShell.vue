@@ -31,9 +31,24 @@ function changeLocale(next: AppLocale): void {
 
 <template>
   <v-app :theme="ui.theme">
-    <v-app-bar flat border>
-      <v-app-bar-title data-test="app-name">{{ t('app.name') }}</v-app-bar-title>
-      <v-tabs :model-value="route.name" density="compact" align-tabs="start" class="ml-4">
+    <v-app-bar flat class="k-appbar" height="64">
+      <div class="d-flex align-center ga-3 ml-4 mr-6">
+        <div class="brand-mark">K</div>
+        <div>
+          <div
+            class="text-body-1 font-weight-bold"
+            style="letter-spacing: -0.01em"
+            data-test="app-name"
+          >
+            {{ t('app.name') }}
+          </div>
+          <div class="text-caption" style="color: var(--k-faint); line-height: 1.1">
+            {{ t('app.tagline') }}
+          </div>
+        </div>
+      </div>
+
+      <v-tabs :model-value="route.name" density="compact" align-tabs="start" slider-color="primary">
         <v-tab
           v-for="item in navItems"
           :key="item"
@@ -44,6 +59,7 @@ function changeLocale(next: AppLocale): void {
           {{ t(`nav.${item}`) }}
         </v-tab>
       </v-tabs>
+
       <v-spacer />
       <v-select
         :model-value="ui.locale"
@@ -52,7 +68,9 @@ function changeLocale(next: AppLocale): void {
         item-value="value"
         density="compact"
         hide-details
-        class="mr-2"
+        variant="solo-filled"
+        flat
+        class="mr-3"
         style="max-width: 150px"
         data-test="locale-select"
         @update:model-value="changeLocale"
@@ -60,13 +78,14 @@ function changeLocale(next: AppLocale): void {
       <v-btn
         :icon="ui.isDark ? 'mdi-weather-sunny' : 'mdi-weather-night'"
         variant="text"
+        class="mr-3"
         data-test="theme-toggle"
         @click="toggleTheme"
       />
     </v-app-bar>
 
-    <v-main>
-      <v-container class="py-6" fluid data-test="shell-body">
+    <v-main class="k-page">
+      <v-container class="py-6" style="max-width: 1360px" data-test="shell-body">
         <router-view />
       </v-container>
     </v-main>

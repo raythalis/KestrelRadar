@@ -77,6 +77,8 @@ export default {
     delete: 'Delete monitor',
     deleteBody: 'Only this monitor is removed; collected items are unaffected.',
     keywords: 'Keywords',
+    keywordsHint: 'Empty means everything passes; otherwise the match mode below applies',
+    nowIs: 'now',
     noKeywords: 'No keywords (everything passes)',
     matchModeLabel: 'Match mode',
     matchMode: {
@@ -94,6 +96,8 @@ export default {
     intent: 'Intent',
     intentHint:
       'One plain sentence, e.g. "new movies with that actress"; only used in Algorithm + LLM',
+    intentGlobalHint:
+      'This monitor follows the global mode, which is algorithm-only, so no intent is needed. Switch global (or this monitor) to LLM and the intent field appears.',
     sensitivityLabel: 'Sensitivity',
     sensitivity: {
       loose: 'Loose',
@@ -115,14 +119,35 @@ export default {
     channel: 'Channel: ',
     channelMissing: 'none yet',
     channelMissingHint: 'This action has no channel yet, so hits cannot be sent.',
+    channelAdd: 'New channel',
+    templateBuiltin: 'Built-in (follows language)',
+    templateContent: 'Current template (read-only)',
     noChannelsHint: 'No channels yet — create one on the Channels page first.',
     digestTime: 'Digest time',
     digestTimeHint: 'When to send the digest, e.g. 0 9 * * * is 09:00 daily',
     template: 'Message template',
-    templateHint: 'Leave empty to use the default template',
     mergeMessages: 'Merge several hits of one send into one message',
     includeDelivered: 'Include content already sent instantly',
     referencedBy: '{n} monitors reference it',
+  },
+  settings: {
+    subtitle:
+      'Message templates live here; actions only pick one. The remaining advanced settings come later.',
+    template: {
+      section: 'Message templates',
+      sectionNote:
+        'Wrap variable names in double braces; the two built-in templates are read-only and are used by language when an action picks none.',
+      name: 'Template name',
+      content: 'Template content',
+      variablesHint:
+        'Variables (wrap in double braces): title, summary, url, sourceCount, sources, hitAt, group, badge, eventCount',
+      add: 'New template',
+      edit: 'Edit template',
+      delete: 'Delete template',
+      deleteBody:
+        'Delete template "{name}"? Actions referencing it fall back to the built-in template.',
+      builtin: 'Built-in',
+    },
   },
   placeholder: {
     dashboard:

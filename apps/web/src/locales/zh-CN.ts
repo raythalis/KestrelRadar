@@ -76,6 +76,8 @@ export default {
     delete: '删除监听',
     deleteBody: '只删这条监听本身，已经采到的内容不受影响。',
     keywords: '关键词',
+    keywordsHint: '留空表示全部通过；填了就按下面的匹配方式来',
+    nowIs: '当前',
     noKeywords: '没填关键词（全部通过）',
     matchModeLabel: '匹配方式',
     matchMode: {
@@ -92,6 +94,8 @@ export default {
     },
     intent: '意图描述',
     intentHint: '用人话写一句，例如「杨幂的新电影」；只在「算法 + LLM」模式下生效',
+    intentGlobalHint:
+      '这条监听跟随全局；全局判定模式是纯算法，所以不用写意图描述。等全局或这条监听开了 LLM，这里会出现意图描述。',
     sensitivityLabel: '灵敏度',
     sensitivity: {
       loose: '宽松',
@@ -113,14 +117,33 @@ export default {
     channel: '通知渠道：',
     channelMissing: '还没选',
     channelMissingHint: '这个动作还没选通知渠道，命中后发不出去。',
+    channelAdd: '新建渠道',
+    templateBuiltin: '系统内置（跟随界面语言）',
+    templateContent: '当前模板内容（只读）',
     noChannelsHint: '还没有通知渠道，先去「通知渠道」页建一个。',
     digestTime: '汇总时间',
     digestTimeHint: '每天几点汇总，例如 0 9 * * * 是每天 09:00',
     template: '消息模板',
-    templateHint: '留空就用默认模板',
     mergeMessages: '一次发送里多条命中合并成一条消息',
     includeDelivered: '包含已即时推送过的内容',
     referencedBy: '被 {n} 条监听引用',
+  },
+  settings: {
+    subtitle: '消息模板在这里集中管理；动作只挑模板，不再各自改正文。其他高级设置后续接入。',
+    template: {
+      section: '消息模板',
+      sectionNote:
+        '模板里用双花括号包住变量名做占位；系统内置的两套只读，动作没选模板时按界面语言使用。',
+      name: '模板别名',
+      content: '模板内容',
+      variablesHint:
+        '可用变量（双花括号包起来）：title、summary、url、sourceCount、sources、hitAt、group、badge、eventCount',
+      add: '新建模板',
+      edit: '编辑模板',
+      delete: '删除模板',
+      deleteBody: '要删掉模板「{name}」吗？动作里引用它的地方会回落到系统内置模板。',
+      builtin: '系统内置',
+    },
   },
   placeholder: {
     dashboard: '仪表盘先占位：RSSHub 状态、源数量、采集数量与采集结果列表后续接入。',

@@ -22,6 +22,7 @@ declare module 'vue' {
     MonitorDialog: typeof import('./components/MonitorDialog.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TemplateDialog: typeof import('./components/TemplateDialog.vue')['default']
     TestLamps: typeof import('./components/TestLamps.vue')['default']
   }
 }

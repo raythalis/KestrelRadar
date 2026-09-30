@@ -5,13 +5,16 @@ import type {
   CreateDiscoveryInput,
   CreateGroupInput,
   CreateMonitorInput,
+  CreateMessageTemplateInput,
   Discovery,
   DiscoveryTestResult,
   Group,
+  MessageTemplate,
   Monitor,
   UpdateActionInput,
   UpdateDiscoveryInput,
   UpdateGroupInput,
+  UpdateMessageTemplateInput,
   UpdateMonitorInput,
 } from '@kestrel/contracts'
 
@@ -83,4 +86,21 @@ export async function updateAction(id: string, patch: UpdateActionInput): Promis
 
 export async function removeAction(id: string): Promise<void> {
   await http.delete(`/actions/${id}`)
+}
+
+export async function createTemplate(input: CreateMessageTemplateInput): Promise<MessageTemplate> {
+  const { data } = await http.post<MessageTemplate>('/templates', input)
+  return data
+}
+
+export async function updateTemplate(
+  id: string,
+  patch: UpdateMessageTemplateInput,
+): Promise<MessageTemplate> {
+  const { data } = await http.patch<MessageTemplate>(`/templates/${id}`, patch)
+  return data
+}
+
+export async function removeTemplate(id: string): Promise<void> {
+  await http.delete(`/templates/${id}`)
 }

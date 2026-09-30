@@ -1,5 +1,8 @@
+import { SETTINGS_DEFAULTS, type Settings } from '@kestrel/contracts'
 import type {
   ConfigSnapshot,
+  CreateMessageTemplateInput,
+  MessageTemplate,
   CreateActionInput,
   CreateDiscoveryInput,
   CreateMonitorInput,
@@ -7,6 +10,7 @@ import type {
   Group,
   UpdateActionInput,
   UpdateDiscoveryInput,
+  UpdateMessageTemplateInput,
   UpdateMonitorInput,
 } from '@kestrel/contracts'
 import { defineStore } from 'pinia'
@@ -14,6 +18,7 @@ import { computed, ref } from 'vue'
 
 import {
   createAction as createActionApi,
+  createTemplate as createTemplateApi,
   createDiscovery as createDiscoveryApi,
   createGroup as createGroupApi,
   createMonitor as createMonitorApi,
@@ -22,11 +27,13 @@ import {
   removeDiscovery as removeDiscoveryApi,
   removeGroup as removeGroupApi,
   removeMonitor as removeMonitorApi,
+  removeTemplate as removeTemplateApi,
   testDiscovery as testDiscoveryApi,
   updateAction as updateActionApi,
   updateDiscovery as updateDiscoveryApi,
   updateGroup as updateGroupApi,
   updateMonitor as updateMonitorApi,
+  updateTemplate as updateTemplateApi,
 } from '@/api/config'
 import { ApiError } from '@/api/http'
 
@@ -38,6 +45,8 @@ export const useConfigStore = defineStore('config', () => {
 
   const groups = computed(() => snapshot.value?.groups ?? [])
   const channels = computed(() => snapshot.value?.channels ?? [])
+  const templates = computed<MessageTemplate[]>(() => snapshot.value?.templates ?? [])
+  const settings = computed<Settings>(() => snapshot.value?.settings ?? SETTINGS_DEFAULTS)
 
   const counts = computed(() => ({
     groups: snapshot.value?.groups.length ?? 0,
@@ -57,6 +66,22 @@ export const useConfigStore = defineStore('config', () => {
 
   function actionsOf(groupId: string) {
     return (snapshot.value?.actions ?? []).filter((item) => item.groupId === groupId)
+  }
+
+  function templateById(id: string | null): MessageTemplate | null {
+    if (!id) return null
+    return templates.value.find((template) => template.id === id) ?? null
+  }
+
+  /** 动作没选模板（= 系统内置）时，界面上显示跟随界面语言的那套内置内容 */
+  function resolvedTemplateContent(id: string | null): string {
+    const found = templateById(id)
+    if (found) return found.content
+    const builtin =
+      templates.value.find(
+        (template) => template.builtin && template.id.endsWith(settings.value.language),
+      ) ?? templates.value.find((template) => template.builtin)
+    return builtin?.content ?? ''
   }
 
   function channelName(channelId: string): string {
@@ -128,6 +153,14 @@ export const useConfigStore = defineStore('config', () => {
   const saveAction = (id: string, patch: UpdateActionInput) =>
     write(() => updateActionApi(id, patch))
 
+  const createTemplate = (input: CreateMessageTemplateInput) =>
+    write(() => createTemplateApi(input))
+
+  const saveTemplate = (id: string, patch: UpdateMessageTemplateInput) =>
+    write(() => updateTemplateApi(id, patch))
+
+  const removeTemplate = (id: string) => write(() => removeTemplateApi(id))
+
   const setDiscoveryEnabled = (id: string, enabled: boolean) =>
     write(() => updateDiscoveryApi(id, { enabled }))
 
@@ -166,12 +199,19 @@ export const useConfigStore = defineStore('config', () => {
     errorMessage,
     groups,
     channels,
+    templates,
+    settings,
     counts,
     discoveriesOf,
     monitorsOf,
     actionsOf,
     channelName,
+    templateById,
+    resolvedTemplateContent,
     monitorNamesUsingAction,
+    createTemplate,
+    saveTemplate,
+    removeTemplate,
     load,
     createGroup,
     saveGroup,

@@ -1,9 +1,256 @@
+// Kestrel 的界面基调：干净的卡片 + 一条青蓝色的强调线，不再裸奔的工业风。
+// 主题相关的颜色都走自定义变量，避免依赖 Vuetify 内部变量名。
+
+.v-theme--kestrelDark {
+  --k-border: rgba(255, 255, 255, 0.08);
+  --k-border-strong: rgba(255, 255, 255, 0.14);
+  --k-soft: rgba(255, 255, 255, 0.045);
+  --k-soft-hover: rgba(255, 255, 255, 0.07);
+  --k-muted: rgba(255, 255, 255, 0.55);
+  --k-faint: rgba(255, 255, 255, 0.35);
+  --k-accent: #2bb8c9;
+  --k-accent-2: #f0a04b;
+  --k-ok: #4cc38a;
+  --k-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --k-page-bg:
+    radial-gradient(1200px 600px at 15% -10%, rgba(43, 184, 201, 0.14), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(240, 160, 75, 0.08), transparent 55%);
+}
+
+.v-theme--kestrelLight {
+  --k-border: rgba(15, 30, 40, 0.1);
+  --k-border-strong: rgba(15, 30, 40, 0.16);
+  --k-soft: rgba(15, 30, 40, 0.035);
+  --k-soft-hover: rgba(15, 30, 40, 0.06);
+  --k-muted: rgba(15, 30, 40, 0.62);
+  --k-faint: rgba(15, 30, 40, 0.42);
+  --k-accent: #0b7285;
+  --k-accent-2: #d9822b;
+  --k-ok: #2f9e44;
+  --k-shadow: 0 10px 26px rgba(15, 30, 40, 0.08);
+  --k-page-bg:
+    radial-gradient(1200px 600px at 12% -12%, rgba(11, 114, 133, 0.1), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(217, 130, 43, 0.08), transparent 55%);
+}
+
 html,
 body,
 #app {
   height: 100%;
 }
 
+body {
+  font-family:
+    'Inter',
+    'PingFang SC',
+    'Hiragino Sans GB',
+    'Microsoft YaHei',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 a {
   color: inherit;
+}
+
+.k-page {
+  background-image: var(--k-page-bg);
+  background-repeat: no-repeat;
+  min-height: 100%;
+}
+
+/* 页头 */
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.page-head__title {
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.page-head__note {
+  font-size: 0.8rem;
+  color: var(--k-muted);
+  margin-top: 4px;
+  max-width: 78ch;
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.section-note {
+  font-size: 0.78rem;
+  color: var(--k-muted);
+  margin-top: 2px;
+}
+
+/* 品牌标记 */
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 1rem;
+  color: #06232a;
+  background: linear-gradient(135deg, var(--k-accent), #7ad3c8);
+  box-shadow: 0 6px 16px rgba(43, 184, 201, 0.32);
+}
+
+.k-appbar {
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--k-soft) 0%, transparent) !important;
+  border-bottom: 1px solid var(--k-border) !important;
+}
+
+/* 分组 */
+.group-card {
+  border: 1px solid var(--k-border) !important;
+  border-radius: 16px !important;
+  background: var(--k-soft) !important;
+  overflow: hidden;
+}
+
+.group-card__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+.group-card__name {
+  font-size: 0.98rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.group-card__desc {
+  font-size: 0.76rem;
+  color: var(--k-muted);
+  margin-top: 2px;
+}
+
+.group-card__stats {
+  font-size: 0.72rem;
+  color: var(--k-faint);
+  white-space: nowrap;
+}
+
+.chevron-btn {
+  transition: transform 0.16s ease;
+}
+
+/* 三列 */
+.column-panel {
+  height: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--k-border);
+  background: var(--k-soft);
+  padding: 12px;
+}
+
+.column-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.column-head__title {
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.column-head__hint {
+  font-size: 0.68rem;
+  color: var(--k-faint);
+}
+
+/* 实体卡片 */
+.entity-card {
+  border-radius: 12px !important;
+  border: 1px solid var(--k-border) !important;
+  border-left: 3px solid var(--k-accent) !important;
+  background: var(--k-soft) !important;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.entity-card:hover {
+  transform: translateY(-1px);
+  background: var(--k-soft-hover) !important;
+}
+
+.entity-card--monitor {
+  border-left-color: var(--k-accent-2) !important;
+}
+
+.entity-card--action {
+  border-left-color: var(--k-ok) !important;
+}
+
+.entity-card__title {
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.entity-meta {
+  font-size: 0.72rem;
+  color: var(--k-muted);
+}
+
+.entity-meta--faint {
+  color: var(--k-faint);
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 26px 12px;
+  border-radius: 12px;
+  border: 1px dashed var(--k-border);
+  color: var(--k-faint);
+  font-size: 0.76rem;
+}
+
+/* 模板预览 */
+.template-preview {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--k-soft);
+  border: 1px solid var(--k-border);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.font-mono {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+
+.template-card {
+  border-color: var(--k-border) !important;
+  border-radius: 14px !important;
+  background: var(--k-soft) !important;
 }

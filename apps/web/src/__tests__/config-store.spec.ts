@@ -24,6 +24,25 @@ const snapshot: ConfigSnapshot = {
   actions: [],
   channels: [],
   modelProviders: [],
+  templates: [
+    {
+      id: 'builtin:zh',
+      name: '系统内置 · 中文',
+      content: '{{badge}}【{{group}}】{{title}}\n来源 {{sourceCount}} 个：\n{{sources}}\n{{url}}',
+      builtin: true,
+      createdAt: null,
+      updatedAt: null,
+    },
+    {
+      id: 't1',
+      name: '简短版',
+      content: '{{title}} — {{url}}',
+      builtin: false,
+      createdAt: '2026-10-01T00:00:00.000Z',
+      updatedAt: '2026-10-01T00:00:00.000Z',
+    },
+  ],
+
   models: [],
   settings: SETTINGS_DEFAULTS,
 }
