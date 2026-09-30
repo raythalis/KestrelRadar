@@ -1,0 +1,66 @@
+# Kestrel
+
+个人信息监听与事件响应（Personal watching & event response）。
+
+一个自托管的 Web 应用：你告诉它**看哪里**（来源）、**在意什么**（监听）、**发现后怎么办**（动作），
+它负责持续采集、判断，并把值得知道的事推给你。
+
+```text
+Source → Watcher → Event → Action
+```
+
+## 仓库结构
+
+```
+kestrel/
+├─ apps/
+│  ├─ web/         前端：Vue 3 + Vuetify 4 + TypeScript + Vite
+│  └─ api/         后端：TypeScript（Fastify）—— 尚未实现，见 apps/api/README.md
+├─ packages/
+│  └─ contracts/   前后端共享契约（随后端阶段落地）
+├─ docs/           规格、领域模型与接口契约
+└─ infra/docker/   后期容器化打包
+```
+
+## 分支约定
+
+- `master`：**只放可用成品**。合并前必须通过类型检查、单元测试与生产构建。
+- `develop`：日常开发分支；功能做完、自检通过后再合并进 `master`。
+- 功能/修复分支：`feat/*`、`fix/*`，从 `develop` 切出，合并回 `develop`。
+- 本地专用内容（本机环境说明、迁移参考代码、脚本）不进版本库。
+
+## 开发
+
+```bash
+cd apps/web
+npm install
+npm run dev          # 开发服务器（HMR）
+npm run type-check   # 类型检查
+npm run test:unit    # 单元测试
+npm run build        # 类型检查 + 生产构建
+npm run lint         # oxlint + ESLint
+npm run format       # Prettier
+```
+
+## 当前状态
+
+- 前端：可运行的界面骨架（总览 / 关注分组 / 设置），深浅色主题 + 中英文切换；
+  当前展示的是**内置示例数据**，界面上明确标注。
+- 后端：**尚未实现**，`/api/v2` 契约见 `docs/grouped-ui-api-contract.md`。
+- 采集、判断、推送：**都还没有**。示例数据不代表任何真实能力。
+
+## 文档
+
+- `docs/product-scope.md` — 产品范围与边界
+- `docs/scenarios.md` — 验收场景
+- `docs/domain-model.md` — 领域模型与不变量
+- `docs/ui-behavior.md` — 界面与提示行为
+- `docs/grouped-ui-api-contract.md` — 分组 UI 与 HTTP 接口契约（草案）
+- `docs/processing-and-llm.md` — 纯代码 / LLM / 本地模型的边界
+- `docs/retention-and-failure.md` — 保留策略与失败处理
+- `docs/agent-integration.md` — 与外部 agent 的集成
+- `docs/implementation-plan.md` — 实施计划
+
+## 许可
+
+MIT

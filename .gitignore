@@ -1,0 +1,36 @@
+# 依赖与构建产物
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# 环境变量与密钥
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# 运行时数据
+/data/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+/logs/
+/runs/
+/cache/
+
+# 本地专用（基础设施细节、迁移参考代码、本机脚本）——绝不推到远端
+local/
+
+# Python（legacy 目录、脚本）
+__pycache__/
+*.py[cod]
+.venv/
+
+# 编辑器 / 系统
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
