@@ -14,10 +14,7 @@ export const settingsSchema = z.object({
   freshnessWindowDays: z.number().int().min(0).max(365),
   /** 全局排除词 */
   globalExcludeKeywords: z.array(z.string().min(1).max(100)).max(200),
-  /** 定期自动测试发现连通性 */
-  autoCheckEnabled: z.boolean(),
-  autoCheckIntervalMinutes: z.number().int().min(5).max(10080),
-  /** 每天最多投递几条，0 表示不限 */
+  /** 每天最多投递几条，0 表示不限（默认不限） */
   dailyDeliveryLimit: z.number().int().min(0).max(1000),
   /** 单次抓取超时（秒） */
   requestTimeoutSeconds: z.number().int().min(5).max(300),
@@ -38,9 +35,7 @@ export const SETTINGS_DEFAULTS: Settings = {
   eventArchiveDays: 14,
   freshnessWindowDays: 7,
   globalExcludeKeywords: [],
-  autoCheckEnabled: false,
-  autoCheckIntervalMinutes: 1440,
-  dailyDeliveryLimit: 50,
+  dailyDeliveryLimit: 0,
   requestTimeoutSeconds: 30,
   maxRetries: 2,
   timezone: 'system',
