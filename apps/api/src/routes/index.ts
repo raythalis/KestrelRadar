@@ -15,7 +15,7 @@ export function registerRoutes(app: FastifyInstance, container: Container): void
   app.get('/health', async () => ({ status: 'ok', apiPrefix: API_PREFIX }))
 
   registerGroupRoutes(app, container.groups)
-  registerDiscoveryRoutes(app, container.discoveries)
+  registerDiscoveryRoutes(app, container.discoveries, container.collector)
   registerMonitorRoutes(app, container.monitors)
   registerActionRoutes(app, container.actions)
   registerChannelRoutes(app, container.channels)

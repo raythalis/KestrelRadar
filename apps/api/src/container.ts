@@ -3,10 +3,13 @@ import { createActionRepo } from './modules/actions/action.repo.ts'
 import { createActionService } from './modules/actions/action.service.ts'
 import { createChannelRepo } from './modules/channels/channel.repo.ts'
 import { createChannelService } from './modules/channels/channel.service.ts'
+import { createCollector, type Collector } from './modules/collection/collector.ts'
+import { createScheduler, type Scheduler } from './modules/collection/scheduler.ts'
 import { createDiscoveryRepo } from './modules/discoveries/discovery.repo.ts'
 import { createDiscoveryService } from './modules/discoveries/discovery.service.ts'
 import { createGroupRepo } from './modules/groups/group.repo.ts'
 import { createGroupService } from './modules/groups/group.service.ts'
+import { createItemRepo, type ItemRepo } from './modules/items/item.repo.ts'
 import { createModelProviderRepo } from './modules/model-providers/model-provider.repo.ts'
 import { createModelProviderService } from './modules/model-providers/model-provider.service.ts'
 import { createModelRepo } from './modules/model-providers/model.repo.ts'
@@ -23,6 +26,9 @@ export interface Container {
   channels: ReturnType<typeof createChannelService>
   modelProviders: ReturnType<typeof createModelProviderService>
   settings: ReturnType<typeof createSettingsService>
+  items: ItemRepo
+  collector: Collector
+  scheduler: Scheduler
 }
 
 /** 装配处：repo 与 service 的依赖关系只在这里写一次 */
@@ -35,6 +41,10 @@ export function buildContainer(db: Db): Container {
   const providerRepo = createModelProviderRepo(db)
   const modelRepo = createModelRepo(db)
   const settingsRepo = createSettingsRepo(db)
+  const itemRepo = createItemRepo(db)
+
+  const settings = createSettingsService(settingsRepo)
+  const collector = createCollector({ discoveries: discoveryRepo, items: itemRepo, settings })
 
   return {
     groups: createGroupService(groupRepo),
@@ -43,6 +53,9 @@ export function buildContainer(db: Db): Container {
     actions: createActionService(actionRepo, groupRepo, channelRepo),
     channels: createChannelService(channelRepo),
     modelProviders: createModelProviderService(providerRepo, modelRepo),
-    settings: createSettingsService(settingsRepo),
+    settings,
+    items: itemRepo,
+    collector,
+    scheduler: createScheduler({ collector }),
   }
 }

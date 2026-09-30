@@ -16,6 +16,27 @@ interface DiscoveryRow {
   enabled: number
   created_at: string
   updated_at: string
+  last_checked_at: string | null
+  route_ok: number | null
+  content_ok: number | null
+  last_check_message: string
+  latest_item_at: string | null
+  baseline_established_at: string | null
+  baseline_item_count: number | null
+  item_count: number
+}
+
+export interface DiscoveryState {
+  lastCheckedAt: string
+  routeOk: boolean
+  contentOk: boolean
+  lastCheckMessage: string
+  latestItemAt: string | null
+}
+
+export interface BaselineMark {
+  establishedAt: string
+  itemCount: number
 }
 
 function toDiscovery(row: DiscoveryRow): Discovery {
@@ -30,12 +51,24 @@ function toDiscovery(row: DiscoveryRow): Discovery {
     enabled: toBool(row.enabled),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    lastCheckedAt: row.last_checked_at,
+    routeOk: row.route_ok === null ? null : toBool(row.route_ok),
+    contentOk: row.content_ok === null ? null : toBool(row.content_ok),
+    lastCheckMessage: row.last_check_message,
+    latestItemAt: row.latest_item_at,
+    itemCount: row.item_count ?? 0,
+    baselineEstablishedAt: row.baseline_established_at,
+    baselineItemCount: row.baseline_item_count,
   }
 }
 
+const SELECT_WITH_COUNT = `select d.*, (select count(*) from items i where i.discovery_id = d.id) as item_count
+  from discoveries d`
+
 export function createDiscoveryRepo(db: Db) {
-  const selectAll = db.prepare('select * from discoveries order by created_at, id')
-  const selectOne = db.prepare('select * from discoveries where id = ?')
+  const selectAll = db.prepare(`${SELECT_WITH_COUNT} order by d.created_at, d.id`)
+  const selectOne = db.prepare(`${SELECT_WITH_COUNT} where d.id = ?`)
+  const selectAccessKey = db.prepare('select access_key from discoveries where id = ?')
   const insertOne = db.prepare(
     `insert into discoveries (id, group_id, name, kind, target, access_key, cron_expression, enabled, created_at, updated_at)
      values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -102,6 +135,33 @@ export function createDiscoveryRepo(db: Db) {
 
     remove(id: string): boolean {
       return deleteOne.run(id).changes > 0
+    },
+
+    /** 采集用：密钥只在这一处读出来，接口永远不回显 */
+    getAccessKey(id: string): string | null {
+      const row = selectAccessKey.get(id) as unknown as { access_key: string | null } | undefined
+      return row?.access_key ?? null
+    },
+
+    updateState(id: string, state: DiscoveryState): void {
+      db.prepare(
+        `update discoveries set last_checked_at = ?, route_ok = ?, content_ok = ?, last_check_message = ?,
+           latest_item_at = ? where id = ?`,
+      ).run(
+        state.lastCheckedAt,
+        fromBool(state.routeOk),
+        fromBool(state.contentOk),
+        state.lastCheckMessage,
+        state.latestItemAt,
+        id,
+      )
+    },
+
+    /** 首次采集只建基线：记下时间和当时收进来的条数，用于界面提示 */
+    markBaseline(id: string, baseline: BaselineMark): void {
+      db.prepare(
+        'update discoveries set baseline_established_at = ?, baseline_item_count = ? where id = ?',
+      ).run(baseline.establishedAt, baseline.itemCount, id)
     },
   }
 }

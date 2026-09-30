@@ -2,6 +2,8 @@ import { z } from 'zod'
 
 /** 全局设置：默认值写在这里，库里只存被改过的项（删掉改动即恢复默认） */
 export const settingsSchema = z.object({
+  /** RSSHub 实例地址（单实例），发现里写相对路由时用它拼 */
+  rsshubBaseUrl: z.string().max(500),
   /** 全局判断模式：纯算法 或 算法 + LLM */
   judgeMode: z.enum(['algorithm', 'algorithm_llm']),
   /** 同时抓几个源 */
@@ -29,6 +31,7 @@ export type SettingKey = keyof Settings
 export const SETTINGS_KEYS = Object.keys(settingsSchema.shape) as SettingKey[]
 
 export const SETTINGS_DEFAULTS: Settings = {
+  rsshubBaseUrl: '',
   judgeMode: 'algorithm',
   concurrency: 5,
   retentionDays: 90,

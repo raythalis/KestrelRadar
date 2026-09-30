@@ -45,6 +45,13 @@ export function registerErrorHandler(app: FastifyInstance): void {
         .status(400)
         .send({ error: { code: 'validation_error', message: describeZodError(error) } })
     }
+    const statusCode = (error as { statusCode?: number }).statusCode
+    if (typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500) {
+      // 框架自己抛的客户端错误（请求体不合法之类）不该报成 500
+      return reply
+        .status(statusCode)
+        .send({ error: { code: 'validation_error', message: '请求不合法，请检查后重试' } })
+    }
     const message = (error as Error).message ?? ''
     if (message.includes('UNIQUE constraint failed')) {
       return reply.status(409).send({ error: { code: 'conflict', message: '已经存在同样的记录' } })

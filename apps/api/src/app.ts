@@ -9,6 +9,8 @@ import { registerRoutes } from './routes/index.ts'
 export interface BuildAppOptions {
   dbPath: string
   logger?: boolean
+  /** 采集调度默认跟着服务一起起；测试里关掉，免得定时器跟着测试跑 */
+  enableScheduler?: boolean
 }
 
 export async function buildApp(options: BuildAppOptions): Promise<FastifyInstance> {
@@ -25,7 +27,14 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     { prefix: API_PREFIX },
   )
 
+  if (options.enableScheduler !== false) {
+    app.addHook('onReady', async () => {
+      container.scheduler.start()
+    })
+  }
+
   app.addHook('onClose', async () => {
+    container.scheduler.stop()
     db.close()
   })
 

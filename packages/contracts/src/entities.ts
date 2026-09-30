@@ -48,8 +48,28 @@ export const discoverySchema = z.object({
   hasAccessKey: z.boolean(),
   cronExpression: z.string().min(1).max(120),
   enabled: z.boolean(),
+  /** 下面这些是采集状态，跟着卡片一起回给界面 */
+  lastCheckedAt: z.string().nullable(),
+  routeOk: z.boolean().nullable(),
+  contentOk: z.boolean().nullable(),
+  lastCheckMessage: z.string(),
+  latestItemAt: z.string().nullable(),
+  itemCount: z.number().int(),
+  baselineEstablishedAt: z.string().nullable(),
+  baselineItemCount: z.number().int().nullable(),
 })
 export type Discovery = z.infer<typeof discoverySchema>
+
+/** 发现连通性测试结果：两级 + 人话说明 */
+export const discoveryTestResultSchema = z.object({
+  routeOk: z.boolean(),
+  contentOk: z.boolean(),
+  /** 这次探测抓到的条数（不等于库里已有的条目数） */
+  foundItemCount: z.number().int(),
+  latestItemAt: z.string().nullable(),
+  message: z.string(),
+})
+export type DiscoveryTestResult = z.infer<typeof discoveryTestResultSchema>
 
 export const createDiscoveryInputSchema = z.object({
   groupId: idSchema,

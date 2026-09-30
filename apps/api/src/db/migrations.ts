@@ -116,6 +116,34 @@ export const MIGRATIONS: readonly Migration[] = [
       );
     `,
   },
+  {
+    name: '002-collection',
+    sql: `
+      alter table discoveries add column last_checked_at text;
+      alter table discoveries add column route_ok integer;
+      alter table discoveries add column content_ok integer;
+      alter table discoveries add column last_check_message text not null default '';
+      alter table discoveries add column latest_item_at text;
+      alter table discoveries add column baseline_established_at text;
+      alter table discoveries add column baseline_item_count integer;
+
+      create table items (
+        id text primary key,
+        discovery_id text not null references discoveries (id) on delete cascade,
+        fingerprint text not null,
+        title text not null,
+        url text,
+        summary text not null default '',
+        source_published_at text,
+        first_seen_at text not null,
+        last_seen_at text not null,
+        unique (discovery_id, fingerprint)
+      );
+      create index idx_items_discovery on items (discovery_id);
+      create index idx_items_first_seen on items (first_seen_at);
+      create index idx_items_source_published on items (source_published_at);
+    `,
+  },
 ]
 
 export function runMigrations(conn: DatabaseSync): void {
