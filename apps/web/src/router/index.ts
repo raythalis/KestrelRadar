@@ -1,13 +1,32 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// 路由表随界面阶段（M5）一起长；骨架期只有入口页。
+import ConfigView from '@/views/ConfigView.vue'
+import DashboardView from '@/views/DashboardView.vue'
+import PlaceholderView from '@/views/PlaceholderView.vue'
+
+// 路由表：仪表盘与配置管理已接入；渠道 / 模型 / 设置先占位。
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    { path: '/', name: 'dashboard', component: DashboardView },
+    { path: '/config', name: 'config', component: ConfigView },
     {
-      path: '/',
-      name: 'home',
-      component: () => import('@/views/HomeView.vue'),
+      path: '/channels',
+      name: 'channels',
+      component: PlaceholderView,
+      meta: { titleKey: 'nav.channels', noteKey: 'placeholder.channels' },
+    },
+    {
+      path: '/models',
+      name: 'models',
+      component: PlaceholderView,
+      meta: { titleKey: 'nav.models', noteKey: 'placeholder.models' },
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: PlaceholderView,
+      meta: { titleKey: 'nav.settings', noteKey: 'placeholder.settings' },
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],

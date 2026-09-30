@@ -11,7 +11,17 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ActionCard: typeof import('./components/ActionCard.vue')['default']
+    ActionDialog: typeof import('./components/ActionDialog.vue')['default']
+    ConfirmDialog: typeof import('./components/ConfirmDialog.vue')['default']
+    DiscoveryCard: typeof import('./components/DiscoveryCard.vue')['default']
+    DiscoveryDialog: typeof import('./components/DiscoveryDialog.vue')['default']
+    GroupDialog: typeof import('./components/GroupDialog.vue')['default']
+    GroupSection: typeof import('./components/GroupSection.vue')['default']
+    MonitorCard: typeof import('./components/MonitorCard.vue')['default']
+    MonitorDialog: typeof import('./components/MonitorDialog.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TestLamps: typeof import('./components/TestLamps.vue')['default']
   }
 }
