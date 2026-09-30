@@ -60,7 +60,7 @@ function seed(
     trigger?: 'instant' | 'digest'
     includeDelivered?: boolean
     mergeMessages?: boolean
-    template?: string
+    templateId?: string | null
     keywords?: string[]
     cron?: string
   } = {},
@@ -107,7 +107,7 @@ function seed(
     triggerType: options.trigger ?? 'instant',
     channelId: channel.id,
     cronExpression: options.cron ?? (options.trigger === 'digest' ? '0 9 * * *' : null),
-    template: options.template ?? '',
+    templateId: options.templateId ?? null,
     includeDelivered: options.includeDelivered ?? false,
     mergeMessages: options.mergeMessages ?? true,
     enabled: true,
@@ -284,7 +284,7 @@ describe('合并发送', () => {
       triggerType: 'instant',
       channelId: fx.channelId,
       cronExpression: null,
-      template: '',
+      templateId: null,
       includeDelivered: false,
       mergeMessages: true,
       enabled: true,
@@ -342,6 +342,22 @@ describe('已投递事件与「有更新」', () => {
   })
 })
 
+describe('模板', () => {
+  it('动作选了自定义模板就按它渲染', async () => {
+    const c = container
+    const fx = seed(c)
+    const template = c.templates.create({
+      name: '简短版',
+      content: '标题={{title}}｜来源={{sourceCount}}',
+    })
+    c.actions.update(fx.actionId, { templateId: template.id })
+    addItem(c, fx.discoveryA, { title: '一条新闻：某事发生了', url: 'https://a.example.com/1' })
+    await runPipeline(c, fx.discoveryA)
+
+    expect(sent[0]?.text).toBe('标题=一条新闻：某事发生了｜来源=1')
+  })
+})
+
 describe('汇总（每天定时）', () => {
   it('汇总只发还没在这个动作上投过的命中', async () => {
     const c = container
@@ -375,7 +391,7 @@ describe('汇总（每天定时）', () => {
       triggerType: 'digest',
       channelId: instant.channelId,
       cronExpression: '0 9 * * *',
-      template: '',
+      templateId: null,
       includeDelivered: false,
       mergeMessages: true,
       enabled: true,

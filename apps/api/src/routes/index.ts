@@ -6,6 +6,7 @@ import { registerActionRoutes } from '../modules/actions/action.routes.ts'
 import { registerChannelRoutes } from '../modules/channels/channel.routes.ts'
 import { registerConfigRoutes } from '../modules/config/config.routes.ts'
 import { registerDeliveryRoutes } from '../modules/delivery/delivery.routes.ts'
+import { registerTemplateRoutes } from '../modules/templates/template.routes.ts'
 import { registerDiscoveryRoutes } from '../modules/discoveries/discovery.routes.ts'
 import { registerGroupRoutes } from '../modules/groups/group.routes.ts'
 import { registerJudgmentRoutes } from '../modules/judgment/judgment.routes.ts'
@@ -25,6 +26,7 @@ export function registerRoutes(app: FastifyInstance, container: Container): void
   registerActionRoutes(app, container.actions)
   registerChannelRoutes(app, container.channels)
   registerDeliveryRoutes(app, container.delivery)
+  registerTemplateRoutes(app, container.templates)
   registerModelProviderRoutes(app, container.modelProviders)
   registerSettingsRoutes(app, container.settings)
   registerConfigRoutes(app, container)

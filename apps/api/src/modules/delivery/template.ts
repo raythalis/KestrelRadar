@@ -11,30 +11,6 @@ export interface TemplateInput {
   timezone: string
 }
 
-/** 默认模板：中英两套，跟随界面语言；用户改过就完全按用户写的渲染 */
-const DEFAULT_TEMPLATES: Record<'zh' | 'en', string> = {
-  zh: [
-    '{{badge}}【{{group}}】{{title}}',
-    '{{summary}}',
-    '来源 {{sourceCount}} 个：',
-    '{{sources}}',
-    '{{url}}',
-    '命中时间：{{hitAt}}',
-  ].join('\n'),
-  en: [
-    '{{badge}}[{{group}}] {{title}}',
-    '{{summary}}',
-    '{{sourceCount}} sources:',
-    '{{sources}}',
-    '{{url}}',
-    'Seen at {{hitAt}}',
-  ].join('\n'),
-}
-
-export function defaultTemplate(language: 'zh' | 'en'): string {
-  return DEFAULT_TEMPLATES[language]
-}
-
 function formatInTimeZone(iso: string | null, timezone: string): string {
   if (!iso) return ''
   const date = new Date(iso)

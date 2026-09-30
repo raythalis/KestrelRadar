@@ -48,6 +48,11 @@ describe('配置快照接口', () => {
       expect(snapshot.monitors).toEqual([])
       expect(snapshot.actions).toEqual([])
       expect(snapshot.models).toEqual([])
+      // 内置模板始终在快照里，供动作选择
+      expect(snapshot.templates.map((item: { builtin: boolean }) => item.builtin)).toEqual([
+        true,
+        true,
+      ])
       expect(snapshot.settings.concurrency).toBe(SETTINGS_DEFAULTS.concurrency)
       // 卡片上带下次采集时间（由调度器算出来，不入库）
       expect(typeof snapshot.discoveries[0].nextRunAt).toBe('string')

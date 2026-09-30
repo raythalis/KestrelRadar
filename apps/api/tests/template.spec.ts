@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import type { Event, EventMember } from '../src/modules/events/event.repo.ts'
-import { defaultTemplate, renderTemplate } from '../src/modules/delivery/template.ts'
+import { renderTemplate } from '../src/modules/delivery/template.ts'
+import { defaultTemplate } from '../src/modules/templates/builtin.ts'
 
 function event(overrides: Partial<Event> = {}): Event {
   return {

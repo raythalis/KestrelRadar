@@ -14,6 +14,7 @@ export function registerConfigRoutes(app: FastifyInstance, container: Container)
       channels: container.channels.list(),
       modelProviders: container.modelProviders.listProviders(),
       models: container.modelProviders.listModels(),
+      templates: container.templates.list(),
       settings: container.settings.get(),
     }
   })

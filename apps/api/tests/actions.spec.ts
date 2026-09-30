@@ -33,7 +33,7 @@ describe('动作接口', () => {
           triggerType: 'digest',
           cronExpression: '0 9 * * *',
           includeDelivered: true,
-          template: '{{title}}',
+          templateId: null,
         },
       })
       expect(digest.statusCode).toBe(201)
@@ -41,7 +41,7 @@ describe('动作接口', () => {
         triggerType: 'digest',
         cronExpression: '0 9 * * *',
         includeDelivered: true,
-        template: '{{title}}',
+        templateId: null,
       })
     } finally {
       await cleanup()

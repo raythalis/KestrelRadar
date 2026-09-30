@@ -12,7 +12,7 @@ interface ActionRow {
   trigger_type: string
   channel_id: string
   cron_expression: string | null
-  template: string
+  template_id: string | null
   include_delivered: number
   merge_messages: number
   enabled: number
@@ -28,7 +28,7 @@ function toAction(row: ActionRow): Action {
     triggerType: row.trigger_type as Action['triggerType'],
     channelId: row.channel_id,
     cronExpression: row.cron_expression,
-    template: row.template,
+    templateId: row.template_id,
     includeDelivered: toBool(row.include_delivered),
     mergeMessages: toBool(row.merge_messages),
     enabled: toBool(row.enabled),
@@ -41,13 +41,13 @@ export function createActionRepo(db: Db) {
   const selectAll = db.prepare('select * from actions order by created_at, id')
   const selectOne = db.prepare('select * from actions where id = ?')
   const insertOne = db.prepare(
-    `insert into actions (id, group_id, name, trigger_type, channel_id, cron_expression, template,
+    `insert into actions (id, group_id, name, trigger_type, channel_id, cron_expression, template_id,
        include_delivered, merge_messages, enabled, created_at, updated_at)
      values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
   const updateOne = db.prepare(
-    `update actions set name = ?, trigger_type = ?, channel_id = ?, cron_expression = ?, template = ?,
-       include_delivered = ?, merge_messages = ?, enabled = ?, updated_at = ? where id = ?`,
+    `update actions set name = ?, trigger_type = ?, channel_id = ?, cron_expression = ?,
+       template_id = ?, include_delivered = ?, merge_messages = ?, enabled = ?, updated_at = ? where id = ?`,
   )
 
   function find(id: string): ActionRow | undefined {
@@ -74,7 +74,7 @@ export function createActionRepo(db: Db) {
         input.triggerType,
         input.channelId,
         input.cronExpression,
-        input.template,
+        input.templateId,
         fromBool(input.includeDelivered),
         fromBool(input.mergeMessages),
         fromBool(input.enabled),
@@ -94,7 +94,7 @@ export function createActionRepo(db: Db) {
         patch.triggerType ?? current.trigger_type,
         patch.channelId ?? current.channel_id,
         patch.cronExpression === undefined ? current.cron_expression : patch.cronExpression,
-        patch.template ?? current.template,
+        patch.templateId === undefined ? current.template_id : patch.templateId,
         fromBool(patch.includeDelivered ?? toBool(current.include_delivered)),
         fromBool(patch.mergeMessages ?? toBool(current.merge_messages)),
         fromBool(patch.enabled ?? toBool(current.enabled)),

@@ -7,6 +7,12 @@ import { createCollector, type Collector } from './modules/collection/collector.
 import { createScheduler, type Scheduler } from './modules/collection/scheduler.ts'
 import { createDiscoveryRepo } from './modules/discoveries/discovery.repo.ts'
 import { createDiscoveryService } from './modules/discoveries/discovery.service.ts'
+import { builtinTemplates } from './modules/templates/builtin.ts'
+import { createTemplateRepo } from './modules/templates/template.repo.ts'
+import {
+  createTemplateService,
+  type TemplateService,
+} from './modules/templates/template.service.ts'
 import { createChannelBatcher, type ChannelBatcher } from './modules/delivery/batch.ts'
 import { createDeliveryRepo, type DeliveryRepo } from './modules/delivery/delivery.repo.ts'
 import { createDeliveryService, type DeliveryService } from './modules/delivery/delivery.service.ts'
@@ -41,6 +47,7 @@ export interface Container {
   merger: ReturnType<typeof createEventService>
   deliveries: DeliveryRepo
   delivery: DeliveryService
+  templates: TemplateService
   batcher: ChannelBatcher
   judge: ReturnType<typeof createJudgeService>
   collector: Collector
@@ -72,6 +79,7 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
   const judgmentRepo = createJudgmentRepo(db)
   const eventRepo = createEventRepo(db)
   const deliveryRepo = createDeliveryRepo(db)
+  const templateRepo = createTemplateRepo(db)
 
   const settings = createSettingsService(settingsRepo)
 
@@ -94,6 +102,8 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     settings,
   })
 
+  const templates = createTemplateService({ repo: templateRepo, builtin: builtinTemplates() })
+
   const sender = options.sender ?? createWebhookSender()
   const batcher = options.batcher ?? createChannelBatcher(sender)
   const delivery = createDeliveryService({
@@ -107,6 +117,7 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     deliveries: deliveryRepo,
     channels: channelRepo,
     settings,
+    templates,
     sender,
     batcher,
     log: options.log,
@@ -199,6 +210,7 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     merger,
     deliveries: deliveryRepo,
     delivery,
+    templates,
     batcher,
     judge,
     collector,

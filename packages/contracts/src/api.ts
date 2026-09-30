@@ -10,6 +10,7 @@ import {
   monitorSchema,
 } from './entities.ts'
 import { settingsSchema } from './settings.ts'
+import { messageTemplateSchema } from './template.ts'
 
 /** 接口前缀：全站一个，改这里就够 */
 export const API_PREFIX = '/api'
@@ -35,6 +36,7 @@ export const configSnapshotSchema = z.object({
   channels: z.array(channelSchema),
   modelProviders: z.array(modelProviderSchema),
   models: z.array(modelSchema),
+  templates: z.array(messageTemplateSchema),
   settings: settingsSchema,
 })
 export type ConfigSnapshot = z.infer<typeof configSnapshotSchema>

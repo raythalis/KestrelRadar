@@ -136,7 +136,8 @@ export const actionSchema = z.object({
   channelId: idSchema,
   /** 仅汇总动作需要 */
   cronExpression: z.string().max(120).nullable(),
-  template: z.string().max(4000),
+  /** 选中的消息模板 id；null = 用跟随界面语言的系统内置模板 */
+  templateId: z.string().max(120).nullable(),
   /** 汇总动作是否包含已即时推送过的内容 */
   includeDelivered: z.boolean(),
   /** 一次发送里多条命中合并成一条消息（关掉就是一条一条发） */
@@ -151,7 +152,7 @@ export const createActionInputSchema = z.object({
   triggerType: actionTriggerSchema.default('instant'),
   channelId: idSchema,
   cronExpression: z.string().max(120).nullable().default(null),
-  template: z.string().max(4000).default(''),
+  templateId: z.string().max(120).nullable().default(null),
   includeDelivered: z.boolean().default(false),
   mergeMessages: z.boolean().default(true),
   enabled: z.boolean().default(true),

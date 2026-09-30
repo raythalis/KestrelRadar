@@ -234,6 +234,22 @@ export const MIGRATIONS: readonly Migration[] = [
       create index idx_delivered_items_item on delivered_items (item_id);
     `,
   },
+  {
+    name: '007-message-templates',
+    sql: `
+      create table message_templates (
+        id text primary key,
+        name text not null,
+        content text not null,
+        created_at text not null,
+        updated_at text not null
+      );
+
+      -- 动作不再自己存模板正文，改成引用一个模板：null = 跟随界面语言的内置模板
+      alter table actions add column template_id text;
+      alter table actions drop column template;
+    `,
+  },
 ]
 
 export function runMigrations(conn: DatabaseSync): void {

@@ -9,10 +9,11 @@ import type { Item, ItemRepo } from '../items/item.repo.ts'
 import type { JudgmentRepo } from '../judgment/judgment.repo.ts'
 import type { MonitorRepo } from '../monitors/monitor.repo.ts'
 import type { SettingsService } from '../settings/settings.service.ts'
+import type { TemplateService } from '../templates/template.service.ts'
 import type { ChannelBatcher } from './batch.ts'
 import type { DeliveryRepo } from './delivery.repo.ts'
 import type { DeliverySender } from './sender.ts'
-import { defaultTemplate, renderTemplate } from './template.ts'
+import { renderTemplate } from './template.ts'
 
 export type DeliveryTrigger = 'instant' | 'digest'
 
@@ -44,6 +45,7 @@ export interface DeliveryDeps {
   deliveries: DeliveryRepo
   channels: ChannelRepo
   settings: SettingsService
+  templates: TemplateService
   sender: DeliverySender
   batcher: ChannelBatcher
   log?: (level: 'info' | 'warn', message: string) => void
@@ -159,8 +161,8 @@ export function createDeliveryService(deps: DeliveryDeps) {
     let budget = limit > 0 ? limit - sentToday : Number.POSITIVE_INFINITY
     if (budget <= 0) return skip(`今天已经推到上限（${limit} 条），剩下的只入库不通知`)
 
-    const template =
-      action.template.trim().length > 0 ? action.template : defaultTemplate(settings.language)
+    // 动作只存模板 id，正文在模板库里；没选就用跟随语言的内置模板
+    const template = deps.templates.contentFor(action.templateId, settings.language)
     const messages = picked.map(({ event, itemIds }) => ({
       event,
       itemIds,
