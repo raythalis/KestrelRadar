@@ -4,6 +4,7 @@ import {
   actionTriggerSchema,
   channelTypeSchema,
   discoveryKindSchema,
+  matchModeSchema,
   monitorModeSchema,
   providerKindSchema,
   sensitivitySchema,
@@ -96,6 +97,8 @@ export const monitorSchema = z.object({
   name: z.string().min(1).max(60),
   mode: monitorModeSchema,
   sensitivity: sensitivitySchema,
+  /** 关键词匹配方式：任意命中 或 全部命中 */
+  matchMode: matchModeSchema,
   /** 语义化意图描述，仅 algorithm_llm 模式生效 */
   intentText: z.string().max(500),
   includeKeywords: z.array(z.string().min(1).max(100)).max(200),
@@ -112,6 +115,7 @@ export const createMonitorInputSchema = z.object({
   name: z.string().min(1).max(60),
   mode: monitorModeSchema.default('follow_global'),
   sensitivity: sensitivitySchema.default('medium'),
+  matchMode: matchModeSchema.default('any'),
   intentText: z.string().max(500).default(''),
   includeKeywords: z.array(z.string().min(1).max(100)).max(200).default([]),
   excludeKeywords: z.array(z.string().min(1).max(100)).max(200).default([]),

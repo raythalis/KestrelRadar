@@ -10,6 +10,9 @@ import { createDiscoveryService } from './modules/discoveries/discovery.service.
 import { createGroupRepo } from './modules/groups/group.repo.ts'
 import { createGroupService } from './modules/groups/group.service.ts'
 import { createItemRepo, type ItemRepo } from './modules/items/item.repo.ts'
+import { createJudgeService } from './modules/judgment/judge.service.ts'
+import { createJudgmentRepo, type JudgmentRepo } from './modules/judgment/judgment.repo.ts'
+import type { JudgeLlm } from './modules/judgment/llm.ts'
 import { createModelProviderRepo } from './modules/model-providers/model-provider.repo.ts'
 import { createModelProviderService } from './modules/model-providers/model-provider.service.ts'
 import { createModelRepo } from './modules/model-providers/model.repo.ts'
@@ -27,13 +30,17 @@ export interface Container {
   modelProviders: ReturnType<typeof createModelProviderService>
   settings: ReturnType<typeof createSettingsService>
   items: ItemRepo
+  judgments: JudgmentRepo
+  judge: ReturnType<typeof createJudgeService>
   collector: Collector
   scheduler: Scheduler
 }
 
 export interface ContainerOptions {
-  /** 采集结果写进服务日志，方便排查 */
+  /** 采集与判定的结果写进服务日志，方便排查 */
   log?: (level: 'info' | 'warn', message: string) => void
+  /** 判定用的模型实现；不传就是「还没配模型」，走降级开关 */
+  llm?: JudgeLlm
 }
 
 /** 装配处：repo 与 service 的依赖关系只在这里写一次 */
@@ -47,9 +54,35 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
   const modelRepo = createModelRepo(db)
   const settingsRepo = createSettingsRepo(db)
   const itemRepo = createItemRepo(db)
+  const judgmentRepo = createJudgmentRepo(db)
 
   const settings = createSettingsService(settingsRepo)
-  const collector = createCollector({ discoveries: discoveryRepo, items: itemRepo, settings })
+
+  const judge = createJudgeService({
+    monitors: monitorRepo,
+    groups: groupRepo,
+    discoveries: discoveryRepo,
+    items: itemRepo,
+    judgments: judgmentRepo,
+    settings,
+    llm: options.llm,
+    log: options.log,
+  })
+
+  const collector = createCollector({
+    discoveries: discoveryRepo,
+    items: itemRepo,
+    settings,
+    // 采到新条目就顺手判一遍：判定失败不影响采集结果
+    onCollected: async (discoveryId) => {
+      try {
+        const written = await judge.judgePendingItems(discoveryId)
+        if (written > 0) options.log?.('info', `判定完成：新判 ${written} 条`)
+      } catch (error) {
+        options.log?.('warn', `判定失败：${(error as Error).message}`)
+      }
+    },
+  })
 
   const scheduler = createScheduler({
     collector,
@@ -80,6 +113,8 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     modelProviders: createModelProviderService(providerRepo, modelRepo),
     settings,
     items: itemRepo,
+    judgments: judgmentRepo,
+    judge,
     collector,
     scheduler,
   }

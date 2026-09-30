@@ -151,6 +151,29 @@ export const MIGRATIONS: readonly Migration[] = [
       alter table discoveries drop column access_key;
     `,
   },
+  {
+    name: '004-judgment',
+    sql: `
+      alter table monitors add column match_mode text not null default 'any';
+
+      create table judgments (
+        id text primary key,
+        item_id text not null references items (id) on delete cascade,
+        monitor_id text not null references monitors (id) on delete cascade,
+        decision text not null check (decision in ('pass', 'drop')),
+        band text not null check (band in ('high', 'gray', 'low')),
+        score integer not null default 0,
+        matched_keywords text not null default '[]',
+        layer text not null check (layer in ('keywords', 'excludes', 'score', 'llm')),
+        reasons text not null default '[]',
+        llm_reason text,
+        created_at text not null,
+        unique (item_id, monitor_id)
+      );
+      create index idx_judgments_monitor on judgments (monitor_id, decision);
+      create index idx_judgments_item on judgments (item_id);
+    `,
+  },
 ]
 
 export function runMigrations(conn: DatabaseSync): void {

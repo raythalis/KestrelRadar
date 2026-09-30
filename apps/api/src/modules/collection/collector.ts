@@ -21,6 +21,8 @@ export interface CollectorDeps {
   items: ItemRepo
   settings: SettingsService
   fetchImpl?: typeof fetch
+  /** 采集完的通知口子（判定层用它补判新条目），失败不影响采集 */
+  onCollected?: (discoveryId: string, newItemCount: number) => void | Promise<void>
 }
 
 interface LoadResult {
@@ -218,6 +220,8 @@ export function createCollector(deps: CollectorDeps) {
     if (discovery.baselineEstablishedAt === null && result.contentOk) {
       deps.discoveries.markBaseline(discoveryId, { establishedAt: now, itemCount: newItemCount })
     }
+
+    if (newItemCount > 0 && deps.onCollected) await deps.onCollected(discoveryId, newItemCount)
 
     return {
       discoveryId,

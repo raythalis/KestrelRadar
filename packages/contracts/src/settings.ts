@@ -16,6 +16,14 @@ export const settingsSchema = z.object({
   eventArchiveDays: z.number().int().min(1).max(365),
   /** 新鲜窗口天数，0 表示关闭 */
   freshnessWindowDays: z.number().int().min(0).max(365),
+  /** 高分线：分数到这条线直接放行（标准灵敏度用它） */
+  scoreHighLine: z.number().int().min(5).max(100),
+  /** 低分线：分数到这条线直接丢掉 */
+  scoreLowLine: z.number().int().min(0).max(95),
+  /** 灵敏度往两边让多少分：宽松减、严格加，中间那档就是全局这两条线 */
+  sensitivityShift: z.number().int().min(0).max(40),
+  /** 模型不通时怎么办：fallback = 降级到纯算法，error = 这次不判（等下次再判） */
+  llmFallbackMode: z.enum(['fallback', 'error']),
   /** 全局排除词 */
   globalExcludeKeywords: z.array(z.string().min(1).max(100)).max(200),
   /** 每天最多投递几条，0 表示不限（默认不限） */
@@ -40,6 +48,10 @@ export const SETTINGS_DEFAULTS: Settings = {
   retentionDays: 90,
   eventArchiveDays: 14,
   freshnessWindowDays: 7,
+  scoreHighLine: 65,
+  scoreLowLine: 35,
+  sensitivityShift: 10,
+  llmFallbackMode: 'fallback',
   globalExcludeKeywords: [],
   dailyDeliveryLimit: 0,
   requestTimeoutSeconds: 30,

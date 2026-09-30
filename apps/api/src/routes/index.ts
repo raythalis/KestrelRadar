@@ -7,6 +7,7 @@ import { registerChannelRoutes } from '../modules/channels/channel.routes.ts'
 import { registerConfigRoutes } from '../modules/config/config.routes.ts'
 import { registerDiscoveryRoutes } from '../modules/discoveries/discovery.routes.ts'
 import { registerGroupRoutes } from '../modules/groups/group.routes.ts'
+import { registerJudgmentRoutes } from '../modules/judgment/judgment.routes.ts'
 import { registerModelProviderRoutes } from '../modules/model-providers/model-provider.routes.ts'
 import { registerMonitorRoutes } from '../modules/monitors/monitor.routes.ts'
 import { registerSettingsRoutes } from '../modules/settings/settings.routes.ts'
@@ -19,6 +20,7 @@ export function registerRoutes(app: FastifyInstance, container: Container): void
   registerGroupRoutes(app, container.groups, resync)
   registerDiscoveryRoutes(app, container.discoveries, container.collector, resync)
   registerMonitorRoutes(app, container.monitors)
+  registerJudgmentRoutes(app, container.judge)
   registerActionRoutes(app, container.actions)
   registerChannelRoutes(app, container.channels)
   registerModelProviderRoutes(app, container.modelProviders)

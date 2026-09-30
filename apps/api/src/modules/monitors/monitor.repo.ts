@@ -11,6 +11,7 @@ interface MonitorRow {
   name: string
   mode: string
   sensitivity: string
+  match_mode: string
   intent_text: string
   include_keywords: string
   exclude_keywords: string
@@ -27,6 +28,7 @@ function toMonitor(row: MonitorRow, actionIds: string[]): Monitor {
     name: row.name,
     mode: row.mode as Monitor['mode'],
     sensitivity: row.sensitivity as Monitor['sensitivity'],
+    matchMode: row.match_mode as Monitor['matchMode'],
     intentText: row.intent_text,
     includeKeywords: parseStringArray(row.include_keywords),
     excludeKeywords: parseStringArray(row.exclude_keywords),
@@ -45,13 +47,14 @@ export function createMonitorRepo(db: Db) {
     'select monitor_id, action_id from monitor_actions order by action_id',
   )
   const insertOne = db.prepare(
-    `insert into monitors (id, group_id, name, mode, sensitivity, intent_text, include_keywords, exclude_keywords,
-       use_global_excludes, enabled, created_at, updated_at)
-     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `insert into monitors (id, group_id, name, mode, sensitivity, match_mode, intent_text, include_keywords,
+       exclude_keywords, use_global_excludes, enabled, created_at, updated_at)
+     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
   const updateOne = db.prepare(
-    `update monitors set name = ?, mode = ?, sensitivity = ?, intent_text = ?, include_keywords = ?,
-       exclude_keywords = ?, use_global_excludes = ?, enabled = ?, updated_at = ? where id = ?`,
+    `update monitors set name = ?, mode = ?, sensitivity = ?, match_mode = ?, intent_text = ?,
+       include_keywords = ?, exclude_keywords = ?, use_global_excludes = ?, enabled = ?, updated_at = ?
+     where id = ?`,
   )
   const insertLink = db.prepare('insert into monitor_actions (monitor_id, action_id) values (?, ?)')
   const deleteLinks = db.prepare('delete from monitor_actions where monitor_id = ?')
@@ -99,6 +102,7 @@ export function createMonitorRepo(db: Db) {
         input.name,
         input.mode,
         input.sensitivity,
+        input.matchMode,
         input.intentText,
         JSON.stringify(input.includeKeywords),
         JSON.stringify(input.excludeKeywords),
@@ -120,6 +124,7 @@ export function createMonitorRepo(db: Db) {
         patch.name ?? current.name,
         patch.mode ?? current.mode,
         patch.sensitivity ?? current.sensitivity,
+        patch.matchMode ?? current.match_mode,
         patch.intentText ?? current.intent_text,
         JSON.stringify(patch.includeKeywords ?? parseStringArray(current.include_keywords)),
         JSON.stringify(patch.excludeKeywords ?? parseStringArray(current.exclude_keywords)),
