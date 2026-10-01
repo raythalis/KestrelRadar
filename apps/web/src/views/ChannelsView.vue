@@ -120,7 +120,7 @@ async function confirmDelete(): Promise<void> {
         <div
           v-if="testResults[channel.id]"
           class="entity-meta mt-2"
-          :style="{ color: testResults[channel.id]?.ok ? 'var(--k-ok)' : 'var(--k-accent-2)' }"
+          :style="{ color: testResults[channel.id]?.ok ? 'var(--k-ok)' : 'var(--k-blue)' }"
           data-test="channel-test-result"
         >
           {{ testResults[channel.id]?.message }}

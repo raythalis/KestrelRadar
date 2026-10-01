@@ -1,37 +1,5 @@
-// Kestrel 的界面基调：干净的卡片 + 一条青蓝色的强调线，不再裸奔的工业风。
-// 主题相关的颜色都走自定义变量，避免依赖 Vuetify 内部变量名。
-
-.v-theme--kestrelDark {
-  --k-border: rgba(255, 255, 255, 0.08);
-  --k-border-strong: rgba(255, 255, 255, 0.14);
-  --k-soft: rgba(255, 255, 255, 0.045);
-  --k-soft-hover: rgba(255, 255, 255, 0.07);
-  --k-muted: rgba(255, 255, 255, 0.55);
-  --k-faint: rgba(255, 255, 255, 0.35);
-  --k-accent: #2bb8c9;
-  --k-accent-2: #f0a04b;
-  --k-ok: #4cc38a;
-  --k-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  --k-page-bg:
-    radial-gradient(1200px 600px at 15% -10%, rgba(43, 184, 201, 0.14), transparent 60%),
-    radial-gradient(900px 500px at 100% 0%, rgba(240, 160, 75, 0.08), transparent 55%);
-}
-
-.v-theme--kestrelLight {
-  --k-border: rgba(15, 30, 40, 0.1);
-  --k-border-strong: rgba(15, 30, 40, 0.16);
-  --k-soft: rgba(15, 30, 40, 0.035);
-  --k-soft-hover: rgba(15, 30, 40, 0.06);
-  --k-muted: rgba(15, 30, 40, 0.62);
-  --k-faint: rgba(15, 30, 40, 0.42);
-  --k-accent: #0b7285;
-  --k-accent-2: #d9822b;
-  --k-ok: #2f9e44;
-  --k-shadow: 0 10px 26px rgba(15, 30, 40, 0.08);
-  --k-page-bg:
-    radial-gradient(1200px 600px at 12% -12%, rgba(11, 114, 133, 0.1), transparent 60%),
-    radial-gradient(900px 500px at 100% 0%, rgba(217, 130, 43, 0.08), transparent 55%);
-}
+// Kestrel 界面基准：结构、间距、组件形态（视觉基准见 docs/design/config-management.html）。
+// 色值一律走 CSS 变量 --k-*，由 src/design/tokens.ts 注入到 <html> 上（多主题就换那套值）。
 
 html,
 body,
@@ -57,13 +25,156 @@ a {
   color: inherit;
 }
 
+/* ---------- 外壳：左侧竖向导航 ---------- */
+
+.k-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--k-bg);
+}
+
+.k-rail {
+  width: 208px;
+  flex: 0 0 208px;
+  background: var(--k-rail);
+  border-right: 1px solid var(--k-border-soft);
+  display: flex;
+  flex-direction: column;
+  padding: 18px 12px;
+  gap: 2px;
+}
+
+.k-rail__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 16px;
+}
+
+.k-rail__name {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.k-rail__tagline {
+  font-size: 0.7rem;
+  color: var(--k-faint);
+  line-height: 1.3;
+}
+
+.k-rail__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--k-faint);
+  padding: 10px 10px 6px;
+}
+
+.k-rail__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  color: var(--k-muted);
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.k-rail__item:hover {
+  background: var(--k-panel-2);
+  color: var(--k-text);
+}
+
+.k-rail__item.is-active {
+  background: var(--k-accent-soft);
+  border-color: transparent;
+  color: var(--k-text);
+  font-weight: 600;
+}
+
+.k-topbar {
+  height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--k-border-soft);
+  background: var(--k-panel);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.k-crumb {
+  font-size: 0.82rem;
+  color: var(--k-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.k-crumb b {
+  color: var(--k-text);
+  font-weight: 600;
+}
+
+.k-spacer {
+  flex: 1;
+}
+
+.k-seg {
+  display: flex;
+  border: 1px solid var(--k-border);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.k-seg button {
+  background: transparent;
+  border: 0;
+  color: var(--k-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 5px 11px;
+  cursor: pointer;
+}
+
+.k-seg button.on {
+  background: var(--k-panel-2);
+  color: var(--k-text);
+}
+
+.k-topbar__locale {
+  max-width: 132px;
+  flex: 0 0 132px;
+}
+
+.k-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--k-bg);
+}
+
+.k-main__inner {
+  padding: 22px 24px 48px;
+}
+
 .k-page {
-  background-image: var(--k-page-bg);
-  background-repeat: no-repeat;
+  background: var(--k-bg);
   min-height: 100%;
 }
 
-/* 页头 */
+/* ---------- 页头 ---------- */
+
 .page-head {
   display: flex;
   align-items: flex-start;
@@ -72,7 +183,7 @@ a {
 }
 
 .page-head__title {
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   font-weight: 650;
   letter-spacing: -0.01em;
   line-height: 1.25;
@@ -97,7 +208,8 @@ a {
   margin-top: 2px;
 }
 
-/* 品牌标记 */
+/* ---------- 品牌标记 ---------- */
+
 .brand-mark {
   width: 34px;
   height: 34px;
@@ -106,22 +218,35 @@ a {
   place-items: center;
   font-weight: 800;
   font-size: 1rem;
-  color: #06232a;
-  background: linear-gradient(135deg, var(--k-accent), #7ad3c8);
-  box-shadow: 0 6px 16px rgba(43, 184, 201, 0.32);
+  color: #2a1a05;
+  background: linear-gradient(135deg, var(--k-accent), #f7c78a);
+  box-shadow: 0 6px 16px rgba(240, 163, 74, 0.28);
 }
 
-.k-appbar {
-  backdrop-filter: blur(10px);
-  background: color-mix(in srgb, var(--k-soft) 0%, transparent) !important;
-  border-bottom: 1px solid var(--k-border) !important;
+/* ---------- 卡片 ---------- */
+
+.k-card {
+  background: var(--k-panel);
+  border: 1px solid var(--k-border);
+  border-radius: var(--k-radius);
+  padding: 16px 18px;
 }
 
-/* 分组 */
+.k-card__title {
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.k-card__note {
+  font-size: 0.78rem;
+  color: var(--k-muted);
+  margin-top: 2px;
+}
+
 .group-card {
   border: 1px solid var(--k-border) !important;
-  border-radius: 16px !important;
-  background: var(--k-soft) !important;
+  border-radius: var(--k-radius) !important;
+  background: var(--k-panel) !important;
   overflow: hidden;
 }
 
@@ -154,12 +279,13 @@ a {
   transition: transform 0.16s ease;
 }
 
-/* 三列 */
+/* ---------- 三列 ---------- */
+
 .column-panel {
   height: 100%;
-  border-radius: 14px;
-  border: 1px solid var(--k-border);
-  background: var(--k-soft);
+  border-radius: var(--k-radius);
+  border: 1px solid var(--k-border-soft);
+  background: var(--k-panel-2);
   padding: 12px;
 }
 
@@ -180,28 +306,20 @@ a {
   color: var(--k-faint);
 }
 
-/* 实体卡片 */
+/* ---------- 实体卡片 ---------- */
+
 .entity-card {
-  border-radius: 12px !important;
+  border-radius: var(--k-radius) !important;
   border: 1px solid var(--k-border) !important;
-  border-left: 3px solid var(--k-accent) !important;
-  background: var(--k-soft) !important;
+  background: var(--k-panel) !important;
   transition:
-    transform 0.15s ease,
+    border-color 0.15s ease,
     background 0.15s ease;
 }
 
 .entity-card:hover {
-  transform: translateY(-1px);
-  background: var(--k-soft-hover) !important;
-}
-
-.entity-card--monitor {
-  border-left-color: var(--k-accent-2) !important;
-}
-
-.entity-card--action {
-  border-left-color: var(--k-ok) !important;
+  background: var(--k-panel-2) !important;
+  border-color: color-mix(in srgb, var(--k-border) 60%, var(--k-text)) !important;
 }
 
 .entity-card__title {
@@ -218,26 +336,110 @@ a {
   color: var(--k-faint);
 }
 
-/* 空状态 */
+/* ---------- 状态点（连通性 / 试抓结果） ---------- */
+
+.status-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--k-muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+.status-dot::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--k-faint);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--k-faint) 18%, transparent);
+}
+
+.status-dot--ok::before {
+  background: var(--k-ok);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--k-ok) 20%, transparent);
+}
+
+.status-dot--err::before {
+  background: var(--k-err);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--k-err) 20%, transparent);
+}
+
+.status-dot--warn::before {
+  background: var(--k-warn);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--k-warn) 20%, transparent);
+}
+
+.status-dot--busy::before {
+  background: var(--k-accent);
+  animation: k-pulse 1s ease-in-out infinite;
+}
+
+@keyframes k-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* ---------- 小标签 ---------- */
+
+.k-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  border: 1px solid var(--k-border);
+  color: var(--k-muted);
+}
+
+.k-tag--accent {
+  border-color: color-mix(in srgb, var(--k-accent) 40%, transparent);
+  background: var(--k-accent-soft);
+  color: var(--k-accent);
+}
+
+.k-tag--ok {
+  border-color: color-mix(in srgb, var(--k-ok) 40%, transparent);
+  color: var(--k-ok);
+}
+
+.k-tag--off {
+  color: var(--k-faint);
+}
+
+/* ---------- 空状态 ---------- */
+
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
   padding: 26px 12px;
-  border-radius: 12px;
+  border-radius: var(--k-radius);
   border: 1px dashed var(--k-border);
+  background: var(--k-panel-2);
   color: var(--k-faint);
   font-size: 0.76rem;
 }
 
-/* 模板预览 */
+/* ---------- 模板预览 ---------- */
+
 .template-preview {
   margin-top: 10px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: var(--k-soft);
-  border: 1px solid var(--k-border);
+  background: var(--k-panel-2);
+  border: 1px solid var(--k-border-soft);
   font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
   font-size: 0.74rem;
   line-height: 1.5;
@@ -251,6 +453,6 @@ a {
 
 .template-card {
   border-color: var(--k-border) !important;
-  border-radius: 14px !important;
-  background: var(--k-soft) !important;
+  border-radius: var(--k-radius) !important;
+  background: var(--k-panel) !important;
 }

@@ -66,15 +66,24 @@ describe('AppShell', () => {
     expect(JSON.parse(localStorage.getItem('kestrel-ui') ?? '{}').locale).toBe('en')
   })
 
-  it('主题按钮在白天/黑夜之间切换', async () => {
+  it('顶栏的深色/浅色段控件能换主题并记下来', async () => {
     const { wrapper, pinia } = mountShell()
     const ui = useUiStore(pinia)
     expect(ui.theme).toBe('kestrelDark')
 
-    await wrapper.get('[data-test="theme-toggle"]').trigger('click')
+    await wrapper.get('[data-test="theme-kestrelLight"]').trigger('click')
     expect(ui.theme).toBe('kestrelLight')
+    expect(JSON.parse(localStorage.getItem('kestrel-ui') ?? '{}').theme).toBe('kestrelLight')
 
-    await wrapper.get('[data-test="theme-toggle"]').trigger('click')
+    await wrapper.get('[data-test="theme-kestrelDark"]').trigger('click')
     expect(ui.theme).toBe('kestrelDark')
+  })
+
+  it('顶栏面包屑跟着当前路由走', async () => {
+    const { wrapper, router } = mountShell()
+    expect(wrapper.get('[data-test="page-title"]').text()).toBe('仪表盘')
+    await router.push({ name: 'settings' })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.get('[data-test="page-title"]').text()).toBe('设置')
   })
 })

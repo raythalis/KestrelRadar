@@ -1,9 +1,10 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
+import { DEFAULT_THEME, findTheme, type AppTheme } from '@/design/tokens'
 import type { AppLocale } from '@/plugins/i18n'
 
-export type AppTheme = 'kestrelLight' | 'kestrelDark'
+export type { AppTheme }
 
 const STORAGE_KEY = 'kestrel-ui'
 
@@ -31,10 +32,13 @@ function writeStored(value: StoredUi) {
 
 export const useUiStore = defineStore('ui', () => {
   const stored = readStored()
-  const theme = ref<AppTheme>(stored.theme ?? 'kestrelDark')
+  // 存着的主题可能来自更早的版本，找不到就回默认
+  const theme = ref<AppTheme>(
+    findTheme(stored.theme ?? '') ? (stored.theme as AppTheme) : DEFAULT_THEME,
+  )
   const locale = ref<AppLocale>(stored.locale ?? 'zh-CN')
 
-  const isDark = computed(() => theme.value === 'kestrelDark')
+  const isDark = computed(() => findTheme(theme.value)?.dark ?? true)
 
   function setTheme(next: AppTheme) {
     theme.value = next

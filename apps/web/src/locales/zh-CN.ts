@@ -1,10 +1,15 @@
 // 只放界面真正用到的文案；删功能时同步删 key。
 export default {
+  theme: {
+    dark: '深色',
+    light: '浅色',
+  },
   app: {
     name: 'Kestrel',
     tagline: '个人信息监听与事件响应',
   },
   nav: {
+    sectionMain: '主导航',
     dashboard: '仪表盘',
     config: '配置管理',
     channels: '通知渠道',

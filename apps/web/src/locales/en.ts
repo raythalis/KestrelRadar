@@ -1,10 +1,15 @@
 // Only strings the UI actually uses; drop keys together with the feature.
 export default {
+  theme: {
+    dark: 'Dark',
+    light: 'Light',
+  },
   app: {
     name: 'Kestrel',
     tagline: 'Personal source watching and event response',
   },
   nav: {
+    sectionMain: 'Main',
     dashboard: 'Dashboard',
     config: 'Config',
     channels: 'Channels',
