@@ -15,11 +15,13 @@ withDefaults(
     placeholder?: string
     type?: string
     autocomplete?: string
-    /** 后面跟一个"测试/检查"这类动作时用（例如 RPM 的试抓） */
+    /** 后面跟一个"测试/检查"这类动作时用（例如 RSSHub 的试抓） */
     actionLabel?: string
     actionLoading?: boolean
+    /** 等宽显示（cron 表达式、地址、路由路径这类要按字符对齐的值） */
+    mono?: boolean
   }>(),
-  { type: 'text', disabled: false, readonly: false, required: false },
+  { type: 'text', disabled: false, readonly: false, required: false, mono: false },
 )
 
 const model = defineModel<string>({ default: '' })
@@ -40,11 +42,13 @@ const emit = defineEmits<{ (e: 'action'): void }>()
         :disabled="disabled"
         :readonly="readonly"
         :error="Boolean(error)"
-        :class="{ 'is-readonly': readonly && !disabled }"
+        :class="{ 'is-readonly': readonly && !disabled, 'font-mono': mono }"
       />
-      <AppButton v-if="actionLabel" size="sm" :loading="actionLoading" @click="emit('action')">
-        {{ actionLabel }}
-      </AppButton>
+      <slot name="action">
+        <AppButton v-if="actionLabel" size="sm" :loading="actionLoading" @click="emit('action')">
+          {{ actionLabel }}
+        </AppButton>
+      </slot>
     </div>
     <span v-if="error" class="app-field__error">{{ error }}</span>
     <span v-else-if="hint" class="app-field__hint">{{ hint }}</span>

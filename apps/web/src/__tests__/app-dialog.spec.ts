@@ -46,11 +46,15 @@ describe('AppDialog', () => {
     expect(document.querySelector('.app-dialog input')).toBeNull()
   })
 
-  it('error 时显示错误条，内容也让位', async () => {
+  it('error 时错误条在内容上方，表单内容不被顶掉', async () => {
     mountDialog({ error: 'Telegram 返回 401' })
     await flushPromises()
-    expect(document.querySelector('[data-test="app-dialog-error"]')?.textContent).toContain('401')
-    expect(document.querySelector('.app-dialog input')).toBeNull()
+    const banner = document.querySelector('[data-test="app-dialog-error"]')
+    expect(banner?.textContent).toContain('401')
+    // 报错不能把用户填的东西藏起来：错误条要在内容前面，内容照常渲染
+    expect(document.querySelector('.app-dialog input')).not.toBeNull()
+    const body = document.querySelector('.app-dialog .app-card__body')
+    expect(body?.firstElementChild).toBe(banner)
   })
 
   it('窄屏用底部抽屉：默认带 sheet 类，特殊情况下可以关掉', () => {

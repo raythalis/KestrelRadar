@@ -14,7 +14,8 @@ function mountDesign() {
   })
 }
 
-describe('/design 预览页', () => {
+// 这一页把所有组件都摊开了，jsdom 里挂载本身就要几秒，给足超时（不是让它跑慢，是别误判超时）
+describe('/design 预览页', { timeout: 20000 }, () => {
   beforeEach(() => {
     localStorage.clear()
   })
@@ -87,7 +88,11 @@ describe('/design 预览页', () => {
 
   it('弹窗三种状态可由按钮打开（默认关闭；内容是 teleport 的，看 props 而不是 DOM）', async () => {
     const wrapper = mountDesign()
-    const dialog = wrapper.findComponent(AppDialog)
+    // 页面上不止一个 AppDialog（每个 cron 字段自带生成器弹窗），按标题认领 DS 演示那一个
+    const dialog = wrapper
+      .findAllComponents(AppDialog)
+      .find((d) => d.props('title') === '新建分组')!
+    expect(dialog).toBeTruthy()
     expect(dialog.props('modelValue')).toBe(false)
 
     const buttons = wrapper.findAll('[data-test="app-button"]')
@@ -108,5 +113,12 @@ describe('/design 预览页', () => {
 
     await openWith('错误')
     expect(dialog.props('error')).toContain('500')
+  })
+
+  it('每个 cron 字段都有生成器入口（弹窗承载，窄屏也靠得住）', () => {
+    const wrapper = mountDesign()
+    const builders = wrapper.findAll('[data-test="cron-builder"]')
+    expect(builders.length).toBeGreaterThanOrEqual(4)
+    expect(wrapper.find('[data-test="cron-hours-toggle"]').exists()).toBe(false)
   })
 })

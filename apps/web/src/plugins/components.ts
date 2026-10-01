@@ -16,6 +16,7 @@ import AppSidebar from '@/components/app/AppSidebar.vue'
 import AppSkeleton from '@/components/app/AppSkeleton.vue'
 import AppStatus from '@/components/app/AppStatus.vue'
 import AppSwitch from '@/components/app/AppSwitch.vue'
+import AppTag from '@/components/app/AppTag.vue'
 
 const components = {
   AppButton,
@@ -32,6 +33,7 @@ const components = {
   AppSkeleton,
   AppStatus,
   AppSwitch,
+  AppTag,
 }
 
 export default {

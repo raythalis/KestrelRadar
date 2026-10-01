@@ -971,3 +971,12 @@
     padding-inline: 0;
   }
 }
+
+// 卡片网格：自动填充、单卡最小 16rem，窄屏自然落成单列。
+// 业务卡片（渠道 / 数据源 / 动作）和将来的站点类页面都用它，不要各写一套栅格。
+.app-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--k-space-3);
+  align-items: stretch;
+}

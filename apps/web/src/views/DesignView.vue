@@ -8,6 +8,11 @@ import { useDisplay } from 'vuetify'
 
 import { findTheme, THEMES } from '@/design/tokens'
 import { designGroups, spaceItems } from '@/design/preview'
+import ActionCard from '@/components/biz/ActionCard.vue'
+import ChannelCard from '@/components/biz/ChannelCard.vue'
+import CronPicker from '@/components/biz/CronPicker.vue'
+import FormDialog from '@/components/biz/FormDialog.vue'
+import SourceCard from '@/components/biz/SourceCard.vue'
 import { useUiStore } from '@/stores/ui'
 import DesignGroup from '@/views/design/DesignGroup.vue'
 
@@ -61,6 +66,19 @@ function flashToast(): void {
   toastVisible.value = true
   window.setTimeout(() => (toastVisible.value = false), 2200)
 }
+
+// 业务组件演示状态
+const cronDaily = ref('0 8 * * *')
+const cronHourly = ref('30 * * * *')
+const cronOdd = ref('*/5 8 * * *')
+const cronBad = ref('0 8 * *')
+const bizDialog = ref<'none' | 'normal' | 'busy' | 'error'>('none')
+const bizDialogOpen = computed({
+  get: () => bizDialog.value !== 'none',
+  set: (value: boolean) => {
+    if (!value) bizDialog.value = 'none'
+  },
+})
 
 const selectItems = [
   { title: '自带算法', value: 'standard' },
@@ -448,6 +466,221 @@ const selectItems = [
         </AppCard>
       </DesignGroup>
 
+      <!-- 业务组件层（P1.5） -->
+      <DesignGroup
+        title="业务组件 · P1.5"
+        note="从页面里沉下来的复用件：表单弹窗外壳、cron 选择器、渠道卡、数据源卡、动作卡"
+        :open="open['业务组件 · P1.5'] ?? false"
+        @update:open="(value) => setOpen('业务组件 · P1.5', value)"
+      >
+        <div class="app-stack">
+          <AppCard title="FormDialog" note="状态：normal / 保存中(busy) / 错误 / 手机端贴底">
+            <div class="app-stack">
+              <div class="app-row ds-wrap">
+                <AppButton
+                  size="sm"
+                  variant="primary"
+                  data-test="biz-dialog-normal"
+                  @click="bizDialog = 'normal'"
+                  >打开表单弹窗</AppButton
+                >
+                <AppButton size="sm" data-test="biz-dialog-busy" @click="bizDialog = 'busy'"
+                  >保存中示例</AppButton
+                >
+                <AppButton
+                  size="sm"
+                  variant="danger"
+                  data-test="biz-dialog-error"
+                  @click="bizDialog = 'error'"
+                  >保存失败</AppButton
+                >
+              </div>
+              <AppHint tone="info">
+                标题、说明、取消/保存、保存中转圈、错误条、手机贴底都在这一个壳里；页面只管往里放字段。
+              </AppHint>
+            </div>
+          </AppCard>
+
+          <AppCard title="CronPicker" note="表达式 + 一句人话 + 小时网格（点小时直接改表达式）">
+            <div class="app-stack">
+              <CronPicker v-model="cronDaily" label="定时汇总时间" hint="每天 08:00 汇总一次" />
+              <CronPicker v-model="cronHourly" label="每小时" />
+              <CronPicker v-model="cronOdd" label="不常见的形状（提醒色）" />
+              <CronPicker v-model="cronBad" label="写错的时候（错误色）" />
+            </div>
+          </AppCard>
+
+          <div class="ds-cols">
+            <AppCard
+              title="ChannelCard"
+              note="状态：连通 / 未测 / 有警告 / 不通 / 测试中 / 停用 / 不可用"
+            >
+              <div class="app-card-grid">
+                <ChannelCard
+                  name="我的 Telegram"
+                  icon="mdi-send"
+                  kind-label="Telegram"
+                  :enabled="true"
+                  tone="ok"
+                  status-text="连通"
+                  detail="目标会话 1231487971"
+                  verified-at="刚刚"
+                  :used-by="2"
+                />
+                <ChannelCard
+                  name="企业微信"
+                  icon="mdi-account-group-outline"
+                  kind-label="企业微信"
+                  :enabled="true"
+                  tone="neutral"
+                  status-text="还没测过"
+                  detail="Bot 已配置"
+                  :used-by="0"
+                />
+                <ChannelCard
+                  name="微信"
+                  icon="mdi-wechat"
+                  kind-label="微信"
+                  :enabled="false"
+                  tone="warn"
+                  status-text="出站窗口约 10 分钟"
+                  detail="仅双向对话用"
+                  :used-by="0"
+                />
+                <ChannelCard
+                  name="Webhook"
+                  icon="mdi-webhook"
+                  kind-label="自定义"
+                  :enabled="true"
+                  tone="err"
+                  status-text="连接失败"
+                  detail="https://example.com/hook"
+                  :used-by="1"
+                  busy
+                />
+                <ChannelCard
+                  name="没权限的渠道"
+                  icon="mdi-lock-outline"
+                  kind-label="Telegram"
+                  :enabled="true"
+                  tone="neutral"
+                  status-text="只读"
+                  detail="需要管理员权限才能改"
+                  :disabled="true"
+                />
+              </div>
+            </AppCard>
+
+            <div class="app-stack">
+              <AppCard
+                title="SourceCard"
+                note="状态：未试过 / 有内容 / 通但空 / 不通 / 抓取中 / 停用"
+              >
+                <div class="app-card-grid">
+                  <SourceCard
+                    name="B 站排行榜"
+                    icon="mdi-video-outline"
+                    kind-label="RSSHub 路由"
+                    :enabled="true"
+                    target="/bilibili/ranking/all"
+                    instance="http://192.168.5.100:1200"
+                    frequency="每 30 分钟"
+                    tone="ok"
+                    status-text="抓到 100 条"
+                    :found-item-count="100"
+                  />
+                  <SourceCard
+                    name="刚加的数据源"
+                    icon="mdi-rss"
+                    kind-label="RSSHub 路由"
+                    :enabled="true"
+                    target="/github/trending/daily"
+                    instance="http://192.168.5.100:1200"
+                    frequency="每 1 小时"
+                    tone="neutral"
+                    status-text="还没抓过"
+                  />
+                  <SourceCard
+                    name="抓得到但没内容"
+                    icon="mdi-web"
+                    kind-label="网页"
+                    :enabled="true"
+                    target="https://example.com/blog"
+                    frequency="每 6 小时"
+                    tone="warn"
+                    status-text="连通但没内容"
+                    message="路由能打开，但没解析出条目，检查选择器"
+                    :found-item-count="0"
+                  />
+                  <SourceCard
+                    name="路由写错了"
+                    icon="mdi-rss"
+                    kind-label="RSSHub 路由"
+                    :enabled="true"
+                    target="/bilibili/ranking/dance"
+                    instance="http://192.168.5.100:1200"
+                    tone="err"
+                    status-text="连接失败"
+                    message="404：这个路由前缀不存在"
+                  />
+                  <SourceCard
+                    name="已停用的源"
+                    icon="mdi-rss"
+                    kind-label="RSSHub 路由"
+                    :enabled="false"
+                    target="/hackernews/best"
+                    instance="http://192.168.5.100:1200"
+                    frequency="每 30 分钟"
+                    tone="neutral"
+                    status-text="已停用"
+                  />
+                </div>
+              </AppCard>
+
+              <AppCard title="ActionCard" note="状态：正常 / 定时汇总 / 缺渠道 / 停用">
+                <div class="app-card-grid">
+                  <ActionCard
+                    name="推给 Telegram"
+                    icon="mdi-bell-ring-outline"
+                    trigger-label="实时推送"
+                    channel-name="我的 Telegram"
+                    template-name="默认模板"
+                    :enabled="true"
+                    :referenced-count="1"
+                  />
+                  <ActionCard
+                    name="早报汇总"
+                    icon="mdi-clock-outline"
+                    trigger-label="定时汇总"
+                    cron-expression="0 8 * * *"
+                    channel-name="企业微信"
+                    template-name="简报模板"
+                    :enabled="true"
+                    :referenced-count="2"
+                  />
+                  <ActionCard
+                    name="还没选渠道的动作"
+                    icon="mdi-bell-off-outline"
+                    trigger-label="实时推送"
+                    template-name="默认模板"
+                    :enabled="true"
+                    :referenced-count="1"
+                  />
+                  <ActionCard
+                    name="已停用的动作"
+                    icon="mdi-bell-outline"
+                    trigger-label="实时推送"
+                    channel-name="我的 Telegram"
+                    :enabled="false"
+                    :referenced-count="0"
+                  />
+                </div>
+              </AppCard>
+            </div>
+          </div>
+        </div>
+      </DesignGroup>
+
       <!-- AppSidebar / AppHeader -->
       <DesignGroup
         title="AppSidebar / AppHeader"
@@ -486,6 +719,19 @@ const selectItems = [
         <AppButton variant="primary" @click="dialog = 'none'">保存</AppButton>
       </template>
     </AppDialog>
+
+    <FormDialog
+      v-model="bizDialogOpen"
+      :title="bizDialog === 'error' ? '保存失败' : '新建动作'"
+      note="表单弹窗只管字段，标题按钮错误条都由外壳负责"
+      :busy="bizDialog === 'busy'"
+      :error="bizDialog === 'error' ? '服务器返回 500：数据库写入失败' : undefined"
+    >
+      <div class="app-stack">
+        <AppInput :model-value="''" label="动作名称" placeholder="例如：推给 Telegram" required />
+        <CronPicker v-model="cronDaily" label="汇总时间" />
+      </div>
+    </FormDialog>
 
     <transition name="ds-toast">
       <div v-if="toastVisible" class="ds-toast app-overlay" data-test="design-toast">保存成功</div>

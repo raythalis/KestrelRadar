@@ -48,12 +48,15 @@ const open = defineModel<boolean>({ default: false })
       <div class="app-card__body app-stack">
         <div v-if="loading" class="app-dialog__state" data-test="app-dialog-loading">
           <span class="app-spinner" />
-          <span>处理中…</span>
+          <span>{{ t('common.processing') }}</span>
         </div>
-        <div v-else-if="error" class="app-hint app-hint--err" data-test="app-dialog-error">
-          {{ error }}
-        </div>
-        <slot v-else />
+        <template v-else>
+          <!-- 出错时错误条放在内容上方，不顶掉表单：用户填的东西不能因为一次保存失败就看不见 -->
+          <div v-if="error" class="app-hint app-hint--err" data-test="app-dialog-error">
+            {{ error }}
+          </div>
+          <slot />
+        </template>
       </div>
 
       <footer v-if="$slots.footer" class="app-card__foot">

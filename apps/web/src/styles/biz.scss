@@ -1,0 +1,167 @@
+// Design System · 业务组件层样式
+//
+// 只服务 Kestrel 的业务组件（components/biz/*），只消费 --k-* 变量。
+// 通用视觉（按钮、标签、状态、卡片、弹窗）都在 components.scss 里，这里不重复定义。
+//
+// 卡片的信息骨架参考了 MoviePilot 的排版思路（图标 + 紧凑信息 + 网格排列），
+// 颜色、圆角、间距、动效全部走 Kestrel 自己的令牌，不照搬它的视觉。
+
+.biz-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-space-2);
+  block-size: 100%;
+  padding: var(--k-space-3) var(--k-space-3) var(--k-space-3) var(--k-space-4);
+  overflow: hidden;
+  background: var(--k-panel-2);
+  border: 1px solid var(--k-border);
+  border-radius: var(--k-radius-md);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+// 左侧强调色条：颜色只跟语义状态走，不写死任何品牌色
+.biz-card::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 3px;
+  background: var(--biz-accent, var(--k-border));
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.biz-card--ok {
+  --biz-accent: var(--k-ok);
+}
+.biz-card--warn {
+  --biz-accent: var(--k-warn);
+}
+.biz-card--err {
+  --biz-accent: var(--k-err);
+}
+.biz-card--neutral {
+  --biz-accent: var(--k-muted);
+}
+
+.biz-card[role='button'] {
+  cursor: pointer;
+}
+
+// 可点的卡片才有悬停反馈：边框往强调色靠、抬起 1px
+.biz-card[role='button']:hover {
+  border-color: color-mix(in srgb, var(--k-border) 40%, var(--biz-accent, var(--k-accent)) 60%);
+  box-shadow: var(--k-shadow);
+  transform: translateY(-1px);
+}
+.biz-card[role='button']:hover::before {
+  opacity: 0.9;
+}
+.biz-card[role='button']:active {
+  transform: translateY(0);
+}
+.biz-card:focus-visible {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 2px;
+}
+
+// 触摸端不做位移（容易误触，也白费性能）
+@media (hover: none) {
+  .biz-card[role='button']:hover {
+    box-shadow: none;
+    transform: none;
+  }
+}
+
+.biz-card.is-off {
+  opacity: 0.62;
+}
+.biz-card.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.biz-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--k-space-2);
+}
+
+.biz-card__icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 34px;
+  block-size: 34px;
+  color: var(--biz-accent, var(--k-accent));
+  background: color-mix(in srgb, var(--biz-accent, var(--k-accent)) 14%, transparent);
+  border-radius: var(--k-radius-sm);
+}
+
+.biz-card__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.biz-card__title {
+  font-size: var(--k-fs-bodyLg);
+  font-weight: var(--k-fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.biz-card__kind,
+.biz-card__meta {
+  font-size: var(--k-fs-label);
+  color: var(--k-muted);
+}
+
+.biz-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-space-2);
+  min-inline-size: 0;
+}
+
+// 路由 / 网址这类要原样看的值：等宽 + 够松的行高，别把字母下沿挤掉
+.biz-card__sub {
+  font-size: var(--k-fs-meta);
+  line-height: var(--k-lh-normal);
+  color: var(--k-muted);
+  overflow-wrap: anywhere;
+}
+
+.biz-card__sub--mono {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-fs-label);
+}
+
+// 底部一排贴卡片底：同排卡片高度不齐也能对齐底边
+.biz-card__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--k-space-1) var(--k-space-2);
+  margin-block-start: auto;
+  padding-block-start: var(--k-space-3);
+  border-block-start: 1px solid var(--k-border-soft);
+}
+
+@media (max-width: 599px) {
+  .biz-card__foot {
+    row-gap: var(--k-space-2);
+  }
+}
+
+// cron 生成器：内容本身有一行固定宽度的分段控件，窄屏给横向滚动，不撑破弹窗
+.cron-builder {
+  overflow-x: auto;
+  padding-block: var(--k-space-1);
+}
