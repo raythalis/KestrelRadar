@@ -1,12 +1,10 @@
-// Kestrel 设计基准之一：色值与主题。
+// Design System · Foundation 第一层：颜色
 //
-// 这里是全项目唯一的色值来源 —— 组件不写死颜色，只用 CSS 变量 --k-*；
-// Vuetify 的主题色也由这里生成，避免同一套色值散落两处。
-// 加一套新颜色模板（后面要做多主题）：在 THEMES 里加一条即可，Vuetify 主题、变量注入、
-// 切换控件都会自动跟上（记得补一条 theme.<id> 文案）。
+// 这里是全项目唯一写色值的地方。组件只认 CSS 变量 --k-*；
+// Vuetify 主题色也由这里生成，不另写一份。
 //
-// 视觉基准：原型 A（Figma 风）——浅色优先、小圆角、克制的蓝作为强调色。
-// 色值的形状层（圆角、字号、间距、等宽小标签）在 styles/main.scss 里。
+// 加一套颜色模板：在 THEMES 里加一条即可（记得补 theme.<id> 文案）；
+// 形状与排版在 foundation.ts，两层的变量名都在 index.ts 里注入。
 
 export interface ThemeTokens {
   /** 页面底色 */
@@ -31,6 +29,8 @@ export interface ThemeTokens {
   accent: string
   /** 强调色的浅底 */
   accentSoft: string
+  /** 压在强调色上的文字色（亮色主题用白，暗色主题用深色，保证主要按钮的文字够清楚） */
+  onAccent: string
   /** 第二强调色（链接、信息） */
   blue: string
   /** 正常状态 */
@@ -39,9 +39,9 @@ export interface ThemeTokens {
   warn: string
   /** 出错状态 */
   err: string
-  /** 圆角 */
+  /** 圆角（历史遗留：形状现在归 foundation.ts，这里只为兼容旧注入） */
   radius: string
-  /** 卡片阴影 */
+  /** 卡片阴影（同上，浮层阴影见 foundation.ts 的 ELEVATION） */
   shadow: string
 }
 
@@ -67,14 +67,15 @@ export const THEMES = [
       border: '#dde0ea',
       borderSoft: '#e8eaf0',
       text: '#0d0f1a',
-      muted: '#6c7280',
-      faint: '#9aa0ad',
-      accent: '#4f6ef7',
-      accentSoft: 'rgba(79, 110, 247, 0.10)',
+      muted: '#5b6472',
+      faint: '#7c8593',
+      accent: '#3b5cf0',
+      accentSoft: 'rgba(59, 92, 240, 0.10)',
+      onAccent: '#ffffff',
       blue: '#2f6fd0',
-      ok: '#12a150',
-      warn: '#b58105',
-      err: '#e5484d',
+      ok: '#0b7d3d',
+      warn: '#8a5d04',
+      err: '#c62f34',
       radius: '4px',
       shadow: '0 1px 2px rgba(13, 15, 26, 0.04)',
     },
@@ -91,13 +92,14 @@ export const THEMES = [
       border: '#242738',
       borderSoft: '#1e2130',
       text: '#e3e5ef',
-      muted: '#8a90a3',
-      faint: '#5f6478',
+      muted: '#9aa2b4',
+      faint: '#78808f',
       accent: '#5b7bf8',
       accentSoft: 'rgba(91, 123, 248, 0.16)',
+      onAccent: '#0c0e15',
       blue: '#6ea8fe',
-      ok: '#30a46c',
-      warn: '#f5a524',
+      ok: '#3fb87a',
+      warn: '#e0a33e',
       err: '#f2555a',
       radius: '4px',
       shadow: '0 1px 2px rgba(0, 0, 0, 0.40)',
@@ -110,7 +112,7 @@ export type AppTheme = (typeof THEMES)[number]['id']
 /** Vuetify 的默认主题（界面偏好见 stores/ui.ts，可以跟随系统） */
 export const DEFAULT_THEME: AppTheme = 'kestrelLight'
 
-/** 界面偏好：白天 / 跟随系统 / 黑夜。跟随系统时按系统亮暗选上面两套之一。 */
+/** 界面偏好：白天 / 跟随系统 / 黑夜 */
 export type ThemePreference = 'light' | 'system' | 'dark'
 
 export const THEME_PREFERENCES: { value: ThemePreference; labelKey: string }[] = [
@@ -140,7 +142,7 @@ export function findTheme(id: string): ThemeDefinition | undefined {
 }
 
 /** token 名 -> CSS 变量名（组件里只认 --k-*） */
-const VAR_NAMES: Record<keyof ThemeTokens, string> = {
+export const COLOR_VAR_NAMES: Record<keyof ThemeTokens, string> = {
   bg: '--k-bg',
   rail: '--k-rail',
   panel: '--k-panel',
@@ -152,6 +154,7 @@ const VAR_NAMES: Record<keyof ThemeTokens, string> = {
   faint: '--k-faint',
   accent: '--k-accent',
   accentSoft: '--k-accent-soft',
+  onAccent: '--k-on-accent',
   blue: '--k-blue',
   ok: '--k-ok',
   warn: '--k-warn',
@@ -160,41 +163,10 @@ const VAR_NAMES: Record<keyof ThemeTokens, string> = {
   shadow: '--k-shadow',
 }
 
-export function cssVars(tokens: ThemeTokens): Record<string, string> {
+export function colorVars(tokens: ThemeTokens): Record<string, string> {
   const vars: Record<string, string> = {}
-  for (const [key, name] of Object.entries(VAR_NAMES)) {
+  for (const [key, name] of Object.entries(COLOR_VAR_NAMES)) {
     vars[name] = tokens[key as keyof ThemeTokens]
   }
   return vars
-}
-
-/** 注入到 <html> 上：弹窗、菜单会被传送到 body，挂在根节点才不会掉色 */
-export function applyThemeVars(theme: ThemeDefinition): void {
-  const root = document.documentElement
-  for (const [name, value] of Object.entries(cssVars(theme.tokens))) {
-    root.style.setProperty(name, value)
-  }
-  // 让浏览器原生控件（滚动条、输入框）也跟着亮暗
-  root.style.setProperty('color-scheme', theme.dark ? 'dark' : 'light')
-  root.dataset.theme = theme.dark ? 'dark' : 'light'
-}
-
-/** Vuetify 主题色，同样从 tokens 生成 */
-export function vuetifyColors(theme: ThemeDefinition): Record<string, string> {
-  const { tokens } = theme
-  return {
-    background: tokens.bg,
-    surface: tokens.panel,
-    'surface-variant': tokens.panel2,
-    'surface-bright': tokens.border,
-    primary: tokens.accent,
-    secondary: tokens.muted,
-    accent: tokens.blue,
-    info: tokens.blue,
-    success: tokens.ok,
-    warning: tokens.warn,
-    error: tokens.err,
-    'on-surface': tokens.text,
-    'on-background': tokens.text,
-  }
 }

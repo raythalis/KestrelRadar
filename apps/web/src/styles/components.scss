@@ -1,0 +1,565 @@
+// Design System · App* 组件视觉层
+//
+// 这是组件样式的唯一来源：页面与业务组件只组合 App*（P1 把它们包成 Vue 组件），
+// 不自己写按钮/卡片/弹窗/间距。
+//
+// 硬规矩：
+// - 只用 --k-* 变量，不出现 #色值、不出现随手写死的 px 间距；
+// - 卡片靠"细边框 + 底色"分层，不用阴影；阴影只给浮层（菜单/弹窗/抽屉）；
+// - 间距只用 --k-space-*（4 的倍数）；
+// - 字号只用 --k-fs-* 七档，字重只用 --k-fw-* 三档。
+
+/* ---------- AppPage：页面容器与内容宽度策略 ---------- */
+
+.app-page {
+  width: 100%;
+  margin-inline: auto;
+  padding: var(--k-pad-page-mobile);
+}
+
+.app-page--narrow {
+  max-width: var(--k-page-narrow);
+}
+
+.app-page--default {
+  max-width: var(--k-page-default);
+}
+
+.app-page--wide {
+  max-width: var(--k-page-wide);
+}
+
+.app-page--full {
+  max-width: none;
+}
+
+/* AppPage 的头部：标题 + 说明 + 右侧操作 */
+.app-page__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--k-space-3);
+  margin-bottom: var(--k-space-5);
+}
+
+.app-page__title {
+  font-size: var(--k-fs-h1);
+  font-weight: var(--k-fw-semibold);
+  line-height: var(--k-lh-tight);
+}
+
+.app-page__note {
+  margin-top: var(--k-space-1);
+  font-size: var(--k-fs-body);
+  color: var(--k-text-muted);
+  max-width: 78ch;
+}
+
+.app-page__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--k-space-2);
+  margin-left: auto;
+}
+
+/* ---------- AppSection：页面内的分节 ---------- */
+
+.app-section + .app-section {
+  margin-top: var(--k-space-5);
+}
+
+.app-section__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--k-space-2);
+  margin-bottom: var(--k-space-3);
+}
+
+.app-section__title {
+  font-size: var(--k-fs-title);
+  font-weight: var(--k-fw-semibold);
+}
+
+.app-section__note {
+  font-size: var(--k-fs-meta);
+  color: var(--k-text-muted);
+}
+
+.app-section__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--k-space-2);
+  margin-left: auto;
+}
+
+/* ---------- AppCard / Surface ---------- */
+
+.app-card {
+  background: var(--k-panel);
+  border: 1px solid var(--k-border);
+  border-radius: var(--k-radius-md);
+  overflow: hidden;
+}
+
+.app-card__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--k-space-1) var(--k-space-2);
+  padding: var(--k-space-3) var(--k-pad-card);
+  border-bottom: 1px solid var(--k-border);
+}
+
+.app-card__title {
+  font-size: var(--k-fs-title);
+  font-weight: var(--k-fw-semibold);
+}
+
+.app-card__note {
+  font-size: var(--k-fs-meta);
+  color: var(--k-text-muted);
+}
+
+.app-card__body {
+  padding: var(--k-pad-card);
+}
+
+.app-card__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--k-space-2);
+  padding: var(--k-space-3) var(--k-pad-card);
+  border-top: 1px solid var(--k-border-soft);
+}
+
+/* 内嵌面板：卡片里再放一层时用它，别用第二层边框 */
+.app-surface {
+  background: var(--k-panel-2);
+  border: 1px solid var(--k-border);
+  border-radius: var(--k-radius-md);
+  padding: var(--k-space-3);
+}
+
+.app-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-space-3);
+}
+
+.app-row {
+  display: flex;
+  align-items: center;
+  gap: var(--k-space-2);
+}
+
+.app-spacer {
+  flex: 1;
+}
+
+/* 统计块网格：手机两列，桌面四列 */
+.app-grid--stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--k-space-3);
+}
+
+/* ---------- AppButton ---------- */
+
+.app-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--k-space-1);
+  height: var(--k-control-h);
+  padding-inline: var(--k-space-3);
+  border: 1px solid var(--k-border);
+  border-radius: var(--k-radius-md);
+  background: var(--k-panel-2);
+  color: var(--k-text);
+  font: inherit;
+  font-size: var(--k-fs-body);
+  font-weight: var(--k-fw-medium);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.app-btn:hover {
+  background: color-mix(in srgb, var(--k-panel-2) 90%, var(--k-text) 6%);
+}
+
+.app-btn--primary {
+  background: var(--k-accent);
+  border-color: transparent;
+  color: var(--k-on-accent);
+}
+
+.app-btn--primary:hover {
+  background: color-mix(in srgb, var(--k-accent) 88%, #000 12%);
+}
+
+.app-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--k-text-muted);
+}
+
+.app-btn--ghost:hover {
+  background: var(--k-panel-2);
+  color: var(--k-text);
+}
+
+.app-btn--danger {
+  background: transparent;
+  border-color: transparent;
+  color: var(--k-err);
+}
+
+.app-btn--danger:hover {
+  background: color-mix(in srgb, var(--k-err) 10%, transparent);
+}
+
+.app-btn--sm {
+  height: 26px;
+  padding-inline: var(--k-space-2);
+  font-size: var(--k-fs-meta);
+}
+
+.app-btn:disabled,
+.app-btn[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---------- 表单：标签 + 控件 + 说明 ---------- */
+
+.app-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-space-1);
+}
+
+.app-field__label {
+  font-size: var(--k-fs-body);
+  font-weight: var(--k-fw-medium);
+}
+
+.app-field__hint {
+  font-size: var(--k-fs-meta);
+  color: var(--k-text-muted);
+}
+
+.app-field__error {
+  font-size: var(--k-fs-meta);
+  color: var(--k-err);
+}
+
+/* 一行一个设置项：左标签右控件，窄屏自动变成上下 */
+.app-field-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--k-space-2);
+  padding: var(--k-space-3) 0;
+  border-top: 1px solid var(--k-border-soft);
+}
+
+.app-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--k-space-3);
+  min-height: var(--k-row-h);
+}
+
+/* ---------- AppStatus / Badge / Tag ---------- */
+
+.app-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k-space-1);
+  padding: 2px var(--k-space-2);
+  border: 1px solid var(--k-border);
+  border-radius: var(--k-radius-pill);
+  background: var(--k-panel);
+  font-size: var(--k-fs-label);
+  color: var(--k-text-muted);
+  cursor: default;
+}
+
+.app-status--action {
+  cursor: pointer;
+}
+
+.app-status--action:hover {
+  color: var(--k-text);
+  border-color: color-mix(in srgb, var(--k-border) 55%, var(--k-text));
+}
+
+.app-status__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--k-radius-pill);
+  background: var(--k-faint);
+  flex: 0 0 7px;
+}
+
+.app-status--ok .app-status__dot {
+  background: var(--k-ok);
+}
+
+.app-status--warn .app-status__dot {
+  background: var(--k-warn);
+}
+
+.app-status--err .app-status__dot {
+  background: var(--k-err);
+}
+
+.app-status--busy .app-status__dot {
+  background: var(--k-accent);
+  animation: k-ds-pulse 1s ease-in-out infinite;
+}
+
+.app-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k-space-1);
+  padding: 2px var(--k-space-2);
+  border: 1px solid var(--k-border);
+  border-radius: var(--k-radius-sm);
+  background: var(--k-panel-2);
+  font-size: var(--k-fs-label);
+  color: var(--k-text-muted);
+  white-space: nowrap;
+}
+
+.app-tag--accent {
+  border-color: color-mix(in srgb, var(--k-accent) 35%, transparent);
+  background: var(--k-accent-soft);
+  color: var(--k-accent);
+}
+
+.app-tag--ok {
+  border-color: color-mix(in srgb, var(--k-ok) 35%, transparent);
+  color: var(--k-ok);
+}
+
+.app-tag--err {
+  border-color: color-mix(in srgb, var(--k-err) 35%, transparent);
+  color: var(--k-err);
+}
+
+.app-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px var(--k-space-1);
+  border-radius: var(--k-radius-sm);
+  background: var(--k-panel-2);
+  border: 1px solid var(--k-border);
+  font-family: var(--k-font-mono);
+  font-size: var(--k-fs-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--k-text-muted);
+}
+
+/* ---------- EmptyState ---------- */
+
+.app-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--k-space-2);
+  padding: var(--k-space-6) var(--k-space-4);
+  border: 1px dashed var(--k-border);
+  border-radius: var(--k-radius-md);
+  text-align: center;
+  color: var(--k-text-muted);
+}
+
+.app-empty__icon {
+  color: var(--k-text-faint);
+}
+
+.app-empty__title {
+  font-size: var(--k-fs-bodyLg);
+  font-weight: var(--k-fw-medium);
+  color: var(--k-text);
+}
+
+.app-empty__note {
+  font-size: var(--k-fs-meta);
+}
+
+/* ---------- Skeleton：不用渐变，用呼吸的底色 ---------- */
+
+.app-skeleton {
+  background: var(--k-panel-2);
+  border-radius: var(--k-radius-sm);
+  animation: k-ds-breathe 1.4s ease-in-out infinite;
+}
+
+.app-skeleton--text {
+  height: 10px;
+}
+
+.app-skeleton--title {
+  height: 14px;
+}
+
+.app-skeleton--block {
+  height: 44px;
+}
+
+/* ---------- Hint / Toast ---------- */
+
+.app-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--k-space-2);
+  padding: var(--k-space-2) var(--k-space-3);
+  border-radius: var(--k-radius-md);
+  font-size: var(--k-fs-meta);
+  border: 1px solid transparent;
+}
+
+.app-hint--info {
+  color: var(--k-text-muted);
+  background: var(--k-panel-2);
+  border-color: var(--k-border);
+}
+
+.app-hint--ok {
+  color: color-mix(in srgb, var(--k-ok) 80%, var(--k-text) 20%);
+  background: color-mix(in srgb, var(--k-ok) 10%, transparent);
+  border-color: color-mix(in srgb, var(--k-ok) 28%, transparent);
+}
+
+.app-hint--warn {
+  color: color-mix(in srgb, var(--k-warn) 85%, var(--k-text) 15%);
+  background: color-mix(in srgb, var(--k-warn) 10%, transparent);
+  border-color: color-mix(in srgb, var(--k-warn) 28%, transparent);
+}
+
+.app-hint--err {
+  color: var(--k-err);
+  background: color-mix(in srgb, var(--k-err) 10%, transparent);
+  border-color: color-mix(in srgb, var(--k-err) 28%, transparent);
+}
+
+/* ---------- 浮层：弹窗与抽屉（阴影只有这一层用） ---------- */
+
+.app-overlay {
+  background: var(--k-panel);
+  border: 1px solid var(--k-border);
+  border-radius: var(--k-radius-lg);
+  box-shadow: var(--k-elev-2);
+}
+
+/* ---------- Vuetify 对齐：DS 是唯一来源，Vuetify 默认值在这里被拉回来 ---------- */
+/* 输入框高度：Vuetify 的 density 才是有效开关（comfortable 48 / compact 40），
+   触摸端直接给撑到 --k-control-h-touch，别让手指点不到 */
+/* 圆角：输入框/卡片 4，浮层 6（Vuetify 的 rounded 属性只认自己的档位，所以用变量覆盖） */
+.v-field,
+.v-card {
+  border-radius: var(--k-radius-md);
+}
+
+.v-overlay__content > .v-card,
+.v-overlay__content > .v-list,
+.v-menu > .v-overlay__content > .v-list,
+.v-menu > .v-overlay__content > .v-card {
+  border-radius: var(--k-radius-lg);
+}
+
+/* 列表行高跟 --k-row-h 走 */
+.v-list-item {
+  min-height: var(--k-row-h);
+}
+
+@media (max-width: 899px) {
+  .v-input .v-field {
+    min-height: var(--k-control-h-touch);
+  }
+
+  .v-list-item {
+    min-height: var(--k-control-h-touch);
+  }
+}
+
+@keyframes k-ds-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes k-ds-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ---------- 响应式：组件自己的规矩，不是只有一个开关 ---------- */
+
+@media (max-width: 599px) {
+  /* 小屏：卡片与页面内边距收紧一档 */
+  .app-card__head,
+  .app-card__body,
+  .app-card__foot {
+    padding-inline: var(--k-space-3);
+  }
+}
+
+@media (min-width: 600px) {
+  .app-page {
+    padding: var(--k-space-5);
+  }
+}
+
+@media (max-width: 899px) {
+  /* 触摸端：控件与行高抬到可点的大小 */
+  .app-btn {
+    height: var(--k-control-h-touch);
+    padding-inline: var(--k-space-4);
+  }
+
+  .app-btn--sm {
+    height: var(--k-control-h);
+  }
+
+  .app-field-row {
+    gap: var(--k-space-1);
+  }
+}
+
+@media (min-width: 900px) {
+  .app-page {
+    padding: var(--k-pad-page);
+  }
+
+  .app-grid--stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .app-field-row {
+    grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--k-space-4);
+  }
+}
+
+@media (min-width: 1440px) {
+  /* 宽屏：不放大内容，只给更多留白 */
+  .app-page {
+    padding-inline: var(--k-space-7);
+  }
+}

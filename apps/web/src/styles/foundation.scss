@@ -1,0 +1,51 @@
+// Design System · Foundation（基础层）：全局排版、焦点、滚动等"无类名"的规矩。
+// 只消费 --k-* 变量（由 design/tokens 注入），不写任何色值、不针对具体页面。
+//
+// 分层顺序（main.ts 里的引入顺序也照此）：
+//   main.scss（旧样式，P6 才清理）→ foundation.scss（本文件）→ components.scss（App* 组件）
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  font-family: var(--k-font-sans);
+  font-size: var(--k-fs-body);
+  line-height: var(--k-lh-normal);
+  color: var(--k-text);
+  background: var(--k-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 数字、路径、时间戳一律等宽 + 等宽数字，方便竖向对齐扫描 */
+.font-mono {
+  font-family: var(--k-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+/* 焦点可见：键盘操作看得出在哪（鼠标点击不出现外圈） */
+:focus-visible {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 1px;
+  border-radius: var(--k-radius-sm);
+}
+
+/* 触摸端不要 300ms 延迟与双击缩放 */
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}

@@ -4,14 +4,12 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
-import { useTheme } from 'vuetify'
 
 import { THEME_PREFERENCES, applyThemeVars, findTheme, type ThemePreference } from '@/design/tokens'
 import type { AppLocale } from '@/plugins/i18n'
 import { useUiStore } from '@/stores/ui'
 
 const ui = useUiStore()
-const theme = useTheme()
 const route = useRoute()
 const { t, locale } = useI18n()
 
@@ -30,7 +28,10 @@ const themeIcons: Record<ThemePreference, string> = {
 }
 
 const currentName = computed(() => String(route.name ?? 'dashboard'))
-const currentTitle = computed(() => t(`nav.${currentName.value}`))
+// 开发用的 /design 不在产品导航里，标题单独给一个（它不在 locales 里，不该为它加产品文案）
+const currentTitle = computed(() =>
+  route.meta.devOnly ? 'Design System' : t(`nav.${currentName.value}`),
+)
 const drawerOpen = ref(false)
 
 // 界面语言以 store 为准（它管着持久化）：刷新后也要把存着的语言装回去
@@ -40,11 +41,11 @@ watch(
   { immediate: true },
 )
 
-// 主题：Vuetify 主题 + CSS 变量（--k-*）一起换；变量挂在 <html> 上，弹窗也才不掉色
+// 主题：Vuetify 那边由 <v-app :theme> 管；这里负责把 CSS 变量（--k-*）挂到 <html> 上，
+// 弹窗、抽屉这些 teleport 出去的浮层也才跟着换色。
 watch(
   () => ui.theme,
   (next) => {
-    theme.global.name.value = next
     const definition = findTheme(next)
     if (definition) applyThemeVars(definition)
   },

@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 
 import ChannelsView from '@/views/ChannelsView.vue'
 import ConfigView from '@/views/ConfigView.vue'
@@ -6,17 +6,31 @@ import DashboardView from '@/views/DashboardView.vue'
 import ModelsView from '@/views/ModelsView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 
-// 路由表：仪表盘（v1.0 占位）之外，其余四页都接了真实接口。
+// 产品路由：仪表盘（v1.0 占位）之外，其余四页都接了真实接口。
+const routes: RouteRecordRaw[] = [
+  { path: '/', name: 'dashboard', component: DashboardView },
+  { path: '/config', name: 'config', component: ConfigView },
+  { path: '/channels', name: 'channels', component: ChannelsView },
+  { path: '/models', name: 'models', component: ModelsView },
+  { path: '/settings', name: 'settings', component: SettingsView },
+]
+
+// /design 是 Design System 预览页：只在开发环境注册。
+// 生产构建里 import.meta.env.DEV 是 false，这段连同 DesignView 的 chunk 一起被删掉。
+if (import.meta.env.DEV) {
+  routes.push({
+    path: '/design',
+    name: 'design',
+    component: () => import('@/views/DesignView.vue'),
+    meta: { devOnly: true },
+  })
+}
+
+routes.push({ path: '/:pathMatch(.*)*', redirect: '/' })
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    { path: '/', name: 'dashboard', component: DashboardView },
-    { path: '/config', name: 'config', component: ConfigView },
-    { path: '/channels', name: 'channels', component: ChannelsView },
-    { path: '/models', name: 'models', component: ModelsView },
-    { path: '/settings', name: 'settings', component: SettingsView },
-    { path: '/:pathMatch(.*)*', redirect: '/' },
-  ],
+  routes,
 })
 
 export default router
