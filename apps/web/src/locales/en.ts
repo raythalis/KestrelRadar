@@ -176,7 +176,7 @@ export default {
     },
     url: 'Webhook URL',
     secret: 'Secret (optional)',
-    secretHint: 'Lets the receiver verify the request came from Kestrel',
+    secretHint: 'Request header Authorization: Bearer',
     hasSecret: 'secret set',
     noSecret: 'no secret',
     botToken: 'Bot token',

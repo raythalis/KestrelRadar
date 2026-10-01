@@ -173,7 +173,7 @@ export default {
     },
     url: 'Webhook 地址',
     secret: '密钥（可留空）',
-    secretHint: '接收方用它校验请求来自 Kestrel',
+    secretHint: '请求头 Authorization: Bearer',
     hasSecret: '已配密钥',
     noSecret: '没配密钥',
     botToken: 'Bot token',
