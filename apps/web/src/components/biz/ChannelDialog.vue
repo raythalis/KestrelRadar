@@ -1,5 +1,6 @@
 <!-- ChannelDialog：通知渠道的填表弹窗（业务组件层）。
-     一个弹窗管两种渠道：类型决定下面出哪组字段——Telegram 要 token 加会话，Webhook 要地址加可选密钥。
+     一个弹窗只管一种渠道：类型由调用方给定（加渠道时选哪种类型是页面的活，放到通知渠道页那一步做），
+     弹窗里只出这一种渠道要填的东西——Telegram 要 token 加会话，Webhook 要地址加可选密钥。
      密钥从不回显（接口只回「配过没有」）：配过就提示留空表示不改，一输入就是覆盖。
      只出事件：组装好的值、读取会话、保存都由页面接；组件不碰 store、不发请求。 -->
 <script setup lang="ts">
@@ -8,7 +9,6 @@ import { useI18n } from 'vue-i18n'
 
 import AppButton from '@/components/app/AppButton.vue'
 import AppInput from '@/components/app/AppInput.vue'
-import AppSelect from '@/components/app/AppSelect.vue'
 import AppSwitch from '@/components/app/AppSwitch.vue'
 import FormDialog from '@/components/biz/FormDialog.vue'
 import type { ChannelChat, ChannelDialogValues } from '@/components/biz/types'
@@ -18,7 +18,8 @@ const props = withDefaults(
     modelValue: boolean
     /** 编辑已有渠道时的初值；新建时留空 */
     name?: string
-    type?: 'telegram' | 'webhook'
+    /** 这一弹窗是哪种渠道：由页面在添加时定下，弹窗里不再给选择 */
+    type: 'telegram' | 'webhook'
     enabled?: boolean
     chatId?: string
     url?: string
@@ -33,7 +34,6 @@ const props = withDefaults(
   }>(),
   {
     name: '',
-    type: 'telegram',
     enabled: true,
     chatId: '',
     url: '',
@@ -56,7 +56,6 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const name = ref(props.name)
-const type = ref<'telegram' | 'webhook'>(props.type)
 const enabled = ref(props.enabled)
 const chatId = ref(props.chatId)
 const url = ref(props.url)
@@ -70,7 +69,6 @@ watch(
   (open) => {
     if (!open) return
     name.value = props.name
-    type.value = props.type
     enabled.value = props.enabled
     chatId.value = props.chatId
     url.value = props.url
@@ -80,16 +78,17 @@ watch(
   { immediate: true },
 )
 
-const typeItems = computed(() => [
-  { title: t('channel.type.telegram'), value: 'telegram' },
-  { title: t('channel.type.webhook'), value: 'webhook' },
-])
-
-const title = computed(() => (props.name ? t('channel.edit') : t('channel.add')))
+/** 类型不作为字段：它由页面在添加时定下，这里只把种类写进标题，让用户知道在配哪种渠道 */
+const typeName = computed(() =>
+  props.type === 'telegram' ? t('channel.type.telegram') : t('channel.type.webhook'),
+)
+const title = computed(() =>
+  t(props.name ? 'channel.editTyped' : 'channel.addTyped', { type: typeName.value }),
+)
 
 const submitDisabled = computed(() => {
   if (!name.value.trim()) return true
-  if (type.value === 'telegram') {
+  if (props.type === 'telegram') {
     const hasToken = props.hasSecret || botToken.value.trim().length > 0
     return !hasToken || !chatId.value.trim()
   }
@@ -97,10 +96,10 @@ const submitDisabled = computed(() => {
 })
 
 function submit(): void {
-  const isTelegram = type.value === 'telegram'
+  const isTelegram = props.type === 'telegram'
   emit('submit', {
     name: name.value.trim(),
-    type: type.value,
+    type: props.type,
     enabled: enabled.value,
     chatId: isTelegram ? chatId.value.trim() : '',
     url: isTelegram ? '' : url.value.trim(),
@@ -130,13 +129,6 @@ function submit(): void {
       />
 
       <AppInput v-model="name" :label="t('common.name')" required data-test="channel-dialog-name" />
-
-      <AppSelect
-        v-model="type"
-        :label="t('channel.typeLabel')"
-        :items="typeItems"
-        data-test="channel-dialog-type"
-      />
 
       <template v-if="type === 'telegram'">
         <AppInput

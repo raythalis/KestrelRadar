@@ -33,6 +33,8 @@ const ZH = {
   'preview.pageWidth': '页面宽度 · {key}',
 
   'states.monitor': '状态：关键词匹配 / 意图描述 / 没填关键词（全部通过）/ 仅走指定动作 / 停用',
+  'demo.channelCreate.telegram': '新建 Telegram 渠道',
+  'demo.channelCreate.webhook': '新建 Webhook 渠道',
   'demo.chat.me': '我自己',
   'demo.chat.group': 'Kestrel 测试群',
   'demo.monitor.dance': '舞蹈相关',
@@ -436,6 +438,8 @@ const EN: Record<keyof typeof ZH, string> = {
   'demo.toneBusy': 'Testing…',
   'demo.toneAction': 'Tap to fetch (action state)',
   'demo.tonePlain': 'Text-only badge, no state dot',
+  'demo.channelCreate.telegram': 'New Telegram channel',
+  'demo.channelCreate.webhook': 'New Webhook channel',
   'demo.chat.me': 'Myself',
   'demo.chat.group': 'Kestrel test group',
   'demo.dialogNormal': 'Plain dialog',

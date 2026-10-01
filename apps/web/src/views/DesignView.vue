@@ -203,6 +203,8 @@ function runChannelTest(channel: DemoChannel): void {
 // 点卡片＝编辑、点「新建渠道」＝新建：都走同一个弹窗
 const editingChannel = ref<DemoChannel | null>(null)
 const creatingChannel = ref(false)
+/** 新建时先定下这一弹窗是哪种渠道：弹窗里不再给类型选择（添加入口是通知渠道页那一步的活） */
+const creatingType = ref<'telegram' | 'webhook'>('telegram')
 const channelDialogOpen = computed({
   get: () => editingChannel.value !== null || creatingChannel.value,
   set: (value: boolean) => {
@@ -216,9 +218,10 @@ function openChannelEdit(channel: DemoChannel): void {
   creatingChannel.value = false
   demoChats.value = []
 }
-function openChannelCreate(): void {
+function openChannelCreate(type: 'telegram' | 'webhook'): void {
   editingChannel.value = null
   creatingChannel.value = true
+  creatingType.value = type
   demoChats.value = []
 }
 /** 演示「读取会话」：真接口是拿 token 调 Telegram getUpdates */
@@ -1074,8 +1077,19 @@ async function confirmChannelDelete(): Promise<void> {
                     @delete="pendingChannel = channel"
                   />
                 </div>
-                <AppButton size="sm" data-test="channel-create" @click="openChannelCreate()">
-                  {{ t('channel.add') }}
+                <AppButton
+                  size="sm"
+                  data-test="channel-create-telegram"
+                  @click="openChannelCreate('telegram')"
+                >
+                  {{ c('demo.channelCreate.telegram') }}
+                </AppButton>
+                <AppButton
+                  size="sm"
+                  data-test="channel-create-webhook"
+                  @click="openChannelCreate('webhook')"
+                >
+                  {{ c('demo.channelCreate.webhook') }}
                 </AppButton>
                 <AppButton
                   v-if="demoDirty"
@@ -1268,7 +1282,7 @@ async function confirmChannelDelete(): Promise<void> {
     <ChannelDialog
       v-model="channelDialogOpen"
       :name="editingChannel?.name ?? ''"
-      :type="editingChannel?.type ?? 'telegram'"
+      :type="editingChannel?.type ?? creatingType"
       :enabled="editingChannel?.enabled ?? true"
       :chat-id="editingChannel?.chatId ?? ''"
       :url="editingChannel?.url ?? ''"

@@ -9,7 +9,7 @@ import vuetify from '@/plugins/vuetify'
 // 弹窗内容 teleport 到 body，挂上去以后直接查 document 才拿得到真实渲染结果
 function mountDialog(props: Record<string, unknown> = {}) {
   return mount(ChannelDialog, {
-    props: { modelValue: true, ...props },
+    props: { modelValue: true, type: 'telegram', ...props },
     global: { plugins: [vuetify, i18n, appComponents] },
     attachTo: document.body,
   })
@@ -31,21 +31,27 @@ afterEach(() => {
 })
 
 describe('ChannelDialog', () => {
-  it('打开时按入参填好，标题跟着是新建还是编辑', async () => {
-    mountDialog({ name: '我的 Telegram', type: 'telegram', chatId: '123', hasSecret: true })
+  it('打开时按入参填好，标题带上渠道种类', async () => {
+    mountDialog({ name: '我的 Telegram', chatId: '123', hasSecret: true })
     await flushPromises()
     expect(input('channel-dialog-name').value).toBe('我的 Telegram')
-    expect(document.body.textContent).toContain('编辑渠道')
+    expect(document.body.textContent).toContain('编辑 Telegram 渠道')
   })
 
-  it('新建时标题是新建渠道', async () => {
+  it('新建时标题是新建加种类；弹窗里不再有类型选择', async () => {
     mountDialog()
     await flushPromises()
-    expect(document.body.textContent).toContain('新建渠道')
+    expect(document.body.textContent).toContain('新建 Telegram 渠道')
+    expect(q('channel-dialog-type')).toBeNull()
+
+    document.body.innerHTML = ''
+    mountDialog({ type: 'webhook' })
+    await flushPromises()
+    expect(document.body.textContent).toContain('新建 Webhook 渠道')
   })
 
   it('Telegram 出 token 与会话，不出 webhook 那两项', async () => {
-    mountDialog({ name: 'TG', type: 'telegram', chatId: '123' })
+    mountDialog({ name: 'TG', chatId: '123' })
     await flushPromises()
     expect(q('channel-dialog-bot-token')).toBeTruthy()
     expect(q('channel-dialog-chat-id')).toBeTruthy()

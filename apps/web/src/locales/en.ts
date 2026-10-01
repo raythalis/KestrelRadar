@@ -162,7 +162,9 @@ export default {
     subtitle:
       'Where messages go out. Telegram needs a bot token plus a chat; Webhook needs a URL and an optional secret.',
     add: 'New channel',
+    addTyped: 'New {type} channel',
     edit: 'Edit channel',
+    editTyped: 'Edit {type} channel',
     delete: 'Delete channel',
     deleteBody: 'Delete channel "{name}"? Actions still using it will stop sending notifications.',
     empty: 'No channels yet. Create one first.',
