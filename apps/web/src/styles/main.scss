@@ -577,3 +577,63 @@ a {
   border-radius: var(--k-radius) !important;
   background: var(--k-panel) !important;
 }
+
+/* ---------- 设置页 ---------- */
+
+.settings-card {
+  margin-bottom: 14px;
+}
+
+.settings-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding: 9px 0;
+  border-top: 1px solid var(--k-border-soft);
+}
+
+.settings-row__name {
+  font-size: 0.84rem;
+  font-weight: 550;
+  color: var(--k-text);
+}
+
+.settings-row__hint {
+  font-size: 0.73rem;
+  color: var(--k-muted);
+  margin-top: 2px;
+  line-height: 1.45;
+}
+
+.settings-row__range {
+  font-size: 0.68rem;
+  color: var(--k-faint);
+  margin-top: 2px;
+}
+
+.settings-row__control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 520px;
+}
+
+.k-link:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .settings-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+}

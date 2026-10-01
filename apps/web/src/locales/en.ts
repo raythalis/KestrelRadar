@@ -202,8 +202,29 @@ export default {
     builtinDefault: 'Default template',
   },
   settings: {
+    range: '{min} – {max} allowed',
+    card: {
+      general: 'General',
+      judgeBands: 'Judgment mode and bands',
+      judgeFallback: 'Fallback and global excludes',
+      collect: 'Collection',
+      retention: 'Retention and lifecycle',
+      delivery: 'Delivery',
+      rsshub: 'RSSHub instance',
+    },
+    cardNote: {
+      general: 'Timezone used for displayed times.',
+      judgeBands:
+        'Scores fall into three bands: high passes, low drops, the middle is a gray zone.',
+      judgeFallback:
+        'Hand the gray zone to the model, or pass it through with the conservative rule.',
+      collect: 'How many at once, when a request counts as timed out, how many retries.',
+      retention: 'How long items stay, when quiet events archive, what counts as fresh.',
+      delivery: 'Daily delivery cap and the language used in messages.',
+      rsshub: 'One RSSHub instance for everything: put its address and access key here.',
+    },
     subtitle:
-      'Changes apply immediately; the restore button on each row brings that one back to its default.',
+      'Related settings sit in one card: change them, then hit Save on that card. Restore default puts them back to factory values.',
     restoreDefault: 'Restore default',
     tab: {
       general: 'General',
@@ -222,7 +243,7 @@ export default {
       en: 'English',
     },
     field: {
-      language: 'UI and default message language',
+      language: 'Message language',
       timezone: 'Time zone',
       judgeMode: 'Global judge mode',
       scoreHighLine: 'High score line',

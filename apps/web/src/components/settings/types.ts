@@ -8,3 +8,11 @@ export interface SettingsField {
   max?: number
   options?: { value: string; title: string }[]
 }
+
+/** 一张设置卡：同一件事的设置放一起，改完点这张卡的「保存」 */
+export interface SettingsCard {
+  id: string
+  titleKey: string
+  noteKey?: string
+  fields: SettingsField[]
+}

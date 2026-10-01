@@ -90,37 +90,43 @@ describe('设置页', () => {
     expect(wrapper.find('[data-test="setting-globalExcludeKeywords"]').exists()).toBe(true)
   })
 
-  it('改一个数值：失焦才提交，且只提交改过的这一项', async () => {
+  it('改一个数值：不会自动提交，点这张卡的保存才写回，且只提交改过的项', async () => {
     const wrapper = await mountLoaded('judge')
     const input = wrapper.get('[data-test="setting-scoreHighLine"] input')
     await input.setValue('70')
+    await flushPromises()
     expect(api.updateSettings).not.toHaveBeenCalled()
 
-    await input.trigger('blur')
+    await wrapper.get('[data-test="save-judgeBands"]').trigger('click')
     await flushPromises()
     expect(api.updateSettings).toHaveBeenCalledWith({ scoreHighLine: 70 })
   })
 
-  it('恢复默认按钮：跟出厂默认一样时是灰的，存过别的值才亮，点了调重置接口', async () => {
+  it('保存按钮：没改动时是灰的，改过才亮', async () => {
     const wrapper = await mountLoaded('judge')
-    expect(wrapper.get('[data-test="restore-scoreHighLine"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.get('[data-test="save-judgeBands"]').attributes('disabled')).toBeDefined()
 
-    // 存过 80（接口回的就是 80）之后按钮该亮起来
+    await wrapper.get('[data-test="setting-scoreHighLine"] input').setValue('70')
+    await flushPromises()
+    expect(wrapper.get('[data-test="save-judgeBands"]').attributes('disabled')).toBeUndefined()
+  })
+
+  it('恢复默认：整张卡一起回默认，跟出厂一样时按钮是灰的', async () => {
+    const wrapper = await mountLoaded('judge')
+    expect(wrapper.get('[data-test="restore-judgeBands"]').attributes('disabled')).toBeDefined()
+
+    // 库里存着 80（跟默认 65 不一样）→ 恢复默认亮起来
     vi.mocked(api.fetchConfig).mockResolvedValue({
       ...snapshot,
       settings: { ...snapshot.settings, scoreHighLine: 80 },
     })
-    const input = wrapper.get('[data-test="setting-scoreHighLine"] input')
-    await input.setValue('80')
-    await input.trigger('blur')
+    await wrapper.get('[data-test="setting-scoreHighLine"] input').setValue('80')
+    await wrapper.get('[data-test="save-judgeBands"]').trigger('click')
     await flushPromises()
     expect(api.updateSettings).toHaveBeenCalledWith({ scoreHighLine: 80 })
-    expect(
-      wrapper.get('[data-test="restore-scoreHighLine"]').attributes('disabled'),
-    ).toBeUndefined()
 
     vi.mocked(api.fetchConfig).mockResolvedValue(snapshot)
-    await wrapper.get('[data-test="restore-scoreHighLine"]').trigger('click')
+    await wrapper.get('[data-test="restore-judgeBands"]').trigger('click')
     await flushPromises()
     expect(api.resetSetting).toHaveBeenCalledWith('scoreHighLine')
   })
