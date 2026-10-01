@@ -62,7 +62,7 @@ export default {
   },
   discovery: {
     testHint: '点一下试抓，只会读，不会改库里的数据',
-    testRunning: '试抓中…',
+    testRunning: '抓取中…',
     testOk: '试抓成功，抓到 {n} 条',
     testEmpty: '通是通了，但没抓到内容',
     testFail: '抓不到',
@@ -70,7 +70,7 @@ export default {
     edit: '编辑发现',
     delete: '删除发现',
     deleteBody: '只删这条发现本身，它的历史条目与事件一律保留。',
-    test: '试抓',
+    test: '抓取测试',
     routeLayer: '路由',
     contentLayer: '内容',
     nextRun: '下次采集：',

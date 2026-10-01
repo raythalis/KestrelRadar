@@ -193,6 +193,125 @@ function submitChannelEdit(): void {
   editingChannel.value = null
 }
 
+// 数据源演示：点状态块＝抓取测试（转圈 900ms 后落成结果）；点卡片＝编辑；右上角 ×＝删除
+type DemoTone = 'ok' | 'warn' | 'err' | 'neutral'
+type DemoSource = {
+  id: string
+  name: string
+  icon: string
+  kindLabel: string
+  enabled: boolean
+  target: string
+  frequency?: string
+  tone: DemoTone
+  statusText: string
+  /** 演示用：抓完落成什么结果 */
+  result: 'ok' | 'warn' | 'err'
+  busy: boolean
+}
+const SOURCE_LABELS = {
+  ok: '有内容',
+  warn: '抓得到但没内容',
+  err: '抓取失败',
+} as const
+function initialSources(): DemoSource[] {
+  return [
+    {
+      id: 's1',
+      name: 'B 站排行榜',
+      icon: 'mdi-video-outline',
+      kindLabel: 'RSSHub 路由',
+      enabled: true,
+      target: '/bilibili/ranking/all',
+      frequency: '每 30 分钟',
+      tone: 'ok',
+      statusText: SOURCE_LABELS.ok,
+      result: 'ok',
+      busy: false,
+    },
+    {
+      id: 's2',
+      name: '刚加的数据源',
+      icon: 'mdi-rss',
+      kindLabel: 'RSSHub 路由',
+      enabled: true,
+      target: '/github/trending/daily',
+      frequency: '每 1 小时',
+      tone: 'neutral',
+      statusText: '',
+      result: 'ok',
+      busy: false,
+    },
+    {
+      id: 's3',
+      name: '抓得到但没内容',
+      icon: 'mdi-web',
+      kindLabel: '网页',
+      enabled: true,
+      target: 'https://example.com/blog',
+      frequency: '每 6 小时',
+      tone: 'warn',
+      statusText: SOURCE_LABELS.warn,
+      result: 'warn',
+      busy: false,
+    },
+    {
+      id: 's4',
+      name: '路由写错了',
+      icon: 'mdi-rss',
+      kindLabel: 'RSSHub 路由',
+      enabled: true,
+      target: '/bilibili/ranking/dance',
+      tone: 'err',
+      statusText: SOURCE_LABELS.err,
+      result: 'err',
+      busy: false,
+    },
+    {
+      id: 's5',
+      name: '已停用的源',
+      icon: 'mdi-rss',
+      kindLabel: 'RSSHub 路由',
+      enabled: false,
+      target: '/hackernews/best',
+      frequency: '每 30 分钟',
+      tone: 'neutral',
+      statusText: '已停用',
+      result: 'ok',
+      busy: false,
+    },
+  ]
+}
+const demoSources = ref<DemoSource[]>(initialSources())
+const pendingSource = ref<DemoSource | null>(null)
+const sourceDeleteOpen = computed({
+  get: () => pendingSource.value !== null,
+  set: (value: boolean) => {
+    if (!value) pendingSource.value = null
+  },
+})
+const sourceDeleteBusy = ref(false)
+async function confirmSourceDelete(): Promise<void> {
+  sourceDeleteBusy.value = true
+  await new Promise((resolve) => window.setTimeout(resolve, 400))
+  demoSources.value = demoSources.value.filter((s) => s.id !== pendingSource.value?.id)
+  sourceDeleteBusy.value = false
+  pendingSource.value = null
+}
+
+const demoSourcesDirty = computed(() =>
+  demoSources.value.some((s, index) => s.statusText !== initialSources()[index]?.statusText),
+)
+function runSourceTest(source: DemoSource): void {
+  if (source.busy || !source.enabled) return
+  source.busy = true
+  window.setTimeout(() => {
+    source.busy = false
+    source.tone = source.result
+    source.statusText = SOURCE_LABELS[source.result]
+  }, 900)
+}
+
 const pendingChannel = ref<DemoChannel | null>(null)
 const channelDeleteOpen = computed({
   get: () => pendingChannel.value !== null,
@@ -674,66 +793,35 @@ async function confirmChannelDelete(): Promise<void> {
             <div class="app-stack">
               <AppCard
                 title="SourceCard"
-                note="状态：未试过 / 有内容 / 通但空 / 不通 / 抓取中 / 停用"
+                note="状态块本身就是抓取测试的入口（还没抓过就显示「抓取测试」）；点卡片＝编辑；右上角 ×＝删除（要确认）；开关在右下；不显示实例地址与已收条数，也不再摆底部按钮行"
               >
-                <div class="app-card-grid">
-                  <SourceCard
-                    name="B 站排行榜"
-                    icon="mdi-video-outline"
-                    kind-label="RSSHub 路由"
-                    :enabled="true"
-                    target="/bilibili/ranking/all"
-                    instance="http://192.168.5.100:1200"
-                    frequency="每 30 分钟"
-                    tone="ok"
-                    status-text="抓到 100 条"
-                    :found-item-count="100"
-                  />
-                  <SourceCard
-                    name="刚加的数据源"
-                    icon="mdi-rss"
-                    kind-label="RSSHub 路由"
-                    :enabled="true"
-                    target="/github/trending/daily"
-                    instance="http://192.168.5.100:1200"
-                    frequency="每 1 小时"
-                    tone="neutral"
-                    status-text="还没抓过"
-                  />
-                  <SourceCard
-                    name="抓得到但没内容"
-                    icon="mdi-web"
-                    kind-label="网页"
-                    :enabled="true"
-                    target="https://example.com/blog"
-                    frequency="每 6 小时"
-                    tone="warn"
-                    status-text="连通但没内容"
-                    message="路由能打开，但没解析出条目，检查选择器"
-                    :found-item-count="0"
-                  />
-                  <SourceCard
-                    name="路由写错了"
-                    icon="mdi-rss"
-                    kind-label="RSSHub 路由"
-                    :enabled="true"
-                    target="/bilibili/ranking/dance"
-                    instance="http://192.168.5.100:1200"
-                    tone="err"
-                    status-text="连接失败"
-                    message="404：这个路由前缀不存在"
-                  />
-                  <SourceCard
-                    name="已停用的源"
-                    icon="mdi-rss"
-                    kind-label="RSSHub 路由"
-                    :enabled="false"
-                    target="/hackernews/best"
-                    instance="http://192.168.5.100:1200"
-                    frequency="每 30 分钟"
-                    tone="neutral"
-                    status-text="已停用"
-                  />
+                <div class="app-stack">
+                  <div class="app-card-grid">
+                    <SourceCard
+                      v-for="source in demoSources"
+                      :key="source.id"
+                      :name="source.name"
+                      :icon="source.icon"
+                      :kind-label="source.kindLabel"
+                      :enabled="source.enabled"
+                      :target="source.target"
+                      :frequency="source.frequency"
+                      :tone="source.tone"
+                      :status-text="source.statusText || t('discovery.test')"
+                      :busy="source.busy"
+                      @test="runSourceTest(source)"
+                      @toggle="source.enabled = $event"
+                      @delete="pendingSource = source"
+                    />
+                  </div>
+                  <AppButton
+                    v-if="demoSourcesDirty"
+                    size="sm"
+                    variant="ghost"
+                    @click="demoSources = initialSources()"
+                  >
+                    复位演示
+                  </AppButton>
                 </div>
               </AppCard>
 
@@ -832,6 +920,14 @@ async function confirmChannelDelete(): Promise<void> {
         <CronPicker v-model="cronDaily" label="汇总时间" />
       </div>
     </FormDialog>
+
+    <ConfirmDialog
+      v-model="sourceDeleteOpen"
+      :title="t('discovery.delete')"
+      :message="t('discovery.deleteBody')"
+      :busy="sourceDeleteBusy"
+      @confirm="confirmSourceDelete"
+    />
 
     <FormDialog v-model="editOpen" title="编辑渠道" @submit="submitChannelEdit">
       <div class="app-stack">

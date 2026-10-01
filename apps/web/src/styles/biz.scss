@@ -101,6 +101,41 @@
   border-radius: var(--k-radius-sm);
 }
 
+// 不要左侧色条的卡片：状态由里面的状态块自己表达（数据源卡走这条）
+.biz-card--no-bar::before {
+  display: none;
+}
+
+// 状态块当按钮用：去掉默认外观，悬停给一圈反馈提示能点
+.biz-card__chipbtn {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--k-radius-pill);
+  cursor: pointer;
+}
+
+.biz-card__chipbtn:hover {
+  outline: 2px solid color-mix(in srgb, var(--k-text) 12%, transparent);
+  outline-offset: 3px;
+}
+
+.biz-card__chipbtn:focus-visible {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 3px;
+}
+
+.biz-card__chipbtn:disabled {
+  cursor: default;
+}
+
+.biz-card__chipbtn:disabled:hover {
+  outline: none;
+}
+
 // 右上角删除：低权重，悬停才显危险色
 .biz-card__remove {
   display: inline-flex;
@@ -236,6 +271,10 @@
 
 // 触摸端把两个小按钮的点击区撑到 44px（视觉尺寸不变）
 @media (max-width: 899px) {
+  .biz-card__chipbtn {
+    min-block-size: var(--k-control-h-touch);
+  }
+
   .biz-card__remove,
   .biz-card__probe {
     inline-size: 44px;

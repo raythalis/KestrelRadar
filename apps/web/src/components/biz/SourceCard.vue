@@ -1,33 +1,36 @@
 <!-- SourceCard：数据源（发现来源）卡片（业务组件层）。
-     状态：未试过 / 有内容(ok) / 通但空(warn) / 不通(err) / 试抓中(busy) / 停用 / 不可用。
-     只出事件，不碰 store。 -->
+     结构跟 ChannelCard 对齐：右上角 ×＝删除（二级确认由页面做）、点整张卡片＝编辑、不再摆底部按钮行。
+     状态块（颜色 + 短标签）本身就是「抓取测试」的入口：点它试抓，抓取中转圈且不给再点；
+     还没有结果时它就显示「抓取测试」。停用的源不给抓。
+     没有左侧色条：状态只由状态块的颜色表达（ChannelCard 才用左侧色条）。
+     卡上不写实例地址、已收条数、解释性提示——要么在编辑里，要么由状态自己说。
+     只出事件，不碰 store：数据、试抓结果与写操作都由页面负责。 -->
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-withDefaults(
+import AppStatus from '@/components/app/AppStatus.vue'
+import AppSwitch from '@/components/app/AppSwitch.vue'
+
+const props = withDefaults(
   defineProps<{
     name: string
-    /** 来源类型文案（RSSHub 路由 / 网页 / …） */
+    /** 来源类型文案（RSSHub 路由 / RSS 源 / 网页） */
     kindLabel: string
     /** 来源图标（mdi-xxx） */
     icon?: string
     enabled: boolean
     /** 抓取目标：路由路径或网址 */
     target: string
-    /** 实例地址（RSSHub 基址等） */
-    instance?: string
     /** 采集频率（已格式化，如"每 30 分钟"） */
     frequency?: string
     tone?: 'ok' | 'warn' | 'err' | 'neutral'
+    /** 状态短标签；还没抓过时页面传「抓取测试」 */
     statusText: string
-    /** 失败/警告的说明文字 */
-    message?: string
-    /** 最近一次抓到的条目数 */
-    foundItemCount?: number
+    /** 抓取中 */
     busy?: boolean
-    disabled?: boolean
   }>(),
-  { icon: 'mdi-rss', tone: 'neutral', busy: false, disabled: false },
+  { icon: 'mdi-rss', tone: 'neutral', frequency: undefined, busy: false },
 )
 
 const emit = defineEmits<{
@@ -38,17 +41,20 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+/** 抓取中或已停用都不给再抓 */
+const probeDisabled = computed(() => props.busy || !props.enabled)
 </script>
 
 <template>
   <div
-    class="biz-card"
-    :class="[`biz-card--${tone}`, { 'is-off': !enabled, 'is-disabled': disabled }]"
-    :role="disabled ? undefined : 'button'"
-    :tabindex="disabled ? undefined : 0"
+    class="biz-card biz-card--no-bar"
+    :class="[`biz-card--${tone}`, { 'is-off': !enabled }]"
+    role="button"
+    tabindex="0"
     data-test="source-card"
-    @click="disabled ? undefined : emit('edit')"
-    @keydown.enter.prevent="disabled ? undefined : emit('edit')"
+    @click="emit('edit')"
+    @keydown.enter.prevent="emit('edit')"
   >
     <div class="biz-card__head">
       <span class="biz-card__icon" data-test="source-icon">
@@ -59,66 +65,47 @@ const { t } = useI18n()
         <span class="biz-card__kind" data-test="source-kind">{{ kindLabel }}</span>
       </span>
       <span class="app-spacer" />
+      <button
+        type="button"
+        class="biz-card__remove"
+        data-test="source-delete"
+        :title="t('common.delete')"
+        :aria-label="t('common.delete')"
+        @click.stop="emit('delete')"
+      >
+        <v-icon size="16">mdi-close</v-icon>
+      </button>
+    </div>
+
+    <div class="biz-card__body">
+      <button
+        type="button"
+        class="biz-card__chipbtn"
+        data-test="source-test"
+        :title="t('discovery.test')"
+        :aria-label="t('discovery.test')"
+        :aria-busy="busy || undefined"
+        :disabled="probeDisabled"
+        @click.stop="emit('test')"
+      >
+        <AppStatus :tone="tone" :busy="busy" data-test="source-status">{{ statusText }}</AppStatus>
+      </button>
+      <span class="biz-card__sub biz-card__sub--mono" data-test="source-target">{{ target }}</span>
+    </div>
+
+    <div class="biz-card__foot" data-test="source-foot">
+      <span v-if="frequency" class="biz-card__meta" data-test="source-frequency">
+        {{ frequency }}
+      </span>
+      <span class="app-spacer" />
       <span @click.stop>
         <AppSwitch
           :model-value="enabled"
-          :disabled="disabled"
           :aria-label="enabled ? t('common.enabled') : t('common.disabled')"
           data-test="source-enabled"
           @update:model-value="(value: boolean) => emit('toggle', value)"
         />
       </span>
-    </div>
-
-    <div class="biz-card__body">
-      <AppStatus :tone="tone" :busy="busy" data-test="source-status">{{ statusText }}</AppStatus>
-      <span class="biz-card__sub biz-card__sub--mono" data-test="source-target">{{ target }}</span>
-      <span v-if="instance" class="biz-card__meta" data-test="source-instance">{{ instance }}</span>
-      <AppHint
-        v-if="message"
-        :tone="tone === 'ok' ? 'info' : tone === 'neutral' ? 'info' : tone"
-        data-test="source-message"
-      >
-        {{ message }}
-      </AppHint>
-    </div>
-
-    <div class="biz-card__foot">
-      <span v-if="frequency" class="biz-card__meta" data-test="source-frequency">{{
-        frequency
-      }}</span>
-      <span v-if="foundItemCount !== undefined" class="biz-card__meta" data-test="source-count">
-        {{ t('discovery.itemCount', { n: foundItemCount }) }}
-      </span>
-      <span class="app-spacer" />
-      <AppButton
-        size="sm"
-        variant="ghost"
-        :loading="busy"
-        :disabled="disabled || !enabled"
-        data-test="source-test"
-        @click.stop="emit('test')"
-      >
-        {{ t('discovery.test') }}
-      </AppButton>
-      <AppButton
-        size="sm"
-        variant="ghost"
-        :disabled="disabled"
-        data-test="source-edit"
-        @click.stop="emit('edit')"
-      >
-        {{ t('common.edit') }}
-      </AppButton>
-      <AppButton
-        size="sm"
-        variant="danger"
-        :disabled="disabled"
-        data-test="source-delete"
-        @click.stop="emit('delete')"
-      >
-        {{ t('common.delete') }}
-      </AppButton>
     </div>
   </div>
 </template>

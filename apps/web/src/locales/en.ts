@@ -71,7 +71,7 @@ export default {
     edit: 'Edit discovery',
     delete: 'Delete discovery',
     deleteBody: 'Only this discovery is removed; its items and events are kept.',
-    test: 'Probe',
+    test: 'Test fetch',
     routeLayer: 'Route',
     contentLayer: 'Content',
     nextRun: 'Next fetch: ',
