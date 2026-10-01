@@ -354,7 +354,6 @@ type DemoMonitor = {
   excludeCount: number
   intentText: string
   sensitivityLabel: string
-  boundActionsLabel: string
   enabled: boolean
 }
 function initialMonitors(): DemoMonitor[] {
@@ -370,7 +369,6 @@ function initialMonitors(): DemoMonitor[] {
       excludeCount: 2,
       intentText: '',
       sensitivityLabel: t('monitor.sensitivity.medium'),
-      boundActionsLabel: '',
       enabled: true,
     },
     {
@@ -383,7 +381,6 @@ function initialMonitors(): DemoMonitor[] {
       excludeCount: 0,
       intentText: c('demo.monitor.intent'),
       sensitivityLabel: t('monitor.sensitivity.high'),
-      boundActionsLabel: '',
       enabled: true,
     },
     {
@@ -396,7 +393,6 @@ function initialMonitors(): DemoMonitor[] {
       excludeCount: 0,
       intentText: '',
       sensitivityLabel: t('monitor.sensitivity.low'),
-      boundActionsLabel: t('monitor.onlyActions', { names: c('demo.action.push') }),
       enabled: true,
     },
     {
@@ -409,7 +405,6 @@ function initialMonitors(): DemoMonitor[] {
       excludeCount: 0,
       intentText: '',
       sensitivityLabel: t('monitor.sensitivity.medium'),
-      boundActionsLabel: '',
       enabled: false,
     },
   ]
@@ -1079,7 +1074,6 @@ async function confirmChannelDelete(): Promise<void> {
                     :exclude-count="monitor.excludeCount"
                     :intent-text="monitor.intentText"
                     :sensitivity-label="monitor.sensitivityLabel"
-                    :bound-actions-label="monitor.boundActionsLabel"
                     :enabled="monitor.enabled"
                     @delete="pendingMonitor = monitor"
                     @toggle="(value: boolean) => toggleMonitor(monitor, value)"

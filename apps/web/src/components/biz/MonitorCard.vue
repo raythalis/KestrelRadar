@@ -26,8 +26,6 @@ const props = withDefaults(
     intentText?: string
     /** 灵敏度文案（宽松 / 标准 / 严格） */
     sensitivityLabel: string
-    /** 「仅走 xxx」；跟随分组时为空 */
-    boundActionsLabel?: string
     enabled: boolean
   }>(),
   {
@@ -36,7 +34,6 @@ const props = withDefaults(
     matchLabel: '',
     excludeCount: 0,
     intentText: '',
-    boundActionsLabel: '',
   },
 )
 
@@ -108,9 +105,6 @@ const restKeywordCount = computed(() => Math.max(0, props.keywords.length - VISI
       </span>
       <span v-if="excludeCount" class="biz-card__meta" data-test="monitor-excludes">
         {{ t('monitor.excludeCount', { n: excludeCount }) }}
-      </span>
-      <span v-if="boundActionsLabel" class="biz-card__meta" data-test="monitor-bound-actions">
-        {{ boundActionsLabel }}
       </span>
       <span class="app-spacer" />
       <span @click.stop>

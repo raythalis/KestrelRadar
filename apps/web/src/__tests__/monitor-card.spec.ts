@@ -69,21 +69,17 @@ describe('MonitorCard', () => {
     expect(wrapper.find('[data-test="monitor-intent"]').text()).toBe('大模型发布与开源项目')
   })
 
-  it('卡脚：灵敏度、排除词数量、仅走指定动作，开关在右下', async () => {
-    const wrapper = mountCard({
-      excludeCount: 2,
-      boundActionsLabel: '仅走 推给 Telegram',
-    })
+  it('卡脚：灵敏度、排除词数量，开关在右下', async () => {
+    const wrapper = mountCard({ excludeCount: 2 })
     const foot = wrapper.find('[data-test="monitor-foot"]')
     expect(foot.find('[data-test="monitor-sensitivity"]').text()).toBe('灵敏度 标准')
     expect(foot.find('[data-test="monitor-excludes"]').text()).toBe('排除 2 个词')
-    expect(foot.find('[data-test="monitor-bound-actions"]').text()).toBe('仅走 推给 Telegram')
 
     await wrapper.findComponent({ name: 'VSwitch' }).vm.$emit('update:modelValue', false)
     expect(wrapper.emitted('toggle')).toEqual([[false]])
   })
 
-  it('没有排除词、不绑定动作时不占位置', () => {
+  it('没有排除词时卡脚不占位置；推送目标不上卡', () => {
     const foot = mountCard().find('[data-test="monitor-foot"]')
     expect(foot.find('[data-test="monitor-excludes"]').exists()).toBe(false)
     expect(foot.find('[data-test="monitor-bound-actions"]').exists()).toBe(false)
