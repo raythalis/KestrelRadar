@@ -28,3 +28,19 @@ if (!('matchMedia' in globalThis)) {
 if (!('scrollTo' in globalThis)) {
   Object.defineProperty(globalThis, 'scrollTo', { value: () => undefined, writable: true })
 }
+
+// jsdom 没有 visualViewport：Vuetify 的浮层（弹窗/菜单）定位会用到它，缺了会直接抛错
+if (!('visualViewport' in globalThis)) {
+  const stub = {
+    width: 1024,
+    height: 768,
+    offsetLeft: 0,
+    offsetTop: 0,
+    pageLeft: 0,
+    pageTop: 0,
+    scale: 1,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }
+  Object.defineProperty(globalThis, 'visualViewport', { value: stub, writable: true })
+}

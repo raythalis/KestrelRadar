@@ -28,6 +28,7 @@ export default {
     cancel: '取消',
     delete: '删除',
     disabled: '已停用',
+    close: '关闭',
   },
   config: {
     title: '配置管理',

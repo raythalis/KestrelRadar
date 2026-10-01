@@ -5,6 +5,8 @@ import { useUiStore } from '@/stores/ui'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
 import AppShell from '@/layouts/AppShell.vue'
+// App* 组件是全局注册的，挂载外壳也要带上这个插件
+import appComponents from '@/plugins/components'
 import i18n from '@/plugins/i18n'
 // 用真实主题：AppShell 会在 kestrelLight / kestrelDark 之间切
 import vuetify from '@/plugins/vuetify'
@@ -31,7 +33,7 @@ function mountShell() {
     router,
     pinia,
     wrapper: mount(AppShell, {
-      global: { plugins: [pinia, vuetify, i18n, router] },
+      global: { plugins: [pinia, vuetify, i18n, router, appComponents] },
     }),
   }
 }
@@ -86,14 +88,14 @@ describe('AppShell', () => {
     for (const name of ['dashboard', 'config', 'channels', 'models', 'settings']) {
       expect(wrapper.find(`[data-test="tab-${name}"]`).exists()).toBe(true)
     }
-    expect(wrapper.find('.k-rail.is-open').exists()).toBe(false)
+    expect(wrapper.find('.app-rail.is-open').exists()).toBe(false)
 
     await wrapper.get('[data-test="drawer-toggle"]').trigger('click')
-    expect(wrapper.find('.k-rail.is-open').exists()).toBe(true)
+    expect(wrapper.find('.app-rail.is-open').exists()).toBe(true)
     expect(wrapper.find('[data-test="drawer-scrim"]').exists()).toBe(true)
 
     await wrapper.get('[data-test="drawer-scrim"]').trigger('click')
-    expect(wrapper.find('.k-rail.is-open').exists()).toBe(false)
+    expect(wrapper.find('.app-rail.is-open').exists()).toBe(false)
   })
 
   it('顶栏面包屑跟着当前路由走', async () => {

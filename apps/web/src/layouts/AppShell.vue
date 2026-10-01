@@ -1,19 +1,16 @@
-<!-- 外壳：桌面左侧导航 + 顶栏；窄屏是抽屉导航 + 底部五个 tab。
-     内容区全宽，不设最大宽度（之前限过 1320px，右侧会留白，已去掉）。 -->
+<!-- 外壳：只负责组织 AppSidebar + AppHeader + 内容区，自己不写样式。
+     桌面是常驻左栏，窄屏是抽屉导航 + 底部导航；顶栏管当前页标题、语言与主题三态。 -->
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 
+import type { AppNavItem } from '@/components/app/types'
 import { THEME_PREFERENCES, applyThemeVars, findTheme, type ThemePreference } from '@/design/tokens'
 import type { AppLocale } from '@/plugins/i18n'
 import { useUiStore } from '@/stores/ui'
 
-const ui = useUiStore()
-const route = useRoute()
-const { t, locale } = useI18n()
-
-const navItems: { name: string; icon: string }[] = [
+const NAV: { name: string; icon: string }[] = [
   { name: 'dashboard', icon: 'mdi-view-dashboard-outline' },
   { name: 'config', icon: 'mdi-tune-variant' },
   { name: 'channels', icon: 'mdi-bell-outline' },
@@ -27,12 +24,23 @@ const themeIcons: Record<ThemePreference, string> = {
   dark: 'mdi-weather-night',
 }
 
+const ui = useUiStore()
+const route = useRoute()
+const { t, locale } = useI18n()
+
+const drawerOpen = ref(false)
+
+const navItems = computed<AppNavItem[]>(() =>
+  NAV.map((item) => ({ ...item, label: t(`nav.${item.name}`) })),
+)
+
 const currentName = computed(() => String(route.name ?? 'dashboard'))
 // 开发用的 /design 不在产品导航里，标题单独给一个（它不在 locales 里，不该为它加产品文案）
 const currentTitle = computed(() =>
   route.meta.devOnly ? 'Design System' : t(`nav.${currentName.value}`),
 )
-const drawerOpen = ref(false)
+
+const brand = computed(() => ({ name: t('app.name'), tagline: t('app.tagline') }))
 
 // 界面语言以 store 为准（它管着持久化）：刷新后也要把存着的语言装回去
 watch(
@@ -85,90 +93,47 @@ function changeLocale(): void {
 
 <template>
   <v-app :theme="ui.theme">
-    <div class="k-shell" @keydown="onKeydown">
-      <button
-        v-if="drawerOpen"
-        type="button"
-        class="k-scrim"
-        data-test="drawer-scrim"
-        :aria-label="t('nav.closeMenu')"
-        @click="drawerOpen = false"
+    <div class="app-shell" :class="{ 'has-drawer-open': drawerOpen }" @keydown="onKeydown">
+      <AppSidebar
+        :items="navItems"
+        :open="drawerOpen"
+        :brand="brand"
+        :close-label="t('nav.closeMenu')"
+        @close="drawerOpen = false"
       />
 
-      <aside class="k-rail" :class="{ 'is-open': drawerOpen }">
-        <div class="k-rail__brand">
-          <span class="k-rail__name" data-test="app-name">{{ t('app.name') }}</span>
-          <span class="k-rail__tagline">{{ t('app.tagline') }}</span>
-        </div>
-
-        <nav class="k-rail__nav">
-          <router-link
-            v-for="item in navItems"
-            :key="item.name"
-            :to="{ name: item.name }"
-            class="k-rail__item"
-            :class="{ 'is-active': currentName === item.name }"
-            :data-test="`nav-${item.name}`"
-          >
-            <v-icon size="18">{{ item.icon }}</v-icon>
-            <span>{{ t(`nav.${item.name}`) }}</span>
-          </router-link>
-        </nav>
-      </aside>
-
-      <main class="k-main">
-        <header class="k-topbar">
-          <button
-            type="button"
-            class="k-iconbtn"
-            data-test="drawer-toggle"
-            :aria-label="t('nav.openMenu')"
-            @click="drawerOpen = !drawerOpen"
-          >
-            <v-icon size="18">mdi-menu</v-icon>
-          </button>
-
-          <span class="k-topbar__title" data-test="page-title">{{ currentTitle }}</span>
-          <span class="k-spacer" />
-
-          <button type="button" class="k-langbtn" data-test="locale-btn" @click="changeLocale">
-            {{ ui.locale === 'zh-CN' ? 'EN' : '中文' }}
-          </button>
-
-          <div class="k-seg" data-test="theme-seg">
-            <button
-              v-for="option in THEME_PREFERENCES"
-              :key="option.value"
-              type="button"
-              :class="{ on: ui.preference === option.value }"
-              :data-test="`theme-${option.value}`"
-              :title="t(option.labelKey)"
-              :aria-label="t(option.labelKey)"
-              @click="ui.setPreference(option.value)"
-            >
-              <v-icon size="14">{{ themeIcons[option.value] }}</v-icon>
+      <main class="app-shell__main">
+        <AppHeader
+          :title="currentTitle"
+          :menu-label="t('nav.openMenu')"
+          @toggle-menu="drawerOpen = !drawerOpen"
+        >
+          <template #actions>
+            <button type="button" class="app-langbtn" data-test="locale-btn" @click="changeLocale">
+              {{ ui.locale === 'zh-CN' ? 'EN' : '中文' }}
             </button>
-          </div>
-        </header>
 
-        <div class="k-main__inner" data-test="shell-body">
+            <div class="app-seg" data-test="theme-seg">
+              <button
+                v-for="option in THEME_PREFERENCES"
+                :key="option.value"
+                type="button"
+                :class="{ on: ui.preference === option.value }"
+                :data-test="`theme-${option.value}`"
+                :title="t(option.labelKey)"
+                :aria-label="t(option.labelKey)"
+                @click="ui.setPreference(option.value)"
+              >
+                <v-icon size="14">{{ themeIcons[option.value] }}</v-icon>
+              </button>
+            </div>
+          </template>
+        </AppHeader>
+
+        <div class="app-shell__content" data-test="shell-body">
           <router-view />
         </div>
       </main>
-
-      <nav class="k-tabbar">
-        <router-link
-          v-for="item in navItems"
-          :key="item.name"
-          :to="{ name: item.name }"
-          class="k-tabbar__item"
-          :class="{ 'is-active': currentName === item.name }"
-          :data-test="`tab-${item.name}`"
-        >
-          <v-icon size="18">{{ item.icon }}</v-icon>
-          <span>{{ t(`nav.${item.name}`) }}</span>
-        </router-link>
-      </nav>
     </div>
   </v-app>
 </template>

@@ -51,7 +51,7 @@
 .app-page__note {
   margin-top: var(--k-space-1);
   font-size: var(--k-fs-body);
-  color: var(--k-text-muted);
+  color: var(--k-muted);
   max-width: 78ch;
 }
 
@@ -83,7 +83,7 @@
 
 .app-section__note {
   font-size: var(--k-fs-meta);
-  color: var(--k-text-muted);
+  color: var(--k-muted);
 }
 
 .app-section__actions {
@@ -118,7 +118,7 @@
 
 .app-card__note {
   font-size: var(--k-fs-meta);
-  color: var(--k-text-muted);
+  color: var(--k-muted);
 }
 
 .app-card__body {
@@ -201,7 +201,7 @@
 .app-btn--ghost {
   background: transparent;
   border-color: transparent;
-  color: var(--k-text-muted);
+  color: var(--k-muted);
 }
 
 .app-btn--ghost:hover {
@@ -225,9 +225,10 @@
   font-size: var(--k-fs-meta);
 }
 
-.app-btn:disabled,
-.app-btn[aria-disabled='true'] {
-  opacity: 0.45;
+/* 真禁用一律去色（连主色的蓝也去掉），跟「加载中保持主色 + 转圈」一眼区分 */
+.app-btn:disabled {
+  filter: grayscale(1);
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -246,7 +247,7 @@
 
 .app-field__hint {
   font-size: var(--k-fs-meta);
-  color: var(--k-text-muted);
+  color: var(--k-muted);
 }
 
 .app-field__error {
@@ -282,7 +283,7 @@
   border-radius: var(--k-radius-pill);
   background: var(--k-panel);
   font-size: var(--k-fs-label);
-  color: var(--k-text-muted);
+  color: var(--k-muted);
   cursor: default;
 }
 
@@ -329,7 +330,7 @@
   border-radius: var(--k-radius-sm);
   background: var(--k-panel-2);
   font-size: var(--k-fs-label);
-  color: var(--k-text-muted);
+  color: var(--k-muted);
   white-space: nowrap;
 }
 
@@ -359,7 +360,7 @@
   font-family: var(--k-font-mono);
   font-size: var(--k-fs-label);
   font-variant-numeric: tabular-nums;
-  color: var(--k-text-muted);
+  color: var(--k-muted);
 }
 
 /* ---------- EmptyState ---------- */
@@ -373,11 +374,11 @@
   border: 1px dashed var(--k-border);
   border-radius: var(--k-radius-md);
   text-align: center;
-  color: var(--k-text-muted);
+  color: var(--k-muted);
 }
 
 .app-empty__icon {
-  color: var(--k-text-faint);
+  color: var(--k-faint);
 }
 
 .app-empty__title {
@@ -423,7 +424,7 @@
 }
 
 .app-hint--info {
-  color: var(--k-text-muted);
+  color: var(--k-muted);
   background: var(--k-panel-2);
   border-color: var(--k-border);
 }
@@ -453,6 +454,351 @@
   border: 1px solid var(--k-border);
   border-radius: var(--k-radius-lg);
   box-shadow: var(--k-elev-2);
+}
+
+/* ---------- AppShell / AppSidebar / AppHeader：外壳布局组件 ---------- */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--k-bg);
+}
+
+.app-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  padding: 0;
+  border: 0;
+  background: rgb(0 0 0 / 40%);
+}
+
+.app-rail {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 30;
+  display: flex;
+  flex: 0 0 224px;
+  flex-direction: column;
+  width: 224px;
+  background: var(--k-rail);
+  border-right: 1px solid var(--k-border);
+  transform: translateX(-100%);
+  transition: transform 0.18s ease;
+}
+
+.app-rail.is-open {
+  transform: none;
+}
+
+.app-rail__brand {
+  display: flex;
+  flex: 0 0 48px;
+  align-items: center;
+  gap: 6px;
+  height: 48px;
+  padding-inline: 20px;
+  border-bottom: 1px solid var(--k-border);
+}
+
+.app-rail__name {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-fs-label);
+  font-weight: var(--k-fw-semibold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.app-rail__tagline {
+  font-family: var(--k-font-mono);
+  font-size: 10px;
+  color: var(--k-faint);
+}
+
+.app-rail__nav {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 6px 0;
+}
+
+.app-rail__item {
+  display: flex;
+  align-items: center;
+  gap: var(--k-space-3);
+  padding: 10px 20px;
+  font-size: var(--k-fs-body);
+  color: var(--k-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.app-rail__item:hover {
+  background: var(--k-panel-2);
+  color: var(--k-text);
+}
+
+.app-rail__item.is-active {
+  background: var(--k-accent-soft);
+  border-left-color: var(--k-accent);
+  color: var(--k-text);
+}
+
+.app-rail__foot {
+  flex: 0 0 auto;
+  padding: 12px 20px;
+  border-top: 1px solid var(--k-border);
+  font-family: var(--k-font-mono);
+  font-size: 10px;
+  color: var(--k-faint);
+}
+
+.app-shell__main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex: 0 0 48px;
+  align-items: center;
+  gap: var(--k-space-3);
+  height: 48px;
+  padding-inline: var(--k-space-4);
+  background: var(--k-panel);
+  border-bottom: 1px solid var(--k-border);
+}
+
+.app-topbar__title {
+  font-size: var(--k-fs-bodyLg);
+  font-weight: var(--k-fw-medium);
+}
+
+.app-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--k-space-2);
+}
+
+.app-topbar__menu {
+  margin-left: -6px;
+}
+
+.app-iconbtn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: var(--k-radius-md);
+  background: none;
+  color: var(--k-muted);
+  cursor: pointer;
+}
+
+.app-iconbtn:hover {
+  background: var(--k-panel-2);
+  color: var(--k-text);
+}
+
+.app-langbtn {
+  padding-inline: var(--k-space-1);
+  border: 0;
+  background: none;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-fs-label);
+  font-weight: var(--k-fw-medium);
+  color: var(--k-muted);
+  cursor: pointer;
+}
+
+.app-langbtn:hover {
+  color: var(--k-text);
+}
+
+.app-seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--k-radius-md);
+  background: var(--k-panel-2);
+}
+
+.app-seg button {
+  display: grid;
+  place-items: center;
+  padding: 5px;
+  border: 0;
+  border-radius: var(--k-radius-sm);
+  background: none;
+  color: var(--k-muted);
+  cursor: pointer;
+}
+
+.app-seg button.on {
+  background: var(--k-panel);
+  color: var(--k-text);
+  box-shadow: var(--k-elev-1);
+}
+
+.app-shell__content {
+  flex: 1 1 auto;
+  padding: var(--k-space-4) var(--k-space-4) calc(104px + env(safe-area-inset-bottom));
+  background: var(--k-bg);
+}
+
+.app-tabbar {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 10;
+  display: flex;
+  background: var(--k-panel);
+  border-top: 1px solid var(--k-border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.app-tabbar__item {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--k-space-1);
+  min-height: var(--k-control-h-touch);
+  padding: 8px 0 10px;
+  font-size: 10px;
+  color: var(--k-muted);
+  text-decoration: none;
+}
+
+.app-tabbar__item.is-active {
+  color: var(--k-accent);
+}
+
+/* ---------- 组件补件：转圈、骨架行、只读态、弹窗状态 ---------- */
+
+.app-spinner {
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentcolor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: k-ds-spin 0.7s linear infinite;
+}
+
+.app-btn--block {
+  width: 100%;
+}
+
+.app-btn.is-loading {
+  /* 加载中不变灰：转圈 + 主色，跟真禁用区分开 */
+  opacity: 1;
+  cursor: progress;
+}
+
+.app-field__row {
+  display: flex;
+  align-items: center;
+  gap: var(--k-space-2);
+}
+
+.app-field__row > .v-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.app-field__req {
+  margin-left: 2px;
+  color: var(--k-err);
+}
+
+.v-field.is-readonly .v-field__input {
+  color: var(--k-muted);
+}
+
+.app-switch-row__text {
+  min-width: 0;
+}
+
+.app-switch-row.is-disabled {
+  opacity: 0.6;
+}
+
+.app-status--neutral .app-status__dot {
+  background: var(--k-faint);
+}
+
+.app-status--info .app-status__dot {
+  background: var(--k-blue);
+}
+
+.app-card.is-interactive {
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.app-card.is-interactive:hover {
+  border-color: color-mix(in srgb, var(--k-border) 45%, var(--k-text) 25%);
+}
+
+.app-card.is-disabled {
+  opacity: 0.6;
+}
+
+.app-card__body--bare {
+  padding: 0;
+}
+
+.app-empty__actions {
+  margin-top: var(--k-space-2);
+}
+
+.app-skeleton-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-space-2);
+}
+
+.app-skeleton--dot {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.app-skeleton-row {
+  display: flex;
+  gap: var(--k-space-3);
+  align-items: flex-start;
+}
+
+.app-skeleton-row__lines {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.app-dialog {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - var(--k-space-6));
+}
+
+.app-dialog__state {
+  display: flex;
+  align-items: center;
+  gap: var(--k-space-2);
+  color: var(--k-muted);
 }
 
 /* ---------- Vuetify 对齐：DS 是唯一来源，Vuetify 默认值在这里被拉回来 ---------- */
@@ -526,14 +872,26 @@
 }
 
 @media (max-width: 899px) {
-  /* 触摸端：控件与行高抬到可点的大小 */
-  .app-btn {
+  /* 触摸端：一律抬到 44px 可点高度。
+     桌面上的 32px 小号按钮只在指针设备出现；手指点的地方不小于 44px。 */
+  .app-btn,
+  .app-btn--sm {
     height: var(--k-control-h-touch);
     padding-inline: var(--k-space-4);
   }
 
-  .app-btn--sm {
-    height: var(--k-control-h);
+  .app-status--action,
+  .app-rail__item,
+  .app-rail__brand,
+  .app-langbtn,
+  .app-seg button,
+  .v-switch {
+    min-height: var(--k-control-h-touch);
+  }
+
+  .app-iconbtn {
+    width: var(--k-control-h-touch);
+    height: var(--k-control-h-touch);
   }
 
   .app-field-row {
@@ -542,8 +900,9 @@
 }
 
 @media (min-width: 900px) {
+  /* ≥900：外壳已经给了 24px 边距，页面不再叠加第二层留白（避免双重 gutter） */
   .app-page {
-    padding: var(--k-pad-page);
+    padding: 0;
   }
 
   .app-grid--stats {
@@ -557,9 +916,58 @@
   }
 }
 
+@media (min-width: 900px) {
+  /* 桌面：左栏常驻，不需要抽屉与底部导航 */
+  .app-rail {
+    position: sticky;
+    inset: auto;
+    transform: none;
+  }
+
+  .app-scrim,
+  .app-tabbar,
+  .app-topbar__menu,
+  .app-topbar__title {
+    display: none !important;
+  }
+
+  .app-topbar {
+    padding-inline: var(--k-space-5);
+  }
+
+  .app-shell__content {
+    padding: var(--k-space-5) var(--k-space-5) 40px;
+  }
+}
+
+/* 移动端弹窗贴底成抽屉：从小屏底部升起，顶部圆角，别盖满整屏 */
+@media (max-width: 899px) {
+  .v-overlay__content.app-dialog__sheet {
+    align-items: flex-end;
+    align-self: flex-end;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .v-overlay__content.app-dialog__sheet > .app-dialog {
+    width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    border-radius: var(--k-radius-lg) var(--k-radius-lg) 0 0;
+    border-bottom: 0;
+  }
+}
+
+@keyframes k-ds-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (min-width: 1440px) {
-  /* 宽屏：不放大内容，只给更多留白 */
+  /* 宽屏只放宽内容宽度上限（AppPage 的 width 档位），不再叠加第二层留白 */
   .app-page {
-    padding-inline: var(--k-space-7);
+    padding-inline: 0;
   }
 }

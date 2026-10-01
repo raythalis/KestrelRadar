@@ -28,6 +28,7 @@ export default {
     cancel: 'Cancel',
     delete: 'Delete',
     disabled: 'Disabled',
+    close: 'Close',
   },
   config: {
     title: 'Configuration',
