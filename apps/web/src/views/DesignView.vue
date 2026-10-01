@@ -12,6 +12,7 @@ import { designGroups, spaceItems } from '@/design/preview'
 import ActionCard from '@/components/biz/ActionCard.vue'
 import MonitorCard from '@/components/biz/MonitorCard.vue'
 import ChannelCard from '@/components/biz/ChannelCard.vue'
+import ChannelDialog from '@/components/biz/ChannelDialog.vue'
 import ConfirmDialog from '@/components/biz/ConfirmDialog.vue'
 import CronPicker from '@/components/biz/CronPicker.vue'
 import FormDialog from '@/components/biz/FormDialog.vue'
@@ -19,6 +20,7 @@ import SourceCard from '@/components/biz/SourceCard.vue'
 import { useUiStore } from '@/stores/ui'
 import DesignGroup from '@/views/design/DesignGroup.vue'
 import { makeDesignCopy, makeDesignLists, type DesignCopyKey } from '@/design/lab-copy'
+import type { ChannelChat, ChannelDialogValues } from '@/components/biz/types'
 
 const ui = useUiStore()
 const { t, locale } = useI18n()
@@ -103,6 +105,10 @@ type DemoChannel = {
   probe: Probe
   /** 演示用：这个渠道点测试会落成什么结果 */
   result?: 'ok' | 'warn' | 'fail'
+  /** 弹窗字段：Telegram 的会话、Webhook 的地址、密钥配没配过 */
+  chatId?: string
+  url?: string
+  hasSecret: boolean
 }
 function initialChannels(): DemoChannel[] {
   return [
@@ -114,6 +120,8 @@ function initialChannels(): DemoChannel[] {
       tone: 'ok',
       probe: 'ok',
       result: 'ok',
+      chatId: '1231487971',
+      hasSecret: true,
     },
     {
       id: 'c2',
@@ -123,6 +131,8 @@ function initialChannels(): DemoChannel[] {
       tone: 'warn',
       probe: 'warn',
       result: 'warn',
+      chatId: '-1001234567890',
+      hasSecret: true,
     },
     {
       id: 'c3',
@@ -132,6 +142,8 @@ function initialChannels(): DemoChannel[] {
       tone: 'neutral',
       probe: 'idle',
       result: 'ok',
+      url: 'https://example.com/hook',
+      hasSecret: true,
     },
     {
       id: 'c4',
@@ -141,6 +153,8 @@ function initialChannels(): DemoChannel[] {
       tone: 'neutral',
       probe: 'idle',
       result: 'ok',
+      url: 'https://example.com/hook',
+      hasSecret: false,
     },
     {
       id: 'c5',
@@ -150,6 +164,8 @@ function initialChannels(): DemoChannel[] {
       tone: 'err',
       probe: 'fail',
       result: 'fail',
+      chatId: '1231487971',
+      hasSecret: true,
     },
   ]
 }
@@ -184,26 +200,67 @@ function runChannelTest(channel: DemoChannel): void {
   }, 900)
 }
 
-// 点卡片＝编辑：保存后把圆点退回未测（凭证/目标可能改了，旧结论作废）
+// 点卡片＝编辑、点「新建渠道」＝新建：都走同一个弹窗
 const editingChannel = ref<DemoChannel | null>(null)
-const editOpen = computed({
-  get: () => editingChannel.value !== null,
+const creatingChannel = ref(false)
+const channelDialogOpen = computed({
+  get: () => editingChannel.value !== null || creatingChannel.value,
   set: (value: boolean) => {
-    if (!value) editingChannel.value = null
+    if (value) return
+    editingChannel.value = null
+    creatingChannel.value = false
   },
 })
-const editName = ref('')
 function openChannelEdit(channel: DemoChannel): void {
   editingChannel.value = channel
-  editName.value = channel.name
+  creatingChannel.value = false
+  demoChats.value = []
 }
-function submitChannelEdit(): void {
-  const channel = editingChannel.value
-  if (!channel) return
-  channel.name = editName.value
-  channel.probe = 'idle'
-  channel.tone = 'neutral'
+function openChannelCreate(): void {
   editingChannel.value = null
+  creatingChannel.value = true
+  demoChats.value = []
+}
+/** 演示「读取会话」：真接口是拿 token 调 Telegram getUpdates */
+const demoChats = ref<ChannelChat[]>([])
+const chatsLoading = ref(false)
+function readChats(): void {
+  chatsLoading.value = true
+  window.setTimeout(() => {
+    demoChats.value = [
+      { id: '1231487971', title: c('demo.chat.me') },
+      { id: '1001234567890', title: c('demo.chat.group') },
+    ]
+    chatsLoading.value = false
+  }, 800)
+}
+function submitChannelEdit(values: ChannelDialogValues): void {
+  const channel = editingChannel.value
+  if (channel) {
+    channel.name = values.name
+    channel.type = values.type
+    channel.enabled = values.enabled
+    channel.chatId = values.chatId
+    channel.url = values.url
+    if (values.secret.trim()) channel.hasSecret = true
+    // 凭证/目标可能改了，旧的连通结论作废
+    channel.probe = 'idle'
+    channel.tone = 'neutral'
+  } else {
+    demoChannels.value.push({
+      id: `c${demoChannels.value.length + 1}-${Date.now()}`,
+      name: values.name,
+      type: values.type,
+      enabled: values.enabled,
+      tone: 'neutral',
+      probe: 'idle',
+      result: 'ok',
+      chatId: values.chatId,
+      url: values.url,
+      hasSecret: values.secret.trim().length > 0,
+    })
+  }
+  channelDialogOpen.value = false
 }
 
 // 数据源演示：点状态块＝抓取测试（转圈 900ms 后落成结果）；点卡片＝编辑；右上角 ×＝删除
@@ -1017,6 +1074,9 @@ async function confirmChannelDelete(): Promise<void> {
                     @delete="pendingChannel = channel"
                   />
                 </div>
+                <AppButton size="sm" data-test="channel-create" @click="openChannelCreate()">
+                  {{ t('channel.add') }}
+                </AppButton>
                 <AppButton
                   v-if="demoDirty"
                   size="sm"
@@ -1205,11 +1265,19 @@ async function confirmChannelDelete(): Promise<void> {
       @confirm="confirmSourceDelete"
     />
 
-    <FormDialog v-model="editOpen" :title="c('demo.channelEdit')" @submit="submitChannelEdit">
-      <div class="app-stack">
-        <AppInput v-model="editName" :label="t('common.name')" />
-      </div>
-    </FormDialog>
+    <ChannelDialog
+      v-model="channelDialogOpen"
+      :name="editingChannel?.name ?? ''"
+      :type="editingChannel?.type ?? 'telegram'"
+      :enabled="editingChannel?.enabled ?? true"
+      :chat-id="editingChannel?.chatId ?? ''"
+      :url="editingChannel?.url ?? ''"
+      :has-secret="editingChannel?.hasSecret ?? false"
+      :chats="demoChats"
+      :chats-loading="chatsLoading"
+      @read-chats="readChats"
+      @submit="submitChannelEdit"
+    />
 
     <ConfirmDialog
       v-model="channelDeleteOpen"
