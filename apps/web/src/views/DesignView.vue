@@ -158,6 +158,7 @@ const demoChannels = ref<DemoChannel[]>(initialChannels())
 watch(locale, () => {
   demoChannels.value = initialChannels()
   demoSources.value = initialSources()
+  demoActions.value = initialActions()
 })
 
 // 演示里改过的东西（删过卡、点过测试）才显示复位按钮
@@ -338,6 +339,91 @@ function runSourceTest(source: DemoSource): void {
     source.tone = source.result
     source.statusText = SOURCE_LABELS[source.result]
   }, 900)
+}
+
+// 动作卡演示：点卡片＝编辑、右上角 ×＝删除（二级确认）、卡脚开关
+type DemoAction = {
+  id: string
+  name: string
+  icon: string
+  triggerLabel: string
+  cron: string | null
+  nextRunAt: string | null
+  channelName?: string
+  templateName?: string
+  enabled: boolean
+}
+function initialActions(): DemoAction[] {
+  return [
+    {
+      id: 'a1',
+      name: c('demo.action.push'),
+      icon: 'mdi-bell-ring-outline',
+      triggerLabel: c('demo.trigger.realtime'),
+      cron: null,
+      nextRunAt: null,
+      channelName: c('demo.channelName'),
+      templateName: c('demo.templateDefault'),
+      enabled: true,
+    },
+    {
+      id: 'a2',
+      name: c('demo.action.digest'),
+      icon: 'mdi-clock-outline',
+      triggerLabel: c('demo.trigger.digest'),
+      cron: '0 8 * * *',
+      nextRunAt: inMinutes(480),
+      channelName: c('demo.channelName'),
+      templateName: c('demo.templateBrief'),
+      enabled: true,
+    },
+    {
+      id: 'a3',
+      name: c('demo.action.missing'),
+      icon: 'mdi-bell-off-outline',
+      triggerLabel: c('demo.trigger.realtime'),
+      cron: null,
+      nextRunAt: null,
+      templateName: c('demo.templateDefault'),
+      enabled: true,
+    },
+    {
+      id: 'a4',
+      name: c('demo.action.off'),
+      icon: 'mdi-bell-outline',
+      triggerLabel: c('demo.trigger.realtime'),
+      cron: null,
+      nextRunAt: null,
+      channelName: c('demo.channelName'),
+      enabled: false,
+    },
+  ]
+}
+const demoActions = ref<DemoAction[]>(initialActions())
+const pendingAction = ref<DemoAction | null>(null)
+const actionDeleteOpen = computed({
+  get: () => pendingAction.value !== null,
+  set: (value: boolean) => {
+    if (!value) pendingAction.value = null
+  },
+})
+const actionDeleteBusy = ref(false)
+async function confirmActionDelete(): Promise<void> {
+  actionDeleteBusy.value = true
+  await new Promise((resolve) => window.setTimeout(resolve, 400))
+  demoActions.value = demoActions.value.filter((a) => a.id !== pendingAction.value?.id)
+  actionDeleteBusy.value = false
+  pendingAction.value = null
+}
+const demoActionsDirty = computed(() => {
+  const base = initialActions()
+  return (
+    demoActions.value.length !== base.length ||
+    demoActions.value.some((a, index) => a.enabled !== base[index]?.enabled)
+  )
+})
+function toggleAction(action: DemoAction, value: boolean): void {
+  action.enabled = value
 }
 
 const pendingChannel = ref<DemoChannel | null>(null)
@@ -854,43 +940,31 @@ async function confirmChannelDelete(): Promise<void> {
                 </div>
               </AppCard>
 
-              <AppCard :note="c('states.action')">
+              <AppCard title="ActionCard" :note="c('states.action')">
                 <div class="app-card-grid">
                   <ActionCard
-                    :name="c('demo.action.push')"
-                    icon="mdi-bell-ring-outline"
-                    :trigger-label="c('demo.trigger.realtime')"
-                    :channel-name="c('demo.channelName')"
-                    :template-name="c('demo.templateDefault')"
-                    :enabled="true"
-                    :referenced-count="1"
+                    v-for="action in demoActions"
+                    :key="action.id"
+                    :name="action.name"
+                    :icon="action.icon"
+                    :trigger-label="action.triggerLabel"
+                    :cron="action.cron"
+                    :next-run-at="action.nextRunAt"
+                    :channel-name="action.channelName"
+                    :template-name="action.templateName"
+                    :enabled="action.enabled"
+                    @delete="pendingAction = action"
+                    @toggle="(value: boolean) => toggleAction(action, value)"
                   />
-                  <ActionCard
-                    :name="c('demo.action.digest')"
-                    icon="mdi-clock-outline"
-                    :trigger-label="c('demo.trigger.digest')"
-                    cron-expression="0 8 * * *"
-                    :channel-name="c('demo.channelName')"
-                    :template-name="c('demo.templateBrief')"
-                    :enabled="true"
-                    :referenced-count="2"
-                  />
-                  <ActionCard
-                    :name="c('demo.action.missing')"
-                    icon="mdi-bell-off-outline"
-                    :trigger-label="c('demo.trigger.realtime')"
-                    :template-name="c('demo.templateDefault')"
-                    :enabled="true"
-                    :referenced-count="1"
-                  />
-                  <ActionCard
-                    :name="c('demo.action.off')"
-                    icon="mdi-bell-outline"
-                    :trigger-label="c('demo.trigger.realtime')"
-                    :channel-name="c('demo.channelName')"
-                    :enabled="false"
-                    :referenced-count="0"
-                  />
+                </div>
+                <div v-if="demoActionsDirty" class="app-row-end">
+                  <AppButton
+                    size="sm"
+                    variant="ghost"
+                    @click="demoActions = initialActions()"
+                  >
+                    {{ c('demo.reset') }}
+                  </AppButton>
                 </div>
               </AppCard>
             </div>
@@ -949,6 +1023,14 @@ async function confirmChannelDelete(): Promise<void> {
         <CronPicker v-model="cronDaily" :label="c('field.every5Summary')" />
       </div>
     </FormDialog>
+
+    <ConfirmDialog
+      v-model="actionDeleteOpen"
+      :title="t('action.delete')"
+      :message="t('action.deleteBody')"
+      :busy="actionDeleteBusy"
+      @confirm="confirmActionDelete"
+    />
 
     <ConfirmDialog
       v-model="sourceDeleteOpen"

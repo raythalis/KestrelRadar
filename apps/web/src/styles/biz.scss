@@ -343,6 +343,11 @@
 }
 
 // 卡脚里的地址/表达式：等宽，读起来跟正文有区分
+// 缺渠道这类「配了但还不能跑」的一行用警示色，不另开提示框
+.biz-card__sub--warn {
+  color: var(--k-warn);
+}
+
 .biz-card__meta--mono {
   font-family: var(--k-font-mono);
 }
