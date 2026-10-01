@@ -29,7 +29,6 @@ export default {
     delete: '删除',
     disabled: '已停用',
     close: '关闭',
-    done: '完成',
     processing: '处理中…',
   },
   config: {
@@ -146,8 +145,6 @@ export default {
     referencedBy: '被 {n} 条监听引用',
   },
   cron: {
-    builder: '可视化',
-    builderTitle: '定时表达式',
     everyMinutes: '每 {n} 分钟',
     everyHours: '每 {n} 小时',
     everyHoursAt: '每 {n} 小时的第 {minute} 分',

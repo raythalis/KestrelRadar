@@ -1,9 +1,10 @@
 <!-- CronPicker：cron 表达式字段。
-     输入框直接编辑表达式，人话行即时翻译；右边的"可视化"按钮打开 cron 生成器
-     （@vue-js-cron/vuetify，MIT），按 分钟/小时/日/月/周 分段点选生成表达式。
+     输入框本身可以直接手打；点它也把生成器展开在字段下方
+     （@vue-js-cron/vuetify，MIT，按 分钟/小时/日/月/周 分段点选），
+     选完表达式回写到同一个输入框，不用先开弹窗、不占按钮位。
      只出事件，不碰 store。 -->
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, getCurrentInstance, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { CronVuetify } from '@vue-js-cron/vuetify'
 import '@vue-js-cron/vuetify/dist/vuetify.css'
@@ -25,10 +26,16 @@ const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
 const { t, locale } = useI18n()
 
-/** cron 生成器的开关（用弹窗外壳：菜单在窄屏下靠不住，弹窗两个尺寸都验过） */
-const builderOpen = ref(false)
+/** 生成器浮层开关：点字段开，点外面关 */
+const menuOpen = ref(false)
 
-/** 生成器菜单跟着界面语言走（组件只内置 zh-cn 与 en 两套词典） */
+/** 包住字段的根节点：判断"是不是点在浮层外面"时用它排除字段自身 */
+const rootEl = ref<HTMLElement | null>(null)
+
+/** 浮层内容挂在类名上：内容会被 teleport 到 body，同一页有几个字段才不会互相认错 */
+const menuClass = `cron-picker-menu-${getCurrentInstance()?.uid ?? 'default'}`
+
+/** 生成器的词典只内置 zh-cn 与 en 两套 */
 const cronLocale = computed(() => (locale.value.toLowerCase().startsWith('zh') ? 'zh-cn' : 'en'))
 
 const draft = computed({
@@ -37,6 +44,30 @@ const draft = computed({
 })
 
 const summary = computed(() => summarizeCron(props.modelValue))
+
+/**
+ * 点浮层、或点它自己弹出的下拉，都不算"点在外面"：
+ * 那些下拉被 teleport 到浮层外面，只能顺着 aria-owns 认回来。
+ */
+function isInsideMenu(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false
+  if (rootEl.value?.contains(target)) return true
+  const content = document.querySelector(`.${menuClass}`)
+  if (content?.contains(target)) return true
+  const overlayId = target.closest('.v-overlay')?.getAttribute('id')
+  if (!overlayId || !content) return false
+  return Array.from(content.querySelectorAll('[aria-owns]')).some(
+    (el) => el.getAttribute('aria-owns') === overlayId,
+  )
+}
+
+function closeOnOutsidePointerDown(event: PointerEvent): void {
+  if (!menuOpen.value || isInsideMenu(event.target)) return
+  menuOpen.value = false
+}
+
+onMounted(() => document.addEventListener('pointerdown', closeOnOutsidePointerDown, true))
+onBeforeUnmount(() => document.removeEventListener('pointerdown', closeOnOutsidePointerDown, true))
 
 const pad = (n: number): string => String(n).padStart(2, '0')
 
@@ -82,35 +113,30 @@ const humanTone = computed(() =>
 </script>
 
 <template>
-  <div class="app-field" data-test="cron-picker">
-    <AppInput
-      :model-value="modelValue"
-      :label="label"
-      :hint="hint"
-      :error="error"
-      :disabled="disabled"
-      :readonly="readonly"
-      placeholder="* * * * *"
-      mono
-      data-test="cron-input"
-      @update:model-value="(value: string) => emit('update:modelValue', value)"
+  <div ref="rootEl" class="app-field" data-test="cron-picker">
+    <VMenu
+      v-model="menuOpen"
+      :disabled="disabled || readonly"
+      :close-on-content-click="false"
+      persistent
     >
-      <template #action>
-        <AppButton
-          size="sm"
-          :disabled="disabled || readonly"
-          data-test="cron-builder"
-          @click="builderOpen = true"
-        >
-          {{ t('cron.builder') }}
-        </AppButton>
+      <template #activator="{ props: menuProps }">
+        <AppInput
+          v-bind="menuProps"
+          :model-value="modelValue"
+          :label="label"
+          :hint="hint"
+          :error="error"
+          :disabled="disabled"
+          :readonly="readonly"
+          placeholder="* * * * *"
+          mono
+          data-test="cron-input"
+          @update:model-value="(value: string) => emit('update:modelValue', value)"
+        />
       </template>
-    </AppInput>
 
-    <AppHint :tone="humanTone" data-test="cron-human">{{ human }}</AppHint>
-
-    <AppDialog v-model="builderOpen" :title="t('cron.builderTitle')" :width="720">
-      <div class="cron-builder" data-test="cron-builder-body">
+      <div class="cron-builder" :class="menuClass" data-test="cron-builder-body">
         <CronVuetify
           v-model="draft"
           :locale="cronLocale"
@@ -118,12 +144,8 @@ const humanTone = computed(() =>
           :chip-props="{ color: 'primary', size: 'small' }"
         />
       </div>
-      <template #footer>
-        <span class="app-spacer" />
-        <AppButton variant="primary" data-test="cron-builder-done" @click="builderOpen = false">
-          {{ t('common.done') }}
-        </AppButton>
-      </template>
-    </AppDialog>
+    </VMenu>
+
+    <AppHint :tone="humanTone" data-test="cron-human">{{ human }}</AppHint>
   </div>
 </template>

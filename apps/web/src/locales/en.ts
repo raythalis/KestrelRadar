@@ -29,7 +29,6 @@ export default {
     delete: 'Delete',
     disabled: 'Disabled',
     close: 'Close',
-    done: 'Done',
     processing: 'Working…',
   },
   config: {
@@ -148,8 +147,6 @@ export default {
     referencedBy: 'Used by {n} monitors',
   },
   cron: {
-    builder: 'Builder',
-    builderTitle: 'Cron schedule',
     everyMinutes: 'Every {n} minutes',
     everyHours: 'Every {n} hours',
     everyHoursAt: 'Every {n} hours at :{minute}',

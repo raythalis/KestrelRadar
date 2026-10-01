@@ -160,8 +160,8 @@
   }
 }
 
-// cron 生成器：内容本身有一行固定宽度的分段控件，窄屏给横向滚动，不撑破弹窗
+// cron 生成器：内容本身是一行固定宽度的分段控件，窄屏给横向滚动，别撑破浮层
 .cron-builder {
   overflow-x: auto;
-  padding-block: var(--k-space-1);
+  padding: var(--k-space-2);
 }

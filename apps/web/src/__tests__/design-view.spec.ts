@@ -88,7 +88,7 @@ describe('/design 预览页', { timeout: 20000 }, () => {
 
   it('弹窗三种状态可由按钮打开（默认关闭；内容是 teleport 的，看 props 而不是 DOM）', async () => {
     const wrapper = mountDesign()
-    // 页面上不止一个 AppDialog（每个 cron 字段自带生成器弹窗），按标题认领 DS 演示那一个
+    // 页面上不止一个 AppDialog（表单演示各带一个），按标题认领 DS 演示那一个
     const dialog = wrapper
       .findAllComponents(AppDialog)
       .find((d) => d.props('title') === '新建分组')!
@@ -115,10 +115,11 @@ describe('/design 预览页', { timeout: 20000 }, () => {
     expect(dialog.props('error')).toContain('500')
   })
 
-  it('每个 cron 字段都有生成器入口（弹窗承载，窄屏也靠得住）', () => {
+  it('cron 字段本身就是入口：点输入框展开生成器，没有多余的按钮', () => {
     const wrapper = mountDesign()
-    const builders = wrapper.findAll('[data-test="cron-builder"]')
-    expect(builders.length).toBeGreaterThanOrEqual(4)
+    const fields = wrapper.findAll('[data-test="cron-input"]')
+    expect(fields.length).toBeGreaterThanOrEqual(4)
+    expect(wrapper.find('[data-test="cron-builder"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="cron-hours-toggle"]').exists()).toBe(false)
   })
 })
