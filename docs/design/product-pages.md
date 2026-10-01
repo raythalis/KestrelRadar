@@ -36,6 +36,8 @@
 - 三个操作是不是分了层级？
 - 有没有把 Lab 里的说明文字抄过来？有就删。
 
+> 具体组件的改造清单见 `docs/design/plan-p3-channels.md`（ChannelCard 九条）。
+
 ## 五、与 UX Writing 规则的关系
 
 文案规则见 `docs/design/ux-writing.md`（界面自解释；需求文档是唯一语义来源）。
