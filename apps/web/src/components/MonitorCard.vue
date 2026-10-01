@@ -33,64 +33,53 @@ const boundActions = computed(() =>
 </script>
 
 <template>
-  <v-card class="entity-card entity-card--monitor pa-3" data-test="monitor-card">
-    <div class="d-flex align-center ga-2">
-      <span class="entity-card__title text-truncate" data-test="monitor-name">
-        {{ monitor.name }}
-      </span>
-      <v-chip
-        v-if="boundActions"
-        size="x-small"
-        color="accent"
-        variant="tonal"
-        data-test="monitor-bound"
-      >
+  <div
+    class="k-item"
+    :class="{ 'k-item--off': !monitor.enabled }"
+    role="button"
+    tabindex="0"
+    data-test="monitor-card"
+    @click="emit('edit')"
+    @keydown.enter.prevent="emit('edit')"
+  >
+    <div class="k-item__top">
+      <span class="k-tag" data-test="monitor-sensitivity">{{ sensitivityLabel }}</span>
+      <span v-if="boundActions" class="k-tag k-tag--off" data-test="monitor-bound">
         {{ t('monitor.onlyActions', { names: boundActions }) }}
-      </v-chip>
-      <v-spacer />
-      <v-switch
-        :model-value="monitor.enabled"
-        data-test="monitor-enabled"
-        @update:model-value="(value) => store.setMonitorEnabled(monitor.id, Boolean(value))"
-      />
+      </span>
+      <span class="k-spacer" />
+      <span @click.stop>
+        <v-switch
+          :model-value="monitor.enabled"
+          :title="monitor.enabled ? t('common.enabled') : t('common.disabled')"
+          data-test="monitor-enabled"
+          @update:model-value="(value) => store.setMonitorEnabled(monitor.id, Boolean(value))"
+        />
+      </span>
     </div>
 
-    <div class="entity-meta" data-test="monitor-mode">
-      {{ modeLabel }} · {{ sensitivityLabel }} · {{ matchModeLabel }}
-    </div>
+    <div class="k-item__title" data-test="monitor-name">{{ monitor.name }}</div>
+    <div class="k-item__sub" data-test="monitor-mode">{{ modeLabel }} · {{ matchModeLabel }}</div>
 
-    <div class="d-flex flex-wrap ga-1 mt-2" data-test="monitor-keywords">
-      <v-chip
-        v-for="keyword in monitor.includeKeywords"
-        :key="keyword"
-        size="x-small"
-        label
-        variant="tonal"
-      >
+    <div class="d-flex flex-wrap ga-1" data-test="monitor-keywords">
+      <span v-for="keyword in monitor.includeKeywords" :key="keyword" class="k-tag">
         {{ keyword }}
-      </v-chip>
+      </span>
       <span v-if="monitor.includeKeywords.length === 0" class="entity-meta entity-meta--faint">
         {{ t('monitor.noKeywords') }}
       </span>
     </div>
 
-    <div class="d-flex align-center ga-1 mt-2">
-      <v-btn
-        size="x-small"
-        variant="text"
-        icon="mdi-pencil"
-        data-test="monitor-edit"
-        @click="emit('edit')"
-      />
-      <v-spacer />
-      <v-btn
-        size="x-small"
-        variant="text"
-        color="error"
-        icon="mdi-delete"
+    <div class="k-item__foot">
+      <span class="k-spacer" />
+      <button
+        type="button"
+        class="k-link k-link--danger"
         data-test="monitor-delete"
-        @click="emit('delete')"
-      />
+        @click.stop="emit('delete')"
+      >
+        {{ t('common.delete') }}
+      </button>
     </div>
-  </v-card>
+  </div>
 </template>

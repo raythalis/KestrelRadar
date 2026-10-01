@@ -17,6 +17,8 @@ export default {
     settings: 'Settings',
   },
   common: {
+    enabled: 'Enabled',
+    edit: 'Edit',
     name: 'Name',
     add: 'Add',
     save: 'Save',
@@ -55,11 +57,16 @@ export default {
     empty: 'Nothing here yet',
   },
   discovery: {
+    testHint: 'Click to probe; reads only, never touches stored data',
+    testRunning: 'Testing…',
+    testOk: 'Test ok, {n} items',
+    testEmpty: 'Reachable but no items',
+    testFail: 'Fetch failed',
     add: 'Add discovery',
     edit: 'Edit discovery',
     delete: 'Delete discovery',
     deleteBody: 'Only this discovery is removed; its items and events are kept.',
-    test: 'Test',
+    test: 'Probe',
     routeLayer: 'Route',
     contentLayer: 'Content',
     nextRun: 'Next fetch: ',
@@ -135,6 +142,11 @@ export default {
     referencedBy: 'Used by {n} monitors',
   },
   channel: {
+    probeHint: 'Click to send one test message to this channel',
+    probe: 'Click to test',
+    probeRunning: 'Sending…',
+    probeOk: 'Reachable',
+    probeFail: 'Cannot send',
     subtitle:
       'Where messages go out. Telegram needs a bot token plus a chat; Webhook needs a URL and an optional secret.',
     add: 'New channel',

@@ -22,62 +22,56 @@ const referencedBy = computed(() => store.monitorNamesUsingAction(props.action.i
 </script>
 
 <template>
-  <v-card class="entity-card entity-card--action pa-3" data-test="action-card">
-    <div class="d-flex align-center ga-2">
-      <span class="entity-card__title text-truncate" data-test="action-name">{{
-        action.name
-      }}</span>
-      <v-spacer />
-      <v-switch
-        :model-value="action.enabled"
-        data-test="action-enabled"
-        @update:model-value="(value) => store.setActionEnabled(action.id, Boolean(value))"
-      />
+  <div
+    class="k-item"
+    :class="{ 'k-item--off': !action.enabled }"
+    role="button"
+    tabindex="0"
+    data-test="action-card"
+    @click="emit('edit')"
+    @keydown.enter.prevent="emit('edit')"
+  >
+    <div class="k-item__top">
+      <span class="k-tag k-tag--accent" data-test="action-trigger">{{ triggerLabel }}</span>
+      <span v-if="action.triggerType === 'digest'" class="k-tag font-mono">
+        {{ action.cronExpression }}
+      </span>
+      <span class="k-spacer" />
+      <span @click.stop>
+        <v-switch
+          :model-value="action.enabled"
+          :title="action.enabled ? t('common.enabled') : t('common.disabled')"
+          data-test="action-enabled"
+          @update:model-value="(value) => store.setActionEnabled(action.id, Boolean(value))"
+        />
+      </span>
     </div>
 
-    <div class="entity-meta" data-test="action-trigger">
-      {{ triggerLabel
-      }}<template v-if="action.triggerType === 'digest'"> · {{ action.cronExpression }}</template>
-    </div>
-    <div class="entity-meta" data-test="action-channel">
+    <div class="k-item__title" data-test="action-name">{{ action.name }}</div>
+    <div class="k-item__sub" data-test="action-channel">
       {{ t('action.channel') }}{{ channel || t('action.channelMissing') }}
     </div>
-    <div class="entity-meta entity-meta--faint" data-test="action-template">
+    <div class="k-item__meta entity-meta--faint" data-test="action-template">
       {{ t('action.template') }}{{ templateName }}
     </div>
 
-    <v-alert
-      v-if="!channel"
-      type="warning"
-      variant="tonal"
-      density="compact"
-      class="mt-2 text-caption"
-      data-test="action-warning"
-    >
+    <div class="k-hint k-hint--warn" v-if="!channel" data-test="action-warning">
       {{ t('action.channelMissingHint') }}
-    </v-alert>
-
-    <div class="entity-meta entity-meta--faint mt-1" data-test="action-referenced">
-      {{ t('action.referencedBy', { n: referencedBy.length }) }}
     </div>
 
-    <div class="d-flex align-center ga-1 mt-2">
-      <v-btn
-        size="x-small"
-        variant="text"
-        icon="mdi-pencil"
-        data-test="action-edit"
-        @click="emit('edit')"
-      />
-      <v-spacer />
-      <v-btn
-        size="x-small"
-        variant="text"
-        color="error"
-        icon="mdi-delete"
+    <div class="k-item__foot">
+      <span class="k-item__meta entity-meta--faint" data-test="action-referenced">
+        {{ t('action.referencedBy', { n: referencedBy.length }) }}
+      </span>
+      <span class="k-spacer" />
+      <button
+        type="button"
+        class="k-link k-link--danger"
         data-test="action-delete"
-        @click="emit('delete')"
-      />
+        @click.stop="emit('delete')"
+      >
+        {{ t('common.delete') }}
+      </button>
     </div>
-  </v-card>
+  </div>
 </template>

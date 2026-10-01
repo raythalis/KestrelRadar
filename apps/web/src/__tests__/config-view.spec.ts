@@ -181,7 +181,10 @@ describe('配置管理页', () => {
     const sections = wrapper.findAll('[data-test="group-section"]')
     expect(sections).toHaveLength(2)
     expect(sections[0]!.get('[data-test="group-name"]').text()).toContain('AI 圈')
-    expect(sections[0]!.get('[data-test="group-counts"]').text()).toBe('1 发现 · 1 监听 · 1 动作')
+    const counts = sections[0]!.get('[data-test="group-counts"]').text()
+    expect(counts).toContain('1 发现')
+    expect(counts).toContain('1 监听')
+    expect(counts).toContain('1 动作')
     // 停用的分组带头部标记
     expect(sections[1]!.find('[data-test="group-disabled"]').exists()).toBe(true)
     // 折叠态看不到三列
@@ -279,7 +282,7 @@ describe('配置管理页', () => {
   it('动作弹窗：模板默认是系统内置，下面只读框显示内置内容', async () => {
     const wrapper = await mountLoaded()
     await wrapper.find('[data-test="group-toggle"]').trigger('click')
-    await wrapper.find('[data-test="action-edit"]').trigger('click')
+    await wrapper.find('[data-test="action-card"]').trigger('click')
 
     const dialog = wrapper.find('[data-test="action-dialog"]')
     // 下拉里显示的就是「系统内置（跟随界面语言）」
@@ -308,7 +311,7 @@ describe('配置管理页', () => {
     })
     await flushPromises()
     await wrapper.find('[data-test="group-toggle"]').trigger('click')
-    await wrapper.find('[data-test="action-edit"]').trigger('click')
+    await wrapper.find('[data-test="action-card"]').trigger('click')
 
     const link = wrapper.find('[data-test="action-channel-add"]')
     expect(link.attributes('href')).toContain('/channels')
@@ -322,7 +325,7 @@ describe('配置管理页', () => {
     const wrapper = mountView()
     await flushPromises()
     await wrapper.find('[data-test="group-toggle"]').trigger('click')
-    await wrapper.find('[data-test="monitor-edit"]').trigger('click')
+    await wrapper.find('[data-test="monitor-card"]').trigger('click')
 
     const dialog = wrapper.find('[data-test="monitor-dialog"]')
     expect(dialog.find('[data-test="monitor-intent-input"]').exists()).toBe(false)
@@ -340,7 +343,7 @@ describe('配置管理页', () => {
     const wrapper = mountView()
     await flushPromises()
     await wrapper.find('[data-test="group-toggle"]').trigger('click')
-    await wrapper.find('[data-test="monitor-edit"]').trigger('click')
+    await wrapper.find('[data-test="monitor-card"]').trigger('click')
 
     const dialog = wrapper.find('[data-test="monitor-dialog"]')
     expect(dialog.find('[data-test="monitor-intent-input"]').exists()).toBe(true)

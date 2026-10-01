@@ -15,7 +15,7 @@ const dialogOpen = ref(false)
 const editing = ref<Channel | null>(null)
 const pendingDelete = ref<Channel | null>(null)
 const testing = ref('')
-/** 每个渠道最近一次测试的结果，只在界面上留着，不入库 */
+/** 每个渠道最近一次连通性结果，只在界面上留着，不入库 */
 const testResults = ref<Record<string, { ok: boolean; message: string }>>({})
 
 onMounted(() => {
@@ -25,6 +25,26 @@ onMounted(() => {
 function openDialog(channel: Channel | null): void {
   editing.value = channel
   dialogOpen.value = true
+}
+
+function dotState(channel: Channel): string {
+  if (testing.value === channel.id) return 'busy'
+  const last = testResults.value[channel.id]
+  if (!last) return 'idle'
+  return last.ok ? 'ok' : 'err'
+}
+
+function dotText(channel: Channel): string {
+  if (testing.value === channel.id) return t('channel.probeRunning')
+  const last = testResults.value[channel.id]
+  if (!last) return t('channel.probe')
+  return last.ok ? t('channel.probeOk') : t('channel.probeFail')
+}
+
+function targetText(channel: Channel): string {
+  return channel.type === 'webhook'
+    ? (channel.config.url ?? '—')
+    : `${t('channel.chatId')} ${channel.config.chatId ?? '—'}`
 }
 
 async function runTest(channel: Channel): Promise<void> {
@@ -80,81 +100,80 @@ async function confirmDelete(): Promise<void> {
     </v-alert>
 
     <div v-if="store.channels.length === 0" class="empty-state" data-test="channels-empty">
-      <v-icon size="22" icon="mdi-broadcast" />
       <span>{{ t('channel.empty') }}</span>
     </div>
 
-    <div v-else class="d-flex flex-column ga-3">
-      <v-card
+    <div v-else class="d-flex flex-column">
+      <div
         v-for="channel in store.channels"
         :key="channel.id"
-        class="entity-card entity-card--action pa-4"
+        class="k-item"
+        :class="{ 'k-item--off': !channel.enabled }"
+        role="button"
+        tabindex="0"
         data-test="channel-card"
+        @click="openDialog(channel)"
+        @keydown.enter.prevent="openDialog(channel)"
       >
-        <div class="d-flex align-center ga-2">
-          <span class="entity-card__title" data-test="channel-name">{{ channel.name }}</span>
-          <v-chip size="x-small" label variant="tonal" color="primary" data-test="channel-type">
+        <div class="k-item__top">
+          <span class="k-tag k-tag--accent" data-test="channel-type">
             {{ t(`channel.type.${channel.type}`) }}
-          </v-chip>
-          <v-spacer />
-          <v-switch
-            :model-value="channel.enabled"
-            data-test="channel-enabled"
-            @update:model-value="
-              (value) => store.saveChannel(channel.id, { enabled: Boolean(value) })
-            "
-          />
+          </span>
+          <span v-if="!channel.enabled" class="k-tag k-tag--off">{{ t('common.disabled') }}</span>
+          <span class="k-spacer" />
+          <span @click.stop>
+            <v-switch
+              :model-value="channel.enabled"
+              :title="channel.enabled ? t('common.enabled') : t('common.disabled')"
+              data-test="channel-enabled"
+              @update:model-value="
+                (value) => store.saveChannel(channel.id, { enabled: Boolean(value) })
+              "
+            />
+          </span>
         </div>
 
-        <div class="entity-meta" data-test="channel-target">
-          {{
-            channel.type === 'webhook'
-              ? channel.config.url
-              : `${t('channel.chatId')} ${channel.config.chatId ?? '—'}`
-          }}
-        </div>
-        <div v-if="channel.type === 'webhook'" class="entity-meta entity-meta--faint">
-          {{ channel.hasSecret ? t('channel.hasSecret') : t('channel.noSecret') }}
+        <div class="k-item__title" data-test="channel-name">{{ channel.name }}</div>
+        <div class="k-item__sub" data-test="channel-target">{{ targetText(channel) }}</div>
+
+        <div class="k-item__meta" style="margin-top: 6px">
+          <button
+            type="button"
+            class="status-dot"
+            :class="`status-dot--${dotState(channel)}`"
+            :disabled="testing === channel.id"
+            :title="t('channel.probeHint')"
+            data-test="channel-test"
+            @click.stop="runTest(channel)"
+          >
+            {{ dotText(channel) }}
+          </button>
         </div>
 
         <div
           v-if="testResults[channel.id]"
-          class="entity-meta mt-2"
-          :style="{ color: testResults[channel.id]?.ok ? 'var(--k-ok)' : 'var(--k-blue)' }"
+          class="k-hint"
+          :class="testResults[channel.id]?.ok ? 'k-hint--warn' : 'k-hint--err'"
           data-test="channel-test-result"
         >
           {{ testResults[channel.id]?.message }}
         </div>
 
-        <div class="d-flex align-center ga-1 mt-2">
-          <v-btn
-            size="x-small"
-            variant="text"
-            prepend-icon="mdi-access-point"
-            :loading="testing === channel.id"
-            data-test="channel-test"
-            @click="runTest(channel)"
-          >
-            {{ t('channel.test') }}
-          </v-btn>
-          <v-spacer />
-          <v-btn
-            size="x-small"
-            variant="text"
-            icon="mdi-pencil"
-            data-test="channel-edit"
-            @click="openDialog(channel)"
-          />
-          <v-btn
-            size="x-small"
-            variant="text"
-            color="error"
-            icon="mdi-delete"
+        <div class="k-item__foot">
+          <span class="k-item__meta entity-meta--faint">
+            {{ channel.hasSecret ? t('channel.hasSecret') : t('channel.noSecret') }}
+          </span>
+          <span class="k-spacer" />
+          <button
+            type="button"
+            class="k-link k-link--danger"
             data-test="channel-delete"
-            @click="pendingDelete = channel"
-          />
+            @click.stop="pendingDelete = channel"
+          >
+            {{ t('common.delete') }}
+          </button>
         </div>
-      </v-card>
+      </div>
     </div>
 
     <ChannelDialog v-model="dialogOpen" :channel="editing" />

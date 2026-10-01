@@ -127,7 +127,7 @@ describe('通知渠道页', () => {
     vi.mocked(api.readTelegramChats).mockResolvedValue([{ id: '-1001', title: '家庭群' }])
     const wrapper = await mountLoaded()
 
-    await wrapper.get('[data-test="channel-edit"]').trigger('click')
+    await wrapper.get('[data-test="channel-card"]').trigger('click')
     const dialog = wrapper.get('[data-test="channel-dialog"]')
     await dialog.get('[data-test="channel-read-chats"]').trigger('click')
     await flushPromises()

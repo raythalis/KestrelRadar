@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import type { Discovery } from '@kestrel/contracts'
+import type { Discovery, DiscoveryTestResult } from '@kestrel/contracts'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import TestLamps from '@/components/TestLamps.vue'
 import { useConfigStore } from '@/stores/config'
 import { formatDateTime } from '@/utils/format'
 
@@ -12,14 +11,43 @@ const emit = defineEmits<{ edit: []; delete: [] }>()
 
 const store = useConfigStore()
 const { t } = useI18n()
+
 const testing = ref(false)
+const result = ref<DiscoveryTestResult | null>(null)
 
 const kindLabel = computed(() => t(`discovery.kind.${props.discovery.kind}`))
+
+/** 状态点：还没试过是灰的；试过以后按“通不通、有没有内容”给三档 */
+const dotState = computed(() => {
+  if (testing.value) return 'busy'
+  const last = result.value
+  if (!last) return 'idle'
+  if (!last.routeOk) return 'err'
+  return last.contentOk ? 'ok' : 'warn'
+})
+
+const dotText = computed(() => {
+  if (testing.value) return t('discovery.testRunning')
+  const last = result.value
+  if (!last) return t('discovery.test')
+  if (!last.routeOk) return t('discovery.testFail')
+  return last.contentOk
+    ? t('discovery.testOk', { n: last.foundItemCount })
+    : t('discovery.testEmpty')
+})
+
+/** 只有真的出问题才提示：路由不通算错，通但没内容算提醒 */
+const checkHintClass = computed(() => {
+  if (!props.discovery.lastCheckMessage) return ''
+  if (!props.discovery.routeOk) return 'k-hint--err'
+  if (!props.discovery.contentOk) return 'k-hint--warn'
+  return ''
+})
 
 async function runTest(): Promise<void> {
   testing.value = true
   try {
-    await store.testDiscovery(props.discovery.id)
+    result.value = await store.testDiscovery(props.discovery.id)
   } finally {
     testing.value = false
   }
@@ -27,74 +55,73 @@ async function runTest(): Promise<void> {
 </script>
 
 <template>
-  <v-card class="entity-card pa-3" data-test="discovery-card">
-    <div class="d-flex align-center ga-2">
-      <v-chip size="x-small" label variant="tonal" color="primary" data-test="discovery-kind">
-        {{ kindLabel }}
-      </v-chip>
-      <span class="entity-card__title text-truncate" data-test="discovery-name">
-        {{ discovery.name }}
+  <div
+    class="k-item"
+    :class="{ 'k-item--off': !discovery.enabled }"
+    role="button"
+    tabindex="0"
+    data-test="discovery-card"
+    @click="emit('edit')"
+    @keydown.enter.prevent="emit('edit')"
+  >
+    <div class="k-item__top">
+      <span class="k-tag k-tag--accent" data-test="discovery-kind">{{ kindLabel }}</span>
+      <span class="k-spacer" />
+      <span @click.stop>
+        <v-switch
+          :model-value="discovery.enabled"
+          :title="discovery.enabled ? t('common.enabled') : t('common.disabled')"
+          data-test="discovery-enabled"
+          @update:model-value="(value) => store.setDiscoveryEnabled(discovery.id, Boolean(value))"
+        />
       </span>
-      <v-spacer />
-      <v-switch
-        :model-value="discovery.enabled"
-        data-test="discovery-enabled"
-        @update:model-value="(value) => store.setDiscoveryEnabled(discovery.id, Boolean(value))"
-      />
     </div>
 
-    <div class="entity-meta text-truncate" data-test="discovery-target">{{ discovery.target }}</div>
+    <div class="k-item__title" data-test="discovery-name">{{ discovery.name }}</div>
+    <div class="k-item__sub" data-test="discovery-target">{{ discovery.target }}</div>
 
-    <div class="mt-2">
-      <TestLamps
-        :route-ok="discovery.routeOk"
-        :content-ok="discovery.contentOk"
-        :message="discovery.lastCheckMessage"
-      />
+    <div class="k-hint" :class="checkHintClass" v-if="checkHintClass" data-test="discovery-message">
+      {{ discovery.lastCheckMessage }}
     </div>
 
-    <div class="entity-meta mt-2" data-test="discovery-next-run">
+    <div class="k-item__meta" style="margin-top: 6px">
+      <button
+        type="button"
+        class="status-dot"
+        :class="`status-dot--${dotState}`"
+        :disabled="testing"
+        :title="t('discovery.testHint')"
+        data-test="discovery-test"
+        @click.stop="runTest"
+      >
+        {{ dotText }}
+      </button>
+    </div>
+
+    <div class="k-item__meta" data-test="discovery-next-run">
       <v-icon size="13" icon="mdi-clock-outline" />
       {{ t('discovery.nextRun') }}{{ formatDateTime(discovery.nextRunAt) }}
     </div>
-    <div class="entity-meta entity-meta--faint">
+    <div class="k-item__meta">
       {{ t('discovery.itemCount', { n: discovery.itemCount }) }} · {{ t('discovery.latestItem')
       }}{{ formatDateTime(discovery.latestItemAt) }}
     </div>
-    <div
-      v-if="discovery.baselineEstablishedAt"
-      class="entity-meta entity-meta--faint"
-      data-test="baseline-note"
-    >
-      {{ t('discovery.baseline', { n: discovery.baselineItemCount ?? 0 }) }}
-    </div>
 
-    <div class="d-flex align-center ga-1 mt-2">
-      <v-btn
-        size="x-small"
-        variant="text"
-        :loading="testing"
-        data-test="discovery-test"
-        @click="runTest"
-      >
-        {{ t('discovery.test') }}
-      </v-btn>
-      <v-spacer />
-      <v-btn
-        size="x-small"
-        variant="text"
-        icon="mdi-pencil"
-        data-test="discovery-edit"
-        @click="emit('edit')"
-      />
-      <v-btn
-        size="x-small"
-        variant="text"
-        color="error"
-        icon="mdi-delete"
+    <div class="k-item__foot">
+      <span class="k-item__meta entity-meta--faint" data-test="baseline-note">
+        <template v-if="discovery.baselineEstablishedAt">
+          {{ t('discovery.baseline', { n: discovery.baselineItemCount ?? 0 }) }}
+        </template>
+      </span>
+      <span class="k-spacer" />
+      <button
+        type="button"
+        class="k-link k-link--danger"
         data-test="discovery-delete"
-        @click="emit('delete')"
-      />
+        @click.stop="emit('delete')"
+      >
+        {{ t('common.delete') }}
+      </button>
     </div>
-  </v-card>
+  </div>
 </template>

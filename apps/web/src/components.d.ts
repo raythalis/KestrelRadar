@@ -27,6 +27,5 @@ declare module 'vue' {
     SettingsForm: typeof import('./components/settings/SettingsForm.vue')['default']
     TemplateDialog: typeof import('./components/TemplateDialog.vue')['default']
     TemplateList: typeof import('./components/settings/TemplateList.vue')['default']
-    TestLamps: typeof import('./components/TestLamps.vue')['default']
   }
 }
