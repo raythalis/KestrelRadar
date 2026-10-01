@@ -516,48 +516,47 @@ const selectItems = [
           <div class="ds-cols">
             <AppCard
               title="ChannelCard"
-              note="状态：连通 / 未测 / 有警告 / 不通 / 测试中 / 停用 / 不可用"
+              note="状态只走左侧色条；右下角圆点＝测试连通性（悬停出提示）；点卡片＝编辑；右上角 ×＝删除"
             >
               <div class="app-card-grid">
                 <ChannelCard
                   name="我的 Telegram"
-                  icon="mdi-send"
-                  kind-label="Telegram"
+                  type="telegram"
                   :enabled="true"
                   tone="ok"
                   status-text="连通"
-                  detail="目标会话 1231487971"
-                  verified-at="刚刚"
                   :used-by="2"
                 />
                 <ChannelCard
-                  name="企业微信"
-                  icon="mdi-account-group-outline"
-                  kind-label="企业微信"
+                  name="还没测过的渠道"
+                  type="telegram"
                   :enabled="true"
                   tone="neutral"
                   status-text="还没测过"
-                  detail="Bot 已配置"
                   :used-by="0"
                 />
                 <ChannelCard
-                  name="微信"
-                  icon="mdi-wechat"
-                  kind-label="微信"
+                  name="停用的渠道"
+                  type="webhook"
                   :enabled="false"
-                  tone="warn"
-                  status-text="出站窗口约 10 分钟"
-                  detail="仅双向对话用"
+                  tone="neutral"
+                  status-text="已停用"
                   :used-by="0"
                 />
                 <ChannelCard
-                  name="Webhook"
-                  icon="mdi-webhook"
-                  kind-label="自定义"
+                  name="连接失败的渠道"
+                  type="webhook"
                   :enabled="true"
                   tone="err"
                   status-text="连接失败"
-                  detail="https://example.com/hook"
+                  :used-by="1"
+                />
+                <ChannelCard
+                  name="正在测试的渠道"
+                  type="telegram"
+                  :enabled="true"
+                  tone="warn"
+                  status-text="测试中"
                   :used-by="1"
                   busy
                 />

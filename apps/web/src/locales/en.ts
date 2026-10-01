@@ -152,9 +152,8 @@ export default {
   },
   channel: {
     usedBy: 'Used by {n} action(s)',
-    verifiedAt: 'Checked {time}',
     probeHint: 'Click to send one test message to this channel',
-    probe: 'Click to test',
+    probe: 'Test connectivity',
     probeRunning: 'Sending…',
     probeOk: 'Reachable',
     probeFail: 'Cannot send',
@@ -186,7 +185,6 @@ export default {
       'Add the bot to a group or send it a message in private chat, then hit "Read chats".',
     noChatsHint: 'No chats found: send the bot a message first, then try again.',
     readFailed: 'Reading chats failed',
-    test: 'Send a test message',
   },
   model: {
     subtitle:

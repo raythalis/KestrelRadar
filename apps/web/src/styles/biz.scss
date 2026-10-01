@@ -88,6 +88,7 @@
   gap: var(--k-space-2);
 }
 
+// 图标只表示「这是个通知渠道」，不带状态色：状态统一交给左侧色条
 .biz-card__icon {
   display: inline-flex;
   flex: none;
@@ -95,9 +96,112 @@
   justify-content: center;
   inline-size: 34px;
   block-size: 34px;
-  color: var(--biz-accent, var(--k-accent));
-  background: color-mix(in srgb, var(--biz-accent, var(--k-accent)) 14%, transparent);
+  color: var(--k-muted);
+  background: color-mix(in srgb, var(--k-muted) 12%, transparent);
   border-radius: var(--k-radius-sm);
+}
+
+// 右上角删除：低权重，悬停才显危险色
+.biz-card__remove {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  margin: -4px -4px 0 0;
+  padding: 0;
+  color: var(--k-muted);
+  background: none;
+  border: 0;
+  border-radius: var(--k-radius-sm);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.biz-card__remove:hover {
+  color: var(--k-err);
+  background: color-mix(in srgb, var(--k-err) 12%, transparent);
+}
+
+// 右下角测试圆点：颜色跟状态走；测试中转圈，异常时呼吸
+.biz-card__probe {
+  position: relative;
+  flex: none;
+  inline-size: 20px;
+  block-size: 20px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.biz-card__probe::before,
+.biz-card__probe::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+}
+
+.biz-card__probe::before {
+  inset: 15%;
+  background: var(--biz-accent, var(--k-muted));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--biz-accent, var(--k-muted)) 70%, transparent);
+}
+
+.biz-card__probe::after {
+  inset: 0;
+}
+
+.biz-card__probe--attention::after {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--biz-accent, var(--k-muted)) 30%, transparent);
+  animation: biz-probe-pulse 2s infinite;
+}
+
+.biz-card__probe--busy::after {
+  border: 1px solid color-mix(in srgb, var(--k-accent) 25%, transparent);
+  border-block-start-color: var(--k-accent);
+  animation: biz-probe-spin 0.8s linear infinite;
+}
+
+@keyframes biz-probe-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--biz-accent, var(--k-muted)) 60%, transparent);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes biz-probe-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// 触摸端把两个小按钮的点击区撑到 44px（视觉尺寸不变）
+@media (max-width: 899px) {
+  .biz-card__remove,
+  .biz-card__probe {
+    inline-size: 44px;
+    block-size: 44px;
+  }
+
+  .biz-card__remove {
+    margin: -10px -10px 0 0;
+  }
+
+  .biz-card__probe::before {
+    inset: 27%;
+  }
 }
 
 .biz-card__heading {

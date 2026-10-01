@@ -150,9 +150,8 @@ export default {
   },
   channel: {
     usedBy: '被 {n} 个动作使用',
-    verifiedAt: '上次验证 {time}',
     probeHint: '点一下给这个渠道发一条测试消息',
-    probe: '点一下试连通',
+    probe: '测试连通性',
     probeRunning: '发送中…',
     probeOk: '连通正常',
     probeFail: '发不出去',
@@ -182,7 +181,6 @@ export default {
     readChatsHint: '先把 bot 拉进群、或在私聊里给它发一句话，再点「读取会话」。',
     noChatsHint: '没读到会话：先给 bot 发一条消息，再点一次。',
     readFailed: '读取会话失败',
-    test: '发送测试消息',
   },
   model: {
     subtitle: 'v1.0 只登记供应商与模型清单；判定用的模型在「设置 → 判定」里开 LLM 后生效。',
