@@ -2,6 +2,8 @@ import type { ErrorCode } from '@kestrel/contracts'
 import type { FastifyInstance } from 'fastify'
 import { ZodError } from 'zod'
 
+import { DeliveryError } from '../modules/delivery/sender.ts'
+
 export class AppError extends Error {
   readonly code: ErrorCode
   readonly status: number
@@ -39,6 +41,10 @@ export function registerErrorHandler(app: FastifyInstance): void {
       return reply
         .status(error.status)
         .send({ error: { code: error.code, message: error.message } })
+    }
+    // 投递失败（token 不对、地址不通之类）是用户能自己改的问题，别报成 500
+    if (error instanceof DeliveryError) {
+      return reply.status(400).send({ error: { code: 'delivery_error', message: error.message } })
     }
     if (error instanceof ZodError) {
       return reply

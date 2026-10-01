@@ -1,47 +1,34 @@
-import { BUILTIN_TEMPLATE_IDS, type MessageTemplate } from '@kestrel/contracts'
+import type { MessageTemplate } from '@kestrel/contracts'
 
-/** 内置模板内容：中英各一套，动作没选模板时按界面语言用它 */
-const BUILTIN_CONTENT: Record<'zh' | 'en', string> = {
-  zh: [
-    '{{badge}}【{{group}}】{{title}}',
-    '{{summary}}',
-    '来源 {{sourceCount}} 个：',
-    '{{sources}}',
-    '{{url}}',
-    '命中时间：{{hitAt}}',
-  ].join('\n'),
-  en: [
-    '{{badge}}[{{group}}] {{title}}',
-    '{{summary}}',
-    '{{sourceCount}} sources:',
-    '{{sources}}',
-    '{{url}}',
-    'Seen at {{hitAt}}',
-  ].join('\n'),
-}
+/** 内置模板的 id：内容与名称都在代码里，界面上只读 */
+export const BUILTIN_TEMPLATE_ID = 'builtin:default'
 
-export function defaultTemplate(language: 'zh' | 'en'): string {
-  return BUILTIN_CONTENT[language]
-}
+/** 内置模板的显示名走 i18n（前端按这个 key 翻译），不再给每种语言各来一套模板 */
+export const BUILTIN_TEMPLATE_NAME_KEY = 'template.builtinDefault'
 
-/** 内置模板列表：只读，界面照样列出来供选择 */
+/** 默认模板正文：动作没挑模板时用它 */
+export const DEFAULT_TEMPLATE_CONTENT = `{{badge}}【{{group}}】{{title}}
+{{summary}}
+来源 {{sourceCount}} 个：
+{{sources}}
+{{url}}
+命中时间：{{hitAt}}`
+
 export function builtinTemplates(): MessageTemplate[] {
   return [
     {
-      id: BUILTIN_TEMPLATE_IDS.zh,
-      name: '系统内置 · 中文',
-      content: BUILTIN_CONTENT.zh,
-      builtin: true,
-      createdAt: null,
-      updatedAt: null,
-    },
-    {
-      id: BUILTIN_TEMPLATE_IDS.en,
-      name: '系统内置 · 英文',
-      content: BUILTIN_CONTENT.en,
+      id: BUILTIN_TEMPLATE_ID,
+      name: '默认模板',
+      nameKey: BUILTIN_TEMPLATE_NAME_KEY,
+      content: DEFAULT_TEMPLATE_CONTENT,
       builtin: true,
       createdAt: null,
       updatedAt: null,
     },
   ]
+}
+
+/** 动作没选模板 / 选的模板被删了，都回落到这一套 */
+export function defaultTemplateContent(): string {
+  return DEFAULT_TEMPLATE_CONTENT
 }

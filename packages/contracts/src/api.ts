@@ -15,7 +15,13 @@ import { messageTemplateSchema } from './template.ts'
 /** 接口前缀：全站一个，改这里就够 */
 export const API_PREFIX = '/api'
 
-export const ERROR_CODES = ['validation_error', 'not_found', 'conflict', 'internal'] as const
+export const ERROR_CODES = [
+  'validation_error',
+  'not_found',
+  'conflict',
+  'delivery_error',
+  'internal',
+] as const
 export const errorCodeSchema = z.enum(ERROR_CODES)
 export type ErrorCode = z.infer<typeof errorCodeSchema>
 
@@ -40,3 +46,29 @@ export const configSnapshotSchema = z.object({
   settings: settingsSchema,
 })
 export type ConfigSnapshot = z.infer<typeof configSnapshotSchema>
+
+/** Telegram 会话（读取会话按钮的结果） */
+export const telegramChatSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+})
+export type TelegramChat = z.infer<typeof telegramChatSchema>
+
+/** 读会话时给 token，或者给一个已保存的渠道 id（用库里那份 token） */
+export const telegramChatsInputSchema = z
+  .object({
+    token: z.string().max(200).optional(),
+    channelId: z.string().max(120).optional(),
+  })
+  .refine((value) => Boolean(value.token?.trim()) || Boolean(value.channelId), {
+    message: '要么给 bot token，要么给一个渠道 id',
+  })
+export type TelegramChatsInput = z.infer<typeof telegramChatsInputSchema>
+
+/** 渠道连通性测试的结果 */
+export const channelTestResultSchema = z.object({
+  ok: z.boolean(),
+  message: z.string(),
+  sentAt: z.string().nullable(),
+})
+export type ChannelTestResult = z.infer<typeof channelTestResultSchema>

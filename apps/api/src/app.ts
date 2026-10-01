@@ -2,6 +2,7 @@ import { API_PREFIX } from '@kestrel/contracts'
 import Fastify, { type FastifyInstance } from 'fastify'
 
 import { buildContainer } from './container.ts'
+import type { TelegramGateway } from './modules/delivery/telegram.ts'
 import { openDatabase } from './db/index.ts'
 import { registerErrorHandler } from './plugins/errors.ts'
 import { registerRoutes } from './routes/index.ts'
@@ -11,6 +12,8 @@ export interface BuildAppOptions {
   logger?: boolean
   /** 采集调度默认跟着服务一起起；测试里关掉，免得定时器跟着测试跑 */
   enableScheduler?: boolean
+  /** 测试用：换成假的 Telegram 网关，别真去打 Telegram */
+  telegram?: TelegramGateway
 }
 
 export async function buildApp(options: BuildAppOptions): Promise<FastifyInstance> {
@@ -24,6 +27,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
       if (level === 'warn') app.log.warn(message)
       else app.log.info(message)
     },
+    telegram: options.telegram,
   })
   await app.register(
     async (instance) => {

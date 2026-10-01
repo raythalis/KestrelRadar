@@ -39,15 +39,17 @@ function summarize(members: EventMember[]): string {
   return text.length > 120 ? `${text.slice(0, 120)}…` : text
 }
 
-function renderSources(members: EventMember[]): string {
+function renderSources(members: EventMember[], language: 'zh' | 'en'): string {
   if (members.length === 0) return ''
+  const joiner = language === 'zh' ? '：' : ': '
+  const noLink = language === 'zh' ? '（没有链接）' : '(no link)'
   return members
-    .map((member) => `- ${member.discoveryName}：${member.url ?? '（没有链接）'}`)
+    .map((member) => `- ${member.discoveryName}${joiner}${member.url ?? noLink}`)
     .join('\n')
 }
 
 /**
- * 模板语法（v1.0 草案，待确认）：用 {{变量}} 占位，认得的变量就替换，
+ * 模板语法（v1.0）：用 {{变量}} 占位，认得的变量就替换，
  * 不认得的原样留着，方便一眼看出写错了哪个。
  * 变量：{{title}} 事件标题、{{summary}} 摘要、{{url}} 原文链接、{{sourceCount}} 来源数量、
  * {{sources}} 来源列表、{{hitAt}} 命中时间、{{group}} 分组名、{{badge}} 有更新标记、
@@ -61,7 +63,7 @@ export function renderTemplate(template: string, input: TemplateInput): string {
     summary: summarize(input.members),
     url: input.event.url ?? '',
     sourceCount: String(input.event.sourceCount),
-    sources: renderSources(input.members),
+    sources: renderSources(input.members, input.language),
     hitAt: formatInTimeZone(input.event.firstItemAt, input.timezone),
     group: input.groupName,
     badge,

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { Event, EventMember } from '../src/modules/events/event.repo.ts'
 import { renderTemplate } from '../src/modules/delivery/template.ts'
-import { defaultTemplate } from '../src/modules/templates/builtin.ts'
+import { defaultTemplateContent } from '../src/modules/templates/builtin.ts'
 
 function event(overrides: Partial<Event> = {}): Event {
   return {
@@ -49,8 +49,8 @@ function render(template: string, overrides: Record<string, unknown> = {}): stri
 }
 
 describe('默认模板', () => {
-  it('中文默认模板带上标题、摘要、来源数、来源列表、链接与命中时间', () => {
-    const text = render(defaultTemplate('zh'))
+  it('默认模板带上标题、摘要、来源数、来源列表、链接与命中时间', () => {
+    const text = render(defaultTemplateContent())
     expect(text).toContain('【AI 圈】某公司发布新模型')
     expect(text).toContain('一句话摘要。')
     expect(text).toContain('来源 2 个：')
@@ -58,11 +58,15 @@ describe('默认模板', () => {
     expect(text).toContain('命中时间：2026-10-01 10:00')
   })
 
-  it('英文模板跟着语言走', () => {
-    const text = render(defaultTemplate('en'), { language: 'en' })
-    expect(text).toContain('[AI 圈] 某公司发布新模型')
-    expect(text).toContain('2 sources:')
-    expect(text).toContain('Seen at 2026-10-01 10:00')
+  it('只有一套模板；语言只影响标记与来源分隔符这类固定文案', () => {
+    const text = render(defaultTemplateContent(), {
+      language: 'en',
+      event: event({ status: 'updated' }),
+    })
+    // 正文还是模板里写的那套，只有「有更新」标记与来源分隔符跟着语言
+    expect(text).toContain('Update 【AI 圈】某公司发布新模型')
+    expect(text).toContain('- 源A: https://a.example.com/1')
+    expect(text).toContain('来源 2 个：')
   })
 
   it('命中时间按设置里的时区渲染', () => {

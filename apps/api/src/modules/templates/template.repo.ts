@@ -19,6 +19,7 @@ function toTemplate(row: TemplateRow): MessageTemplate {
   return {
     id: row.id,
     name: row.name,
+    nameKey: null,
     content: row.content,
     builtin: false,
     createdAt: row.created_at,

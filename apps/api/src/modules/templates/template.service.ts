@@ -6,7 +6,7 @@ import type {
 
 import { AppError } from '../../plugins/errors.ts'
 import type { TemplateRepo } from './template.repo.ts'
-import { defaultTemplate } from './builtin.ts'
+import { defaultTemplateContent } from './builtin.ts'
 
 export interface TemplateServiceDeps {
   repo: TemplateRepo
@@ -49,10 +49,10 @@ export function createTemplateService(deps: TemplateServiceDeps) {
       deps.repo.remove(id)
     },
 
-    /** 动作没选模板（null）时，用跟随界面语言的内置模板 */
-    contentFor(templateId: string | null, language: 'zh' | 'en'): string {
+    /** 动作没选模板（null）时用内置默认模板；引用的模板被删了也回落到它 */
+    contentFor(templateId: string | null): string {
       if (templateId && templateId.trim().length > 0) return this.get(templateId).content
-      return defaultTemplate(language)
+      return defaultTemplateContent()
     },
   }
 }

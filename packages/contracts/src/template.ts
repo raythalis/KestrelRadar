@@ -1,16 +1,17 @@
 import { z } from 'zod'
 
 /** 系统内置模板的 id：内容固定在代码里，不可改不可删 */
-export const BUILTIN_TEMPLATE_IDS = { zh: 'builtin:zh', en: 'builtin:en' } as const
+export const BUILTIN_TEMPLATE_ID = 'builtin:default'
 
-/** 消息模板：别名 + 内容；动作靠 id 引用它 */
 export const messageTemplateSchema = z.object({
   id: z.string().min(1).max(120),
+  /** 自定义模板的别名；内置模板用它当兜底 */
   name: z.string().min(1).max(60),
+  /** 内置模板的显示名走 i18n；自定义模板为 null */
+  nameKey: z.string().max(120).nullable(),
   content: z.string().min(1).max(4000),
-  /** 系统内置：界面上只读，不许改也不许删 */
+  /** 系统内置：只读 */
   builtin: z.boolean(),
-  /** 内置模板没有创建 / 修改时间 */
   createdAt: z.string().nullable(),
   updatedAt: z.string().nullable(),
 })

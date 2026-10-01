@@ -1,4 +1,6 @@
-import type { Action } from '@kestrel/contracts'
+import type { Action, ChannelTestResult } from '@kestrel/contracts'
+
+import { DeliveryError } from './sender.ts'
 
 import type { ActionRepo } from '../actions/action.repo.ts'
 import type { ChannelRepo } from '../channels/channel.repo.ts'
@@ -10,6 +12,7 @@ import type { JudgmentRepo } from '../judgment/judgment.repo.ts'
 import type { MonitorRepo } from '../monitors/monitor.repo.ts'
 import type { SettingsService } from '../settings/settings.service.ts'
 import type { TemplateService } from '../templates/template.service.ts'
+import type { TelegramChat, TelegramGateway } from './telegram.ts'
 import type { ChannelBatcher } from './batch.ts'
 import type { DeliveryRepo } from './delivery.repo.ts'
 import type { DeliverySender } from './sender.ts'
@@ -28,12 +31,6 @@ export interface DeliveryOutcome {
   message: string
 }
 
-export interface ChannelTestResult {
-  ok: boolean
-  message: string
-  sentAt: string | null
-}
-
 export interface DeliveryDeps {
   actions: ActionRepo
   monitors: MonitorRepo
@@ -46,6 +43,7 @@ export interface DeliveryDeps {
   channels: ChannelRepo
   settings: SettingsService
   templates: TemplateService
+  telegram: TelegramGateway
   sender: DeliverySender
   batcher: ChannelBatcher
   log?: (level: 'info' | 'warn', message: string) => void
@@ -161,8 +159,8 @@ export function createDeliveryService(deps: DeliveryDeps) {
     let budget = limit > 0 ? limit - sentToday : Number.POSITIVE_INFINITY
     if (budget <= 0) return skip(`今天已经推到上限（${limit} 条），剩下的只入库不通知`)
 
-    // 动作只存模板 id，正文在模板库里；没选就用跟随语言的内置模板
-    const template = deps.templates.contentFor(action.templateId, settings.language)
+    // 动作只存模板 id，正文在模板库里；没选就用内置默认模板
+    const template = deps.templates.contentFor(action.templateId)
     const messages = picked.map(({ event, itemIds }) => ({
       event,
       itemIds,
@@ -249,6 +247,21 @@ export function createDeliveryService(deps: DeliveryDeps) {
     },
 
     /** 渠道连通性测试：真的发一条测试消息（有副作用，只能手动触发） */
+    /** 读取会话：token 优先用界面上刚填的，否则用渠道里存着的 */
+    async listTelegramChats(input: {
+      channelId?: string
+      token?: string
+    }): Promise<TelegramChat[]> {
+      const typed = input.token?.trim()
+      let token = typed && typed.length > 0 ? typed : null
+      if (!token && input.channelId) token = deps.channels.getSecret(input.channelId)
+      if (!token)
+        throw new DeliveryError(
+          '没有可用的 bot token：填一个，或选一个已经存过 token 的 Telegram 渠道',
+        )
+      return deps.telegram.listChats(token)
+    },
+
     async testChannel(channelId: string): Promise<ChannelTestResult> {
       const channel = deps.channels.get(channelId)
       if (!channel) return { ok: false, message: '渠道不存在', sentAt: null }

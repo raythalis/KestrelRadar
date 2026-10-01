@@ -16,7 +16,9 @@ import {
 import { createChannelBatcher, type ChannelBatcher } from './modules/delivery/batch.ts'
 import { createDeliveryRepo, type DeliveryRepo } from './modules/delivery/delivery.repo.ts'
 import { createDeliveryService, type DeliveryService } from './modules/delivery/delivery.service.ts'
-import { createWebhookSender, type DeliverySender } from './modules/delivery/sender.ts'
+import { createDeliverySender } from './modules/delivery/dispatcher.ts'
+import type { DeliverySender } from './modules/delivery/sender.ts'
+import { createTelegramGateway, type TelegramGateway } from './modules/delivery/telegram.ts'
 import { createEventRepo, type EventRepo } from './modules/events/event.repo.ts'
 import { createEventService } from './modules/events/event.service.ts'
 import { createGroupRepo } from './modules/groups/group.repo.ts'
@@ -61,6 +63,7 @@ export interface ContainerOptions {
   llm?: JudgeLlm
   /** 投递用的发送器；不传就是真的往 Webhook 发 */
   sender?: DeliverySender
+  telegram?: TelegramGateway
   /** 渠道合并窗口；测试里给一个很短的窗口 */
   batcher?: ChannelBatcher
 }
@@ -104,7 +107,8 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
 
   const templates = createTemplateService({ repo: templateRepo, builtin: builtinTemplates() })
 
-  const sender = options.sender ?? createWebhookSender()
+  const telegram = options.telegram ?? createTelegramGateway()
+  const sender = options.sender ?? createDeliverySender()
   const batcher = options.batcher ?? createChannelBatcher(sender)
   const delivery = createDeliveryService({
     actions: actionRepo,
@@ -118,6 +122,7 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     channels: channelRepo,
     settings,
     templates,
+    telegram,
     sender,
     batcher,
     log: options.log,
