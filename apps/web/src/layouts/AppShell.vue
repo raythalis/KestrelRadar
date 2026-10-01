@@ -20,7 +20,11 @@ const localeOptions: { value: AppLocale; label: string }[] = [
 const navItems = ['dashboard', 'config', 'channels', 'models', 'settings'] as const
 
 // 界面语言以 store 为准（它管着持久化）：刷新后也要把存着的语言装回去
-watch(() => ui.locale, (next) => (locale.value = next), { immediate: true })
+watch(
+  () => ui.locale,
+  (next) => (locale.value = next),
+  { immediate: true },
+)
 
 function toggleTheme(): void {
   ui.toggleTheme()
