@@ -133,6 +133,7 @@ export default {
     },
     channel: '通知渠道：',
     channelMissing: '未选择渠道',
+    channelDisabled: '未启用',
     channelMissingHint: '这个动作还没选通知渠道，命中后发不出去。',
     channelAdd: '新建渠道',
     templateBuiltin: '系统内置（默认模板）',

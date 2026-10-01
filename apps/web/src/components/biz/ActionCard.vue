@@ -23,11 +23,13 @@ const props = withDefaults(
     nextRunAt?: string | null
     /** 目标渠道名；缺了就是没配 */
     channelName?: string
+    /** 目标渠道自己是不是启用的；渠道停用时在渠道名旁边挂个红 tag */
+    channelEnabled?: boolean
     /** 消息模板名 */
     templateName?: string
     enabled: boolean
   }>(),
-  { icon: 'mdi-bell-ring-outline', cron: null, nextRunAt: null },
+  { icon: 'mdi-bell-ring-outline', cron: null, nextRunAt: null, channelEnabled: true },
 )
 
 const emit = defineEmits<{
@@ -74,12 +76,18 @@ const channelMissing = computed(() => !props.channelName)
     </div>
 
     <div class="biz-card__body">
-      <span
-        class="biz-card__sub"
-        :class="{ 'biz-card__sub--warn': channelMissing }"
-        data-test="action-channel"
-      >
-        {{ channelName || t('action.channelMissing') }}
+      <span class="biz-card__line">
+        <span
+          class="biz-card__sub"
+          :class="{ 'biz-card__sub--warn': channelMissing }"
+          data-test="action-channel"
+        >
+          {{ channelName || t('action.channelMissing') }}
+        </span>
+        <!-- 渠道存在但被停用：这条动作发不出去，就在渠道名旁边标出来 -->
+        <AppTag v-if="channelName && !channelEnabled" tone="err" data-test="action-channel-off">
+          {{ t('action.channelDisabled') }}
+        </AppTag>
       </span>
       <span v-if="templateName" class="biz-card__meta" data-test="action-template">
         {{ templateName }}

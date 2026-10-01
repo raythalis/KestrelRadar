@@ -350,6 +350,7 @@ type DemoAction = {
   cron: string | null
   nextRunAt: string | null
   channelName?: string
+  channelEnabled?: boolean
   templateName?: string
   enabled: boolean
 }
@@ -384,6 +385,18 @@ function initialActions(): DemoAction[] {
       triggerLabel: c('demo.trigger.realtime'),
       cron: null,
       nextRunAt: null,
+      templateName: c('demo.templateDefault'),
+      enabled: true,
+    },
+    {
+      id: 'a5',
+      name: c('demo.action.channelOff'),
+      icon: 'mdi-bell-alert-outline',
+      triggerLabel: c('demo.trigger.realtime'),
+      cron: null,
+      nextRunAt: null,
+      channelName: c('demo.channelName'),
+      channelEnabled: false,
       templateName: c('demo.templateDefault'),
       enabled: true,
     },
@@ -951,6 +964,7 @@ async function confirmChannelDelete(): Promise<void> {
                     :cron="action.cron"
                     :next-run-at="action.nextRunAt"
                     :channel-name="action.channelName"
+                    :channel-enabled="action.channelEnabled !== false"
                     :template-name="action.templateName"
                     :enabled="action.enabled"
                     @delete="pendingAction = action"

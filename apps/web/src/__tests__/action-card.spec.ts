@@ -44,6 +44,19 @@ describe('ActionCard', () => {
     expect(missing.find('[data-test="action-warning"]').exists()).toBe(false)
   })
 
+  it('渠道自己停用时，在渠道名旁边挂红 tag；渠道正常不挂', () => {
+    const off = mountCard({ channelEnabled: false })
+    const tag = off.find('[data-test="action-channel-off"]')
+    expect(tag.exists()).toBe(true)
+    expect(tag.text()).toBe('未启用')
+    expect(tag.classes()).toContain('app-tag--err')
+
+    expect(mountCard().find('[data-test="action-channel-off"]').exists()).toBe(false)
+    // 没配渠道时不挂这个 tag（那是另一回事：未选择渠道）
+    const missing = mountCard({ channelName: undefined, channelEnabled: false })
+    expect(missing.find('[data-test="action-channel-off"]').exists()).toBe(false)
+  })
+
   it('定时汇总：cron 表达式与下次汇总时间都在卡脚（跟数据源卡同一个位置）', () => {
     const wrapper = mountCard({
       triggerLabel: '定时汇总',

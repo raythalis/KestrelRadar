@@ -343,6 +343,14 @@
 }
 
 // 卡脚里的地址/表达式：等宽，读起来跟正文有区分
+// 渠道名 + 旁边的小 tag（例如渠道未启用）：同一行，窄了就换行
+.biz-card__line {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--k-space-1);
+  align-items: center;
+}
+
 // 缺渠道这类「配了但还不能跑」的一行用警示色，不另开提示框
 .biz-card__sub--warn {
   color: var(--k-warn);

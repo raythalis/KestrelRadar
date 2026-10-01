@@ -135,6 +135,7 @@ export default {
     },
     channel: 'Channel: ',
     channelMissing: 'No channel selected',
+    channelDisabled: 'Not enabled',
     channelMissingHint: 'This action has no channel yet, so hits cannot be sent.',
     channelAdd: 'New channel',
     templateBuiltin: 'Built-in (default template)',

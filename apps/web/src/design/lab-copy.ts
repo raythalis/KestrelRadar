@@ -57,7 +57,7 @@ const ZH = {
     '状态：左侧色条＝渠道状态；右下角圆点＝测试连通性：未测（空心圈）→ 点一下 → 测试中（黄色转圈，不可再点）→ 连通（绿，呼吸）／有警告（黄，静止）／失败（红，静止）。停用的渠道圆点不可点；点卡片＝编辑，保存后退回未测；右上角 ×＝删除（要确认）',
   'states.source':
     '状态：状态块本身就是抓取测试的入口（还没抓过就显示「抓取测试」）；点卡片＝编辑；右上角 ×＝删除（要确认）；开关在右下；脚上只写 cron 表达式 + 下次采集时间（停用的源不显示下次）；不显示实例地址与已收条数，也不再摆底部按钮行',
-  'states.action': '状态：正常 / 定时汇总 / 缺渠道 / 停用',
+  'states.action': '状态：正常 / 定时汇总 / 缺渠道 / 渠道未启用 / 停用',
   'states.hint': '语气：info / ok / warn / err',
   'states.skeleton': '版面：text / card / list / page',
 
@@ -155,6 +155,7 @@ const ZH = {
   'demo.action.digest': '早报汇总',
   'demo.action.missing': '还没选渠道的动作',
   'demo.action.off': '已停用的动作',
+  'demo.action.channelOff': '渠道已停用的动作',
   'demo.trigger.realtime': '实时推送',
   'demo.trigger.digest': '定时汇总',
   'demo.channelName': '我的 Telegram',
@@ -265,7 +266,7 @@ const EN: Record<keyof typeof ZH, string> = {
     'Left accent bar = channel state; bottom-right dot = connectivity test: untested (hollow) → tap → testing (yellow spinner, not clickable) → connected (green, pulsing) / warning (yellow, still) / failed (red, still). Disabled channels show no dot; tapping the card edits, saving resets to untested; the top-right × deletes (with confirmation)',
   'states.source':
     'The state chip is itself the fetch-test entry point (untested reads “Test fetch”); tapping the card edits; top-right × deletes (with confirmation); the switch sits bottom-right; the footer carries only the cron expression + next run (disabled sources omit the next run); no instance URL, no stored-item count, no bottom button row',
-  'states.action': 'States: normal / digest / missing channel / disabled',
+  'states.action': 'States: normal / digest / missing channel / channel off / disabled',
   'states.hint': 'States: info / ok / warn / err',
   'states.skeleton': 'Layouts: text / card / list / page',
 
@@ -359,6 +360,7 @@ const EN: Record<keyof typeof ZH, string> = {
   'demo.action.digest': 'Morning digest',
   'demo.action.missing': 'Action with no channel',
   'demo.action.off': 'Disabled action',
+  'demo.action.channelOff': 'Action with a disabled channel',
   'demo.trigger.realtime': 'Push in real time',
   'demo.trigger.digest': 'Timed digest',
   'demo.channelName': 'My Telegram',
