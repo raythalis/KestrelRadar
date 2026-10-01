@@ -122,11 +122,7 @@ function submit(): void {
     @cancel="emit('cancel')"
   >
     <div class="app-stack">
-      <AppSwitch
-        v-model="enabled"
-        :label="t('common.enabled')"
-        data-test="channel-dialog-enabled"
-      />
+      <AppSwitch v-model="enabled" :label="t('common.enable')" data-test="channel-dialog-enabled" />
 
       <AppInput v-model="name" :label="t('common.name')" required data-test="channel-dialog-name" />
 

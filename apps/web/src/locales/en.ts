@@ -21,6 +21,7 @@ export default {
   },
   common: {
     enabled: 'Enabled',
+    enable: 'Enable',
     edit: 'Edit',
     name: 'Name',
     add: 'Add',
@@ -175,7 +176,7 @@ export default {
     },
     url: 'Webhook URL',
     secret: 'Secret (optional)',
-    secretHint: 'Sent as Authorization: Bearer in the request header',
+    secretHint: 'Lets the receiver verify the request came from Kestrel',
     hasSecret: 'secret set',
     noSecret: 'no secret',
     botToken: 'Bot token',

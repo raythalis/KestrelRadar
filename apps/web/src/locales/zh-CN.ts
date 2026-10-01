@@ -21,6 +21,7 @@ export default {
   },
   common: {
     enabled: '已启用',
+    enable: '启用',
     edit: '编辑',
     name: '名称',
     add: '添加',
@@ -172,7 +173,7 @@ export default {
     },
     url: 'Webhook 地址',
     secret: '密钥（可留空）',
-    secretHint: '填了就放在请求头 Authorization: Bearer 里',
+    secretHint: '接收方用它校验请求来自 Kestrel',
     hasSecret: '已配密钥',
     noSecret: '没配密钥',
     botToken: 'Bot token',
