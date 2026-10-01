@@ -255,6 +255,36 @@
   color: var(--k-err);
 }
 
+/* 固定前缀的输入：前缀和输入框拼成一条，接缝处不收圆角；前缀只展示，值里不含它 */
+.app-field__group {
+  display: flex;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.app-field__prefix {
+  display: flex;
+  align-items: center;
+  max-width: 55%;
+  padding: 0 var(--k-space-2);
+  border: 1px solid var(--k-border);
+  border-right: 0;
+  border-radius: var(--k-radius-md) 0 0 var(--k-radius-md);
+  background: var(--k-panel-2);
+  color: var(--k-muted);
+  font-family: var(--k-font-mono);
+  font-size: var(--k-fs-meta);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-field__group.is-prefixed .v-field {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+
 /* 一行一个设置项：左标签右控件，窄屏自动变成上下 */
 .app-field-row {
   display: grid;

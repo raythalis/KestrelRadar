@@ -20,6 +20,8 @@ withDefaults(
     actionLoading?: boolean
     /** 等宽显示（cron 表达式、地址、路由路径这类要按字符对齐的值） */
     mono?: boolean
+    /** 固定前缀（不可编辑的一段，例如 RSSHub 实例地址）；值里不含它，只负责显示 */
+    prefix?: string
   }>(),
   { type: 'text', disabled: false, readonly: false, required: false, mono: false },
 )
@@ -34,16 +36,21 @@ const emit = defineEmits<{ (e: 'action'): void }>()
       {{ label }}<span v-if="required" class="app-field__req">*</span>
     </label>
     <div class="app-field__row">
-      <v-text-field
-        v-model="model"
-        :type="type"
-        :placeholder="placeholder"
-        :autocomplete="autocomplete"
-        :disabled="disabled"
-        :readonly="readonly"
-        :error="Boolean(error)"
-        :class="{ 'is-readonly': readonly && !disabled, 'font-mono': mono }"
-      />
+      <div class="app-field__group" :class="{ 'is-prefixed': Boolean(prefix) }">
+        <span v-if="prefix" class="app-field__prefix" data-test="app-input-prefix">{{
+          prefix
+        }}</span>
+        <v-text-field
+          v-model="model"
+          :type="type"
+          :placeholder="placeholder"
+          :autocomplete="autocomplete"
+          :disabled="disabled"
+          :readonly="readonly"
+          :error="Boolean(error)"
+          :class="{ 'is-readonly': readonly && !disabled, 'font-mono': mono }"
+        />
+      </div>
       <slot name="action">
         <AppButton v-if="actionLabel" size="sm" :loading="actionLoading" @click="emit('action')">
           {{ actionLabel }}

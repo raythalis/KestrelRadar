@@ -79,6 +79,14 @@ export default {
     latestItem: 'Latest: ',
     itemCount: '{n} items collected',
     baseline: 'Baseline set: {n} historical items, not pushed',
+    addSource: 'New source',
+    goConfigure: 'Set up',
+    editSource: 'Edit source',
+    targetHint: {
+      rsshub: 'RSSHub route, e.g. /bilibili/ranking/all',
+      rss: 'Feed URL, e.g. https://example.com/feed.xml',
+      web: 'Page URL, e.g. https://example.com/news',
+    },
     kindLabel: 'Type',
     kind: {
       rsshub: 'RSSHub route',

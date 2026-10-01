@@ -183,6 +183,7 @@ const ZH = {
   'demo.sourceStatusWarn': '抓得到但没内容',
   'demo.sourceStatusFail': '抓取失败',
   'demo.reset': '复位演示',
+  'demo.rsshubConfigured': 'RSSHub 已配置',
   'demo.dialogNote':
     '在手机上打开它会从底部升起（底部抽屉，顶部圆角），桌面上是居中弹窗。关掉可以用右上角、取消按钮或 Esc。',
   'demo.formDialogNote':
@@ -397,6 +398,7 @@ const EN: Record<keyof typeof ZH, string> = {
   'demo.sourceStatusWarn': 'Reachable but empty',
   'demo.sourceStatusFail': 'Fetch failed',
   'demo.reset': 'Reset demo',
+  'demo.rsshubConfigured': 'RSSHub configured',
   'demo.dialogNote':
     'On a phone it rises from the bottom (bottom sheet, rounded top); on desktop it is a centred dialog. Close it with the top-right ×, the cancel button or Esc.',
   'demo.formDialogNote':

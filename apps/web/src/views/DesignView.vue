@@ -17,10 +17,11 @@ import ConfirmDialog from '@/components/biz/ConfirmDialog.vue'
 import CronPicker from '@/components/biz/CronPicker.vue'
 import FormDialog from '@/components/biz/FormDialog.vue'
 import SourceCard from '@/components/biz/SourceCard.vue'
+import SourceDialog from '@/components/biz/SourceDialog.vue'
 import { useUiStore } from '@/stores/ui'
 import DesignGroup from '@/views/design/DesignGroup.vue'
 import { makeDesignCopy, makeDesignLists, type DesignCopyKey } from '@/design/lab-copy'
-import type { ChannelChat, ChannelDialogValues } from '@/components/biz/types'
+import type { ChannelChat, ChannelDialogValues, SourceDialogValues } from '@/components/biz/types'
 
 const ui = useUiStore()
 const { t, locale } = useI18n()
@@ -272,6 +273,8 @@ type DemoSource = {
   id: string
   name: string
   icon: string
+  /** 弹窗要按种类出提示，所以这里存枚举而不是只存文案 */
+  kind: 'rsshub' | 'rss' | 'web'
   kindLabel: string
   enabled: boolean
   target: string
@@ -305,6 +308,7 @@ function initialSources(): DemoSource[] {
       id: 's1',
       name: c('demo.source.bili'),
       icon: 'mdi-video-outline',
+      kind: 'rsshub',
       kindLabel: t('discovery.kind.rsshub'),
       enabled: true,
       target: '/bilibili/ranking/all',
@@ -319,9 +323,10 @@ function initialSources(): DemoSource[] {
       id: 's2',
       name: c('demo.source.new'),
       icon: 'mdi-rss',
-      kindLabel: t('discovery.kind.rsshub'),
+      kind: 'rss',
+      kindLabel: t('discovery.kind.rss'),
       enabled: true,
-      target: '/github/trending/daily',
+      target: 'https://github.blog/feed/',
       cron: '0 * * * *',
       nextRunAt: inMinutes(42),
       tone: 'neutral',
@@ -333,6 +338,7 @@ function initialSources(): DemoSource[] {
       id: 's3',
       name: c('demo.source.empty'),
       icon: 'mdi-web',
+      kind: 'web',
       kindLabel: t('discovery.kind.web'),
       enabled: true,
       target: 'https://example.com/blog',
@@ -347,6 +353,7 @@ function initialSources(): DemoSource[] {
       id: 's4',
       name: c('demo.source.bad'),
       icon: 'mdi-rss',
+      kind: 'rsshub',
       kindLabel: t('discovery.kind.rsshub'),
       enabled: true,
       target: '/bilibili/ranking/dance',
@@ -361,6 +368,7 @@ function initialSources(): DemoSource[] {
       id: 's5',
       name: c('demo.source.off'),
       icon: 'mdi-rss',
+      kind: 'rsshub',
       kindLabel: t('discovery.kind.rsshub'),
       enabled: false,
       target: '/hackernews/best',
@@ -388,6 +396,62 @@ async function confirmSourceDelete(): Promise<void> {
   demoSources.value = demoSources.value.filter((s) => s.id !== pendingSource.value?.id)
   sourceDeleteBusy.value = false
   pendingSource.value = null
+}
+
+// 点卡片＝编辑、点「新建数据源 · xxx」＝新建（种类在入口定下）
+const editingSource = ref<DemoSource | null>(null)
+const creatingSource = ref(false)
+const rsshubConfigured = ref(true)
+/** 演示用的 RSSHub 实例地址（跟全局设置里那个同一个值）；空字符串＝还没配 */
+const RSSHUB_BASE_URL = 'http://192.168.5.100:1200'
+const sourceDialogOpen = computed({
+  get: () => editingSource.value !== null || creatingSource.value,
+  set: (value: boolean) => {
+    if (value) return
+    editingSource.value = null
+    creatingSource.value = false
+  },
+})
+function openSourceEdit(source: DemoSource): void {
+  editingSource.value = source
+  creatingSource.value = false
+}
+function openSourceCreate(): void {
+  editingSource.value = null
+  creatingSource.value = true
+}
+/** 演示用：新建的卡片给个图标 */
+const SOURCE_ICONS = { rsshub: 'mdi-rss', rss: 'mdi-rss', web: 'mdi-web' } as const
+function submitSourceEdit(values: SourceDialogValues): void {
+  const source = editingSource.value
+  if (source) {
+    source.name = values.name
+    source.kind = values.kind
+    source.kindLabel = t(`discovery.kind.${values.kind}`)
+    source.target = values.target
+    source.cron = values.cronExpression
+    source.enabled = values.enabled
+    // 地址/频率可能改了，旧的抓取结论作废
+    source.statusText = t('discovery.test')
+    source.tone = 'neutral'
+  } else {
+    demoSources.value.push({
+      id: `s${demoSources.value.length + 1}-${Date.now()}`,
+      name: values.name,
+      icon: SOURCE_ICONS[values.kind],
+      kind: values.kind,
+      kindLabel: t(`discovery.kind.${values.kind}`),
+      enabled: values.enabled,
+      target: values.target,
+      cron: values.cronExpression,
+      nextRunAt: inMinutes(30),
+      tone: 'neutral',
+      statusText: t('discovery.test'),
+      result: 'ok',
+      busy: false,
+    })
+  }
+  sourceDialogOpen.value = false
 }
 
 const demoSourcesDirty = computed(() =>
@@ -1119,9 +1183,20 @@ async function confirmChannelDelete(): Promise<void> {
                       :tone="source.tone"
                       :status-text="source.statusText || t('discovery.test')"
                       :busy="source.busy"
+                      @edit="openSourceEdit(source)"
                       @test="runSourceTest(source)"
                       @toggle="source.enabled = $event"
                       @delete="pendingSource = source"
+                    />
+                  </div>
+                  <div class="app-row ds-wrap">
+                    <AppButton size="sm" data-test="source-create" @click="openSourceCreate()">
+                      {{ t('discovery.addSource') }}
+                    </AppButton>
+                    <AppSwitch
+                      v-model="rsshubConfigured"
+                      :label="c('demo.rsshubConfigured')"
+                      data-test="source-rsshub-configured"
                     />
                   </div>
                   <AppButton
@@ -1254,6 +1329,18 @@ async function confirmChannelDelete(): Promise<void> {
         <CronPicker v-model="cronDaily" :label="c('field.every5Summary')" />
       </div>
     </FormDialog>
+
+    <SourceDialog
+      v-model="sourceDialogOpen"
+      :name="editingSource?.name ?? ''"
+      :kind="editingSource?.kind ?? 'rsshub'"
+      :target="editingSource?.target ?? ''"
+      :cron="editingSource?.cron ?? '0 * * * *'"
+      :enabled="editingSource?.enabled ?? true"
+      :rsshub-base-url="rsshubConfigured ? RSSHUB_BASE_URL : ''"
+      @submit="submitSourceEdit"
+      @configure-rsshub="flashToast()"
+    />
 
     <ConfirmDialog
       v-model="monitorDeleteOpen"

@@ -28,7 +28,12 @@ const model = defineModel<string | number | null>({ default: null })
       :disabled="disabled"
       :readonly="readonly"
       :error="Boolean(error)"
-    />
+    >
+      <!-- 下拉项要自己画的时候（灰掉某项、右侧挂个动作）由调用方提供 -->
+      <template v-if="$slots.item" #item="scope">
+        <slot name="item" v-bind="scope" />
+      </template>
+    </v-select>
     <span v-if="error" class="app-field__error">{{ error }}</span>
     <span v-else-if="hint" class="app-field__hint">{{ hint }}</span>
   </div>

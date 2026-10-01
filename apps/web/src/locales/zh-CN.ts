@@ -78,6 +78,14 @@ export default {
     latestItem: '最近一条：',
     itemCount: '已收 {n} 条',
     baseline: '已建立基线：收入 {n} 条历史内容，不计入推送',
+    addSource: '新建数据源',
+    goConfigure: '前往配置',
+    editSource: '编辑数据源',
+    targetHint: {
+      rsshub: 'RSSHub 路由，例如 /bilibili/ranking/all',
+      rss: '订阅地址，例如 https://example.com/feed.xml',
+      web: '网页地址，例如 https://example.com/news',
+    },
     kindLabel: '类型',
     kind: {
       rsshub: 'RSSHub 路由',

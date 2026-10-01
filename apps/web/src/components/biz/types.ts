@@ -19,3 +19,13 @@ export interface ChannelChat {
   id: string
   title: string
 }
+
+/** 数据源弹窗交出去的值（页面负责拼成 create/update 入参） */
+export interface SourceDialogValues {
+  name: string
+  kind: 'rsshub' | 'rss' | 'web'
+  /** RSSHub 路由、RSS 地址或网页地址 */
+  target: string
+  cronExpression: string
+  enabled: boolean
+}

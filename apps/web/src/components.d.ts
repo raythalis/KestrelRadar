@@ -44,6 +44,7 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     SettingsForm: typeof import('./components/settings/SettingsForm.vue')['default']
     SourceCard: typeof import('./components/biz/SourceCard.vue')['default']
+    SourceDialog: typeof import('./components/biz/SourceDialog.vue')['default']
     TemplateDialog: typeof import('./components/TemplateDialog.vue')['default']
     TemplateList: typeof import('./components/settings/TemplateList.vue')['default']
   }
