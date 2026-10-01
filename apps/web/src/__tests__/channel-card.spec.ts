@@ -14,7 +14,6 @@ function mountCard(props: Record<string, unknown> = {}) {
       enabled: true,
       tone: 'ok',
       statusText: '连通',
-      usedBy: 2,
       ...props,
     },
     global: { plugins: [vuetify, i18n, appComponents] },
@@ -25,6 +24,19 @@ describe('ChannelCard', () => {
   it('第二行就是渠道类型枚举的文案，页面不用手写', () => {
     expect(mountCard().find('[data-test="channel-kind"]').text()).toBe('Telegram')
     expect(mountCard({ type: 'webhook' }).find('[data-test="channel-kind"]').text()).toBe('Webhook')
+  })
+
+  it('图标跟类型走，且都真的存在于图标字体里（写错名字会是空白）', () => {
+    expect(mountCard().find('[data-test="channel-icon"] .v-icon').classes()).toContain('mdi-send')
+    expect(
+      mountCard({ type: 'webhook' }).find('[data-test="channel-icon"] .v-icon').classes(),
+    ).toContain('mdi-webhook')
+  })
+
+  it('卡上不写「被几个动作用着」这类影响面信息', () => {
+    const wrapper = mountCard()
+    expect(wrapper.find('[data-test="channel-used-by"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('动作使用')
   })
 
   it('状态不写成一句文字：颜色走左侧色条，圆点用 title 说明', () => {

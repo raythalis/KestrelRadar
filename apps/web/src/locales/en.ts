@@ -151,7 +151,6 @@ export default {
     errorSyntax: 'Cannot read this expression',
   },
   channel: {
-    usedBy: 'Used by {n} action(s)',
     probeHint: 'Click to send one test message to this channel',
     probe: 'Test connectivity',
     probeRunning: 'Sending…',

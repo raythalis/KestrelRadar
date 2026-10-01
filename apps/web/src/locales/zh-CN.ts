@@ -149,7 +149,6 @@ export default {
     errorSyntax: '这段表达式读不出来',
   },
   channel: {
-    usedBy: '被 {n} 个动作使用',
     probeHint: '点一下给这个渠道发一条测试消息',
     probe: '测试连通性',
     probeRunning: '发送中…',

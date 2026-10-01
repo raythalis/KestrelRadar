@@ -2,11 +2,14 @@
      状态只由左侧色条表达；右下角的圆点是测试连通性的按钮（悬停出提示，测试中转圈）。
      点击整张卡片＝编辑；右上角 ×＝删除；启用开关在编辑表单里，不占卡片位置。
      类型文案与图标都由渠道类型枚举决定，页面不手写。
-     只出事件，不碰 store：数据与写操作由页面负责。 -->
+     只出事件，不碰 store：数据与写操作由页面负责。
+     卡上不写「被几个动作用着」这类影响面信息——那是删除确认时才需要知道的。 -->
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ChannelType } from '@kestrel/contracts'
+
+import { CHANNEL_ICONS } from './icons'
 
 const props = withDefaults(
   defineProps<{
@@ -18,25 +21,17 @@ const props = withDefaults(
     tone?: 'ok' | 'warn' | 'err' | 'neutral'
     /** 状态文案：只作为圆点的悬停提示与无障碍标签，不显示成文字 */
     statusText: string
-    /** 被几个动作引用；0 表示还没人用 */
-    usedBy?: number
     /** 正在测试连通性 */
     busy?: boolean
   }>(),
-  { tone: 'neutral', usedBy: 0, busy: false },
+  { tone: 'neutral', busy: false },
 )
 
 const emit = defineEmits<{ edit: []; test: []; delete: [] }>()
 
 const { t } = useI18n()
 
-/** 图标跟类型枚举走 */
-const ICONS: Record<ChannelType, string> = {
-  telegram: 'mdi-telegram',
-  webhook: 'mdi-webhook',
-}
-
-const icon = computed(() => ICONS[props.type])
+const icon = computed(() => CHANNEL_ICONS[props.type])
 const kindLabel = computed(() => t(`channel.type.${props.type}`))
 
 /** 悬停提示：状态 + 这个圆点是干什么的；测试中说明正在发 */
@@ -77,9 +72,6 @@ const probeTitle = computed(() =>
     </div>
 
     <div class="biz-card__foot">
-      <span class="biz-card__meta" data-test="channel-used-by">
-        {{ t('channel.usedBy', { n: usedBy }) }}
-      </span>
       <span class="app-spacer" />
       <button
         type="button"

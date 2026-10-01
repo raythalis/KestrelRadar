@@ -525,7 +525,6 @@ const selectItems = [
                   :enabled="true"
                   tone="ok"
                   status-text="连通"
-                  :used-by="2"
                 />
                 <ChannelCard
                   name="还没测过的渠道"
@@ -533,7 +532,6 @@ const selectItems = [
                   :enabled="true"
                   tone="neutral"
                   status-text="还没测过"
-                  :used-by="0"
                 />
                 <ChannelCard
                   name="停用的渠道"
@@ -541,7 +539,6 @@ const selectItems = [
                   :enabled="false"
                   tone="neutral"
                   status-text="已停用"
-                  :used-by="0"
                 />
                 <ChannelCard
                   name="连接失败的渠道"
@@ -549,7 +546,6 @@ const selectItems = [
                   :enabled="true"
                   tone="err"
                   status-text="连接失败"
-                  :used-by="1"
                 />
                 <ChannelCard
                   name="正在测试的渠道"
@@ -557,7 +553,6 @@ const selectItems = [
                   :enabled="true"
                   tone="warn"
                   status-text="测试中"
-                  :used-by="1"
                   busy
                 />
               </div>

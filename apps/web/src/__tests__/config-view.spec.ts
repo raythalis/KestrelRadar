@@ -157,7 +157,8 @@ async function mountLoaded() {
   return wrapper
 }
 
-describe('配置管理页', () => {
+// 整页挂载本来就慢，全套并发跑时容易撞默认 5s 上限
+describe('配置管理页', { timeout: 20000 }, () => {
   beforeEach(() => {
     vi.mocked(api.fetchConfig).mockReset()
     for (const fn of [
