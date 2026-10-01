@@ -87,14 +87,17 @@ const selectItems = [
   { title: '灰区交给模型复核', value: 'assisted' },
 ]
 
-// 渠道卡演示：× 要确认，确认后才从演示列表里去掉（刷新即还原）
+// 渠道卡演示：× 要确认；圆点走「未测 → 测试中 → 连通／失败」的状态机（结果只留在内存里）
+type Probe = 'idle' | 'testing' | 'ok' | 'fail'
 type DemoChannel = {
   id: string
   name: string
   type: 'telegram' | 'webhook'
   enabled: boolean
   tone: 'ok' | 'warn' | 'err' | 'neutral'
-  statusText: string
+  probe: Probe
+  /** 演示用：这个渠道点测试就失败 */
+  fails?: boolean
 }
 function initialChannels(): DemoChannel[] {
   return [
@@ -104,7 +107,7 @@ function initialChannels(): DemoChannel[] {
       type: 'telegram',
       enabled: true,
       tone: 'ok',
-      statusText: '连通',
+      probe: 'ok',
     },
     {
       id: 'c2',
@@ -112,7 +115,7 @@ function initialChannels(): DemoChannel[] {
       type: 'telegram',
       enabled: true,
       tone: 'neutral',
-      statusText: '还没测过',
+      probe: 'idle',
     },
     {
       id: 'c3',
@@ -120,7 +123,7 @@ function initialChannels(): DemoChannel[] {
       type: 'webhook',
       enabled: false,
       tone: 'neutral',
-      statusText: '已停用',
+      probe: 'idle',
     },
     {
       id: 'c4',
@@ -128,19 +131,32 @@ function initialChannels(): DemoChannel[] {
       type: 'webhook',
       enabled: true,
       tone: 'err',
-      statusText: '连接失败',
-    },
-    {
-      id: 'c5',
-      name: '正在测试的渠道',
-      type: 'telegram',
-      enabled: true,
-      tone: 'warn',
-      statusText: '测试中',
+      probe: 'fail',
+      fails: true,
     },
   ]
 }
 const demoChannels = ref<DemoChannel[]>(initialChannels())
+
+// 演示里改过的东西（删过卡、点过测试）才显示复位按钮
+const demoDirty = computed(() => {
+  const base = initialChannels()
+  return (
+    demoChannels.value.length !== base.length ||
+    demoChannels.value.some((c, index) => c.probe !== base[index]?.probe)
+  )
+})
+
+// 点圆点：先转圈，再落成连通或失败；转圈期间按钮是 disabled，点不动
+function runChannelTest(channel: DemoChannel): void {
+  if (channel.probe === 'testing') return
+  channel.probe = 'testing'
+  window.setTimeout(() => {
+    channel.probe = channel.fails ? 'fail' : 'ok'
+    channel.tone = channel.fails ? 'err' : 'ok'
+  }, 900)
+}
+
 const pendingChannel = ref<DemoChannel | null>(null)
 const channelDeleteOpen = computed({
   get: () => pendingChannel.value !== null,
@@ -158,12 +174,6 @@ async function confirmChannelDelete(): Promise<void> {
   pendingChannel.value = null
 }
 
-// 测试中：只让那一张卡的圆点转圈
-const testingId = ref<string | null>(null)
-function runChannelTest(channel: DemoChannel): void {
-  testingId.value = channel.id
-  window.setTimeout(() => (testingId.value = null), 900)
-}
 </script>
 
 <template>
@@ -597,7 +607,7 @@ function runChannelTest(channel: DemoChannel): void {
           <div class="ds-cols">
             <AppCard
               title="ChannelCard"
-              note="状态只走左侧色条；右下角圆点＝测试连通性（悬停出提示）；点卡片＝编辑；右上角 ×＝删除，删除要先确认"
+              note="左侧色条＝渠道状态；右下角圆点＝测试连通性：未测（静止）→ 点一下 → 测试中（转圈，不可再点）→ 连通（绿，呼吸）／失败（红，静止）。点卡片＝编辑，右上角 ×＝删除（要确认）"
             >
               <div class="app-stack">
                 <div class="app-card-grid">
@@ -608,14 +618,13 @@ function runChannelTest(channel: DemoChannel): void {
                     :type="channel.type"
                     :enabled="channel.enabled"
                     :tone="channel.tone"
-                    :status-text="channel.statusText"
-                    :busy="testingId === channel.id"
+                    :probe="channel.probe"
                     @test="runChannelTest(channel)"
                     @delete="pendingChannel = channel"
                   />
                 </div>
                 <AppButton
-                  v-if="demoChannels.length < 5"
+                  v-if="demoDirty"
                   size="sm"
                   variant="ghost"
                   @click="demoChannels = initialChannels()"

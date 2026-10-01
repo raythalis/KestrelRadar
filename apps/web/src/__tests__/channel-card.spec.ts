@@ -13,7 +13,7 @@ function mountCard(props: Record<string, unknown> = {}) {
       type: 'telegram',
       enabled: true,
       tone: 'ok',
-      statusText: '连通',
+      probe: 'idle',
       ...props,
     },
     global: { plugins: [vuetify, i18n, appComponents] },
@@ -39,14 +39,13 @@ describe('ChannelCard', () => {
     expect(wrapper.text()).not.toContain('动作使用')
   })
 
-  it('状态不写成一句文字：颜色走左侧色条，圆点用 title 说明', () => {
-    const wrapper = mountCard({ tone: 'err', statusText: '连接失败' })
+  it('状态不写成一句文字：颜色走左侧色条，圆点只写它是什么', () => {
+    const wrapper = mountCard({ tone: 'err', probe: 'fail' })
     expect(wrapper.classes()).toContain('biz-card--err')
     expect(wrapper.find('[data-test="channel-status"]').exists()).toBe(false)
     expect(wrapper.text()).not.toContain('连接失败')
-    expect(wrapper.find('[data-test="channel-test"]').attributes('title')).toBe(
-      '连接失败 · 测试连通性',
-    )
+    // 圆点提示不写状态字
+    expect(wrapper.find('[data-test="channel-test"]').attributes('title')).toBe('测试连通性')
   })
 
   it('中间那行没有含义的细节没了，也不显示上次验证时间', () => {
@@ -73,26 +72,29 @@ describe('ChannelCard', () => {
     expect(wrapper.emitted('edit')).toBeUndefined()
   })
 
-  it('右下角圆点走测试：平时不转、测试中转圈、异常时呼吸', async () => {
-    const wrapper = mountCard()
-    const probe = wrapper.find('[data-test="channel-test"]')
-    expect(probe.classes()).not.toContain('biz-card__probe--busy')
-    expect(probe.classes()).not.toContain('biz-card__probe--attention')
+  it('圆点状态机：未测静止、连通呼吸、失败静止、测试中转圈且不可再点', async () => {
+    const idle = mountCard()
+    expect(idle.find('[data-test="channel-test"]').classes()).toContain('biz-card__probe--idle')
 
-    await probe.trigger('click')
-    expect(wrapper.emitted('test')).toHaveLength(1)
-    expect(wrapper.emitted('edit')).toBeUndefined()
+    await idle.find('[data-test="channel-test"]').trigger('click')
+    expect(idle.emitted('test')).toHaveLength(1)
+    expect(idle.emitted('edit')).toBeUndefined()
 
-    const busy = mountCard({ busy: true })
-    expect(busy.find('[data-test="channel-test"]').classes()).toContain('biz-card__probe--busy')
-    expect(busy.find('[data-test="channel-test"]').attributes('title')).toBe('发送中…')
+    expect(
+      mountCard({ probe: 'ok' }).find('[data-test="channel-test"]').classes(),
+    ).toContain('biz-card__probe--ok')
+    expect(
+      mountCard({ probe: 'fail' }).find('[data-test="channel-test"]').classes(),
+    ).toContain('biz-card__probe--fail')
 
-    expect(mountCard({ tone: 'err' }).find('[data-test="channel-test"]').classes()).toContain(
-      'biz-card__probe--attention',
-    )
-    expect(mountCard({ tone: 'ok' }).find('[data-test="channel-test"]').classes()).not.toContain(
-      'biz-card__probe--attention',
-    )
+    // 测试中：转圈，并且点不动
+    const testing = mountCard({ probe: 'testing' })
+    const dot = testing.find('[data-test="channel-test"]')
+    expect(dot.classes()).toContain('biz-card__probe--testing')
+    expect((dot.element as HTMLButtonElement).disabled).toBe(true)
+    expect(dot.attributes('aria-busy')).toBe('true')
+    await dot.trigger('click')
+    expect(testing.emitted('test')).toBeUndefined()
   })
 
   it('停用只是变淡：照样能点进编辑、圆点照样能用', async () => {

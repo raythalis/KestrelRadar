@@ -1,8 +1,10 @@
 <!-- ChannelCard：通知渠道卡片（业务组件层）。
-     状态只由左侧色条表达；右下角的圆点是测试连通性的按钮（悬停出提示，测试中转圈）。
+     左侧色条＝渠道状态（跟 tone 走）；右下角圆点＝测试连通性按钮，它自己有一套状态：
+     未测（白，不呼吸）→ 点一下 → 测试中（转圈，期间不能再点）→ 连通（绿，呼吸）／失败（红，不呼吸）。
+     圆点悬停只写「测试连通性」，状态靠颜色和动效表达，不写状态字。
      点击整张卡片＝编辑；右上角 ×＝删除；启用开关在编辑表单里，不占卡片位置。
      类型文案与图标都由渠道类型枚举决定，页面不手写。
-     只出事件，不碰 store：数据与写操作由页面负责。
+     只出事件，不碰 store：数据、测试结果与写操作都由页面负责（结果只留在前端内存里）。
      卡上不写「被几个动作用着」这类影响面信息——那是删除确认时才需要知道的。 -->
 <script setup lang="ts">
 import { computed } from 'vue'
@@ -17,14 +19,12 @@ const props = withDefaults(
     /** 渠道类型（枚举值）：第二行文案与图标都跟着它走 */
     type: ChannelType
     enabled: boolean
-    /** 连通状态：颜色只用在左侧色条与测试圆点上 */
+    /** 渠道状态：只决定左侧色条颜色 */
     tone?: 'ok' | 'warn' | 'err' | 'neutral'
-    /** 状态文案：只作为圆点的悬停提示与无障碍标签，不显示成文字 */
-    statusText: string
-    /** 正在测试连通性 */
-    busy?: boolean
+    /** 测试圆点自己的状态：未测 / 测试中 / 连通 / 失败 */
+    probe?: 'idle' | 'testing' | 'ok' | 'fail'
   }>(),
-  { tone: 'neutral', busy: false },
+  { tone: 'neutral', probe: 'idle' },
 )
 
 const emit = defineEmits<{ edit: []; test: []; delete: [] }>()
@@ -34,10 +34,8 @@ const { t } = useI18n()
 const icon = computed(() => CHANNEL_ICONS[props.type])
 const kindLabel = computed(() => t(`channel.type.${props.type}`))
 
-/** 悬停提示：状态 + 这个圆点是干什么的；测试中说明正在发 */
-const probeTitle = computed(() =>
-  props.busy ? t('channel.probeRunning') : `${props.statusText} · ${t('channel.probe')}`,
-)
+/** 圆点悬停提示只写它是什么，不写状态；测试中不能再点 */
+const testing = computed(() => props.probe === 'testing')
 </script>
 
 <template>
@@ -76,14 +74,12 @@ const probeTitle = computed(() =>
       <button
         type="button"
         class="biz-card__probe"
-        :class="{
-          'biz-card__probe--busy': busy,
-          'biz-card__probe--attention': !busy && (tone === 'err' || tone === 'warn'),
-        }"
+        :class="`biz-card__probe--${probe}`"
         data-test="channel-test"
-        :title="probeTitle"
-        :aria-label="probeTitle"
-        :aria-busy="busy"
+        :title="t('channel.probe')"
+        :aria-label="t('channel.probe')"
+        :aria-busy="testing || undefined"
+        :disabled="testing"
         @click.stop="emit('test')"
       />
     </div>
