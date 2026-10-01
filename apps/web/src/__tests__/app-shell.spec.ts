@@ -51,6 +51,21 @@ describe('AppShell', () => {
     expect(wrapper.get('[data-test="nav-config"]').text()).toBe('配置管理')
   })
 
+  it('存过英文的话，刷新后界面直接是英文', () => {
+    localStorage.setItem('kestrel-ui', JSON.stringify({ locale: 'en' }))
+    const { wrapper } = mountShell()
+    expect(wrapper.get('[data-test="nav-config"]').text()).toBe('Config')
+  })
+
+  it('切换语言既改界面也记下来', async () => {
+    const { wrapper, pinia } = mountShell()
+    const ui = useUiStore(pinia)
+    ui.setLocale('en')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.get('[data-test="nav-config"]').text()).toBe('Config')
+    expect(JSON.parse(localStorage.getItem('kestrel-ui') ?? '{}').locale).toBe('en')
+  })
+
   it('主题按钮在白天/黑夜之间切换', async () => {
     const { wrapper, pinia } = mountShell()
     const ui = useUiStore(pinia)

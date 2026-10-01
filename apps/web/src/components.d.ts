@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     ActionCard: typeof import('./components/ActionCard.vue')['default']
     ActionDialog: typeof import('./components/ActionDialog.vue')['default']
+    ChannelDialog: typeof import('./components/ChannelDialog.vue')['default']
     ConfirmDialog: typeof import('./components/ConfirmDialog.vue')['default']
     DiscoveryCard: typeof import('./components/DiscoveryCard.vue')['default']
     DiscoveryDialog: typeof import('./components/DiscoveryDialog.vue')['default']
@@ -20,9 +21,12 @@ declare module 'vue' {
     GroupSection: typeof import('./components/GroupSection.vue')['default']
     MonitorCard: typeof import('./components/MonitorCard.vue')['default']
     MonitorDialog: typeof import('./components/MonitorDialog.vue')['default']
+    ProviderDialog: typeof import('./components/ProviderDialog.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SettingsForm: typeof import('./components/settings/SettingsForm.vue')['default']
     TemplateDialog: typeof import('./components/TemplateDialog.vue')['default']
+    TemplateList: typeof import('./components/settings/TemplateList.vue')['default']
     TestLamps: typeof import('./components/TestLamps.vue')['default']
   }
 }

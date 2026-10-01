@@ -1,4 +1,11 @@
 /** 时间显示：界面上统一「本地时区 + 年月日时分」，没有值就显示占位符 */
+export function templateDisplayName(
+  template: { name: string; nameKey: string | null },
+  translate: (key: string) => string,
+): string {
+  return template.nameKey ? translate(template.nameKey) : template.name
+}
+
 export function formatDateTime(value: string | null | undefined): string {
   if (!value) return '—'
   const date = new Date(value)

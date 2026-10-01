@@ -43,7 +43,7 @@ const modeOptions = computed(() => [
   { value: 'algorithm_llm', title: t('monitor.mode.algorithm_llm') },
 ])
 const sensitivityOptions = computed(() =>
-  (['loose', 'medium', 'strict'] as const).map((value) => ({
+  (['low', 'medium', 'high'] as const).map((value) => ({
     value,
     title: t(`monitor.sensitivity.${value}`),
   })),

@@ -26,8 +26,9 @@ const snapshot: ConfigSnapshot = {
   modelProviders: [],
   templates: [
     {
-      id: 'builtin:zh',
-      name: '系统内置 · 中文',
+      id: 'builtin:default',
+      name: '默认模板',
+      nameKey: 'template.builtinDefault',
       content: '{{badge}}【{{group}}】{{title}}\n来源 {{sourceCount}} 个：\n{{sources}}\n{{url}}',
       builtin: true,
       createdAt: null,
@@ -36,6 +37,7 @@ const snapshot: ConfigSnapshot = {
     {
       id: 't1',
       name: '简短版',
+      nameKey: null,
       content: '{{title}} — {{url}}',
       builtin: false,
       createdAt: '2026-10-01T00:00:00.000Z',

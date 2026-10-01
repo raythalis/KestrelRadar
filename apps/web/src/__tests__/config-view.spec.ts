@@ -117,8 +117,9 @@ const snapshot: ConfigSnapshot = {
   models: [],
   templates: [
     {
-      id: 'builtin:zh',
-      name: '系统内置 · 中文',
+      id: 'builtin:default',
+      name: '默认模板',
+      nameKey: 'template.builtinDefault',
       content:
         '{{badge}}【{{group}}】{{title}}\n备注\n来源 {{sourceCount}} 个：\n{{sources}}\n{{url}}\n命中时间：{{hitAt}}',
       builtin: true,
@@ -126,16 +127,9 @@ const snapshot: ConfigSnapshot = {
       updatedAt: null,
     },
     {
-      id: 'builtin:en',
-      name: 'Built-in · English',
-      content: '{{badge}}[{{group}}] {{title}}',
-      builtin: true,
-      createdAt: null,
-      updatedAt: null,
-    },
-    {
       id: 't1',
       name: '简短版',
+      nameKey: null,
       content: '{{title}} — {{url}}',
       builtin: false,
       createdAt: '2026-10-01T00:00:00.000Z',
@@ -289,7 +283,7 @@ describe('配置管理页', () => {
 
     const dialog = wrapper.find('[data-test="action-dialog"]')
     // 下拉里显示的就是「系统内置（跟随界面语言）」
-    expect(dialog.text()).toContain('系统内置（跟随界面语言）')
+    expect(dialog.text()).toContain('系统内置（默认模板）')
     const preview = dialog.find('[data-test="action-template-content"] textarea')
     expect((preview.element as HTMLTextAreaElement).value).toContain('{{sourceCount}}')
     expect(preview.attributes('readonly')).toBeDefined()

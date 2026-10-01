@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { useConfigStore } from '@/stores/config'
+import { templateDisplayName } from '@/utils/format'
 
 const props = defineProps<{ action: Action }>()
 const emit = defineEmits<{ edit: []; delete: [] }>()
@@ -13,9 +14,10 @@ const { t } = useI18n()
 
 const triggerLabel = computed(() => t(`action.trigger.${props.action.triggerType}`))
 const channel = computed(() => store.channelName(props.action.channelId))
-const templateName = computed(
-  () => store.templateById(props.action.templateId)?.name ?? t('action.templateBuiltin'),
-)
+const templateName = computed(() => {
+  const template = store.templateById(props.action.templateId)
+  return template ? templateDisplayName(template, t) : t('action.templateBuiltin')
+})
 const referencedBy = computed(() => store.monitorNamesUsingAction(props.action.id))
 </script>
 

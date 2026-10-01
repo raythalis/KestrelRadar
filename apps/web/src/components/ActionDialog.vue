@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { useConfigStore } from '@/stores/config'
+import { templateDisplayName } from '@/utils/format'
 
 const props = defineProps<{ modelValue: boolean; groupId: string; action: Action | null }>()
 const emit = defineEmits<{ 'update:modelValue': [boolean]; saved: [] }>()
@@ -33,7 +34,9 @@ const channelOptions = computed(() =>
 )
 const templateOptions = computed(() => [
   { value: '', title: t('action.templateBuiltin') },
-  ...store.templates.map((template) => ({ value: template.id, title: template.name })),
+  ...store.templates
+    .filter((template) => !template.builtin)
+    .map((template) => ({ value: template.id, title: templateDisplayName(template, t) })),
 ])
 /** 只读展示：当前选中的模板长什么样 */
 const templateContent = computed(() => store.resolvedTemplateContent(templateId.value || null))
@@ -112,16 +115,6 @@ async function submit(): Promise<void> {
             {{ t('action.channelAdd') }}
           </v-btn>
         </div>
-        <v-alert
-          v-if="channelOptions.length === 0"
-          type="warning"
-          variant="tonal"
-          density="compact"
-          class="mb-3 text-caption"
-        >
-          {{ t('action.noChannelsHint') }}
-        </v-alert>
-
         <v-text-field
           v-if="triggerType === 'digest'"
           v-model="cronExpression"

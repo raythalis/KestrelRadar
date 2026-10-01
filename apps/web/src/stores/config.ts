@@ -1,23 +1,36 @@
 import { SETTINGS_DEFAULTS, type Settings } from '@kestrel/contracts'
+
 import type {
   ConfigSnapshot,
-  CreateMessageTemplateInput,
-  MessageTemplate,
   CreateActionInput,
+  CreateChannelInput,
   CreateDiscoveryInput,
+  CreateMessageTemplateInput,
+  CreateModelInput,
+  CreateModelProviderInput,
   CreateMonitorInput,
   DiscoveryTestResult,
   Group,
+  MessageTemplate,
+  Model,
+  ModelProvider,
   UpdateActionInput,
   UpdateDiscoveryInput,
+  UpdateChannelInput,
   UpdateMessageTemplateInput,
+  UpdateModelInput,
+  UpdateModelProviderInput,
   UpdateMonitorInput,
+  UpdateSettingsInput,
 } from '@kestrel/contracts'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
 import {
   createAction as createActionApi,
+  createChannel as createChannelApi,
+  createModel as createModelApi,
+  createProvider as createProviderApi,
   createTemplate as createTemplateApi,
   createDiscovery as createDiscoveryApi,
   createGroup as createGroupApi,
@@ -26,13 +39,21 @@ import {
   removeAction as removeActionApi,
   removeDiscovery as removeDiscoveryApi,
   removeGroup as removeGroupApi,
+  removeChannel as removeChannelApi,
+  removeModel as removeModelApi,
   removeMonitor as removeMonitorApi,
+  removeProvider as removeProviderApi,
   removeTemplate as removeTemplateApi,
+  resetSetting as resetSettingApi,
   testDiscovery as testDiscoveryApi,
   updateAction as updateActionApi,
   updateDiscovery as updateDiscoveryApi,
   updateGroup as updateGroupApi,
+  updateChannel as updateChannelApi,
+  updateModel as updateModelApi,
   updateMonitor as updateMonitorApi,
+  updateProvider as updateProviderApi,
+  updateSettings as updateSettingsApi,
   updateTemplate as updateTemplateApi,
 } from '@/api/config'
 import { ApiError } from '@/api/http'
@@ -47,6 +68,12 @@ export const useConfigStore = defineStore('config', () => {
   const channels = computed(() => snapshot.value?.channels ?? [])
   const templates = computed<MessageTemplate[]>(() => snapshot.value?.templates ?? [])
   const settings = computed<Settings>(() => snapshot.value?.settings ?? SETTINGS_DEFAULTS)
+  const providers = computed<ModelProvider[]>(() => snapshot.value?.modelProviders ?? [])
+  /** 某个供应商下的模型清单 */
+  const modelsOf = (providerId: string): Model[] =>
+    (snapshot.value?.models ?? []).filter((model) => model.providerId === providerId)
+  const providerName = (providerId: string): string =>
+    providers.value.find((provider) => provider.id === providerId)?.name ?? ''
 
   const counts = computed(() => ({
     groups: snapshot.value?.groups.length ?? 0,
@@ -73,15 +100,11 @@ export const useConfigStore = defineStore('config', () => {
     return templates.value.find((template) => template.id === id) ?? null
   }
 
-  /** 动作没选模板（= 系统内置）时，界面上显示跟随界面语言的那套内置内容 */
+  /** 动作没选模板（= 系统内置）时，界面上显示内置默认模板的正文 */
   function resolvedTemplateContent(id: string | null): string {
     const found = templateById(id)
     if (found) return found.content
-    const builtin =
-      templates.value.find(
-        (template) => template.builtin && template.id.endsWith(settings.value.language),
-      ) ?? templates.value.find((template) => template.builtin)
-    return builtin?.content ?? ''
+    return templates.value.find((template) => template.builtin)?.content ?? ''
   }
 
   function channelName(channelId: string): string {
@@ -161,6 +184,31 @@ export const useConfigStore = defineStore('config', () => {
 
   const removeTemplate = (id: string) => write(() => removeTemplateApi(id))
 
+  const saveSettings = (patch: UpdateSettingsInput) => write(() => updateSettingsApi(patch))
+
+  const resetSetting = (key: string) => write(() => resetSettingApi(key))
+
+  const createChannel = (input: CreateChannelInput) => write(() => createChannelApi(input))
+
+  const saveChannel = (id: string, patch: UpdateChannelInput) =>
+    write(() => updateChannelApi(id, patch))
+
+  const removeChannel = (id: string) => write(() => removeChannelApi(id))
+
+  const createProvider = (input: CreateModelProviderInput) => write(() => createProviderApi(input))
+
+  const saveProvider = (id: string, patch: UpdateModelProviderInput) =>
+    write(() => updateProviderApi(id, patch))
+
+  const removeProvider = (id: string) => write(() => removeProviderApi(id))
+
+  const createModel = (providerId: string, input: CreateModelInput) =>
+    write(() => createModelApi(providerId, input))
+
+  const saveModel = (id: string, patch: UpdateModelInput) => write(() => updateModelApi(id, patch))
+
+  const removeModel = (id: string) => write(() => removeModelApi(id))
+
   const setDiscoveryEnabled = (id: string, enabled: boolean) =>
     write(() => updateDiscoveryApi(id, { enabled }))
 
@@ -230,5 +278,19 @@ export const useConfigStore = defineStore('config', () => {
     removeMonitor,
     setActionEnabled,
     removeAction,
+    saveSettings,
+    resetSetting,
+    createChannel,
+    saveChannel,
+    removeChannel,
+    createProvider,
+    saveProvider,
+    removeProvider,
+    createModel,
+    saveModel,
+    removeModel,
+    providers,
+    modelsOf,
+    providerName,
   }
 })

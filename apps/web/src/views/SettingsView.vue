@@ -1,33 +1,77 @@
 <script setup lang="ts">
-import type { MessageTemplate } from '@kestrel/contracts'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import TemplateDialog from '@/components/TemplateDialog.vue'
+import SettingsForm from '@/components/settings/SettingsForm.vue'
+import TemplateList from '@/components/settings/TemplateList.vue'
+import type { SettingsField } from '@/components/settings/types'
 import { useConfigStore } from '@/stores/config'
 
 const store = useConfigStore()
 const { t } = useI18n()
 
-const dialogOpen = ref(false)
-const editing = ref<MessageTemplate | null>(null)
-const pendingDelete = ref<MessageTemplate | null>(null)
+const tab = ref('general')
 
 onMounted(() => {
   if (!store.snapshot) void store.load()
 })
 
-function openDialog(template: MessageTemplate | null): void {
-  editing.value = template
-  dialogOpen.value = true
-}
+const judgeModeOptions = computed(() =>
+  (['algorithm', 'algorithm_llm'] as const).map((value) => ({
+    value,
+    title: t(`monitor.mode.${value}`),
+  })),
+)
+const fallbackOptions = computed(() =>
+  (['fallback', 'error'] as const).map((value) => ({
+    value,
+    title: t(`settings.fallback.${value}`),
+  })),
+)
+const languageOptions = computed(() =>
+  (['zh', 'en'] as const).map((value) => ({ value, title: t(`settings.language.${value}`) })),
+)
 
-async function confirmDelete(): Promise<void> {
-  const target = pendingDelete.value
-  pendingDelete.value = null
-  if (target) await store.removeTemplate(target.id)
-}
+const generalFields = computed<SettingsField[]>(() => [
+  { key: 'language', kind: 'select', options: languageOptions.value },
+  { key: 'timezone', kind: 'text' },
+])
+
+const judgeFields = computed<SettingsField[]>(() => [
+  { key: 'judgeMode', kind: 'select', options: judgeModeOptions.value },
+  { key: 'scoreHighLine', kind: 'number', min: 5, max: 100 },
+  { key: 'scoreLowLine', kind: 'number', min: 0, max: 95 },
+  { key: 'sensitivityShift', kind: 'number', min: 0, max: 40 },
+  { key: 'llmFallbackMode', kind: 'select', options: fallbackOptions.value },
+  { key: 'globalExcludeKeywords', kind: 'keywords' },
+])
+
+const collectionFields = computed<SettingsField[]>(() => [
+  { key: 'concurrency', kind: 'number', min: 1, max: 20 },
+  { key: 'requestTimeoutSeconds', kind: 'number', min: 5, max: 300 },
+  { key: 'maxRetries', kind: 'number', min: 0, max: 5 },
+  { key: 'retentionDays', kind: 'number', min: 7, max: 3650 },
+  { key: 'eventArchiveDays', kind: 'number', min: 1, max: 365 },
+  { key: 'freshnessWindowDays', kind: 'number', min: 0, max: 365 },
+])
+
+const deliveryFields = computed<SettingsField[]>(() => [
+  { key: 'dailyDeliveryLimit', kind: 'number', min: 0, max: 1000 },
+])
+
+const sourceFields = computed<SettingsField[]>(() => [
+  { key: 'rsshubBaseUrl', kind: 'text' },
+  { key: 'rsshubAccessKey', kind: 'text' },
+])
+
+const tabs = computed(() => [
+  { value: 'general', title: t('settings.tab.general') },
+  { value: 'judge', title: t('settings.tab.judge') },
+  { value: 'collection', title: t('settings.tab.collection') },
+  { value: 'delivery', title: t('settings.tab.delivery') },
+  { value: 'source', title: t('settings.tab.source') },
+  { value: 'templates', title: t('settings.tab.templates') },
+])
 </script>
 
 <template>
@@ -37,10 +81,6 @@ async function confirmDelete(): Promise<void> {
         <h2 class="page-head__title">{{ t('nav.settings') }}</h2>
         <p class="page-head__note">{{ t('settings.subtitle') }}</p>
       </div>
-      <v-spacer />
-      <v-btn color="primary" variant="flat" data-test="new-template" @click="openDialog(null)">
-        {{ t('settings.template.add') }}
-      </v-btn>
     </div>
 
     <v-alert
@@ -53,64 +93,31 @@ async function confirmDelete(): Promise<void> {
       {{ store.errorMessage }}
     </v-alert>
 
-    <section>
-      <h3 class="section-title">{{ t('settings.template.section') }}</h3>
-      <p class="section-note">{{ t('settings.template.sectionNote') }}</p>
+    <v-tabs v-model="tab" density="comfortable" color="primary" data-test="settings-tabs">
+      <v-tab
+        v-for="item in tabs"
+        :key="item.value"
+        :value="item.value"
+        :data-test="`tab-${item.value}`"
+      >
+        {{ item.title }}
+      </v-tab>
+    </v-tabs>
+    <v-divider class="mb-5" style="border-color: var(--k-border)" />
 
-      <div class="d-flex flex-column ga-3 mt-3">
-        <v-card
-          v-for="template in store.templates"
-          :key="template.id"
-          variant="outlined"
-          class="pa-4 template-card"
-          data-test="template-card"
-        >
-          <div class="d-flex align-center ga-2">
-            <span class="text-body-2 font-weight-medium" data-test="template-name">
-              {{ template.name }}
-            </span>
-            <v-chip
-              v-if="template.builtin"
-              size="x-small"
-              label
-              color="primary"
-              data-test="template-builtin"
-            >
-              {{ t('settings.template.builtin') }}
-            </v-chip>
-            <v-spacer />
-            <template v-if="!template.builtin">
-              <v-btn
-                size="x-small"
-                variant="text"
-                icon="mdi-pencil"
-                data-test="template-edit"
-                @click="openDialog(template)"
-              />
-              <v-btn
-                size="x-small"
-                variant="text"
-                color="error"
-                icon="mdi-delete"
-                data-test="template-delete"
-                @click="pendingDelete = template"
-              />
-            </template>
-          </div>
-          <pre class="template-preview" data-test="template-content">{{ template.content }}</pre>
-        </v-card>
-      </div>
-    </section>
-
-    <p class="section-note mt-6" data-test="settings-rest-note">{{ t('placeholder.settings') }}</p>
-
-    <TemplateDialog v-model="dialogOpen" :template="editing" />
-    <ConfirmDialog
-      :model-value="pendingDelete !== null"
-      :title="t('settings.template.delete')"
-      :body="t('settings.template.deleteBody', { name: pendingDelete?.name ?? '' })"
-      @update:model-value="(value) => (pendingDelete = value ? pendingDelete : null)"
-      @confirm="confirmDelete"
+    <SettingsForm v-if="tab === 'general'" :fields="generalFields" data-test="pane-general" />
+    <SettingsForm v-else-if="tab === 'judge'" :fields="judgeFields" data-test="pane-judge" />
+    <SettingsForm
+      v-else-if="tab === 'collection'"
+      :fields="collectionFields"
+      data-test="pane-collection"
     />
+    <SettingsForm
+      v-else-if="tab === 'delivery'"
+      :fields="deliveryFields"
+      data-test="pane-delivery"
+    />
+    <SettingsForm v-else-if="tab === 'source'" :fields="sourceFields" data-test="pane-source" />
+    <TemplateList v-else data-test="pane-templates" />
   </div>
 </template>

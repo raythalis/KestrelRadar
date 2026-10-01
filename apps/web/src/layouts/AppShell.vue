@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useTheme } from 'vuetify'
@@ -18,6 +19,9 @@ const localeOptions: { value: AppLocale; label: string }[] = [
 
 const navItems = ['dashboard', 'config', 'channels', 'models', 'settings'] as const
 
+// 界面语言以 store 为准（它管着持久化）：刷新后也要把存着的语言装回去
+watch(() => ui.locale, (next) => (locale.value = next), { immediate: true })
+
 function toggleTheme(): void {
   ui.toggleTheme()
   theme.global.name.value = ui.theme
@@ -25,7 +29,6 @@ function toggleTheme(): void {
 
 function changeLocale(next: AppLocale): void {
   ui.setLocale(next)
-  locale.value = next
 }
 </script>
 
