@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import { createPinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 
@@ -113,6 +114,20 @@ describe('/design 预览页', { timeout: 20000 }, () => {
 
     await openWith('错误')
     expect(dialog.props('error')).toContain('500')
+  })
+
+  it('切到英文：整页不留中文（i18n 兜底；文案全走 design/lab-copy.ts）', async () => {
+    i18n.global.locale.value = 'zh-CN'
+    const wrapper = mountDesign()
+    expect(wrapper.text()).toContain('主要操作')
+
+    i18n.global.locale.value = 'en'
+    await nextTick()
+    expect(wrapper.text()).toContain('Primary action')
+    // 英文模式下页面上不该再剩下任何中文字（含演示卡的名字与状态）
+    expect(wrapper.text()).not.toMatch(/[\u4e00-\u9fa5]/)
+
+    i18n.global.locale.value = 'zh-CN'
   })
 
   it('cron 字段本身就是入口：点输入框展开生成器，没有多余的按钮', () => {

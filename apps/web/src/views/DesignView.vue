@@ -3,7 +3,7 @@
      作用：用真实 App* 组件把 Foundation 与组件状态矩阵摊开，桌面/手机两种宽度下直接看渲染结果。
      页面自身只用 App* 与 Vuetify，不写任何色值、间距、圆角。 -->
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDisplay } from 'vuetify'
 
@@ -17,9 +17,13 @@ import FormDialog from '@/components/biz/FormDialog.vue'
 import SourceCard from '@/components/biz/SourceCard.vue'
 import { useUiStore } from '@/stores/ui'
 import DesignGroup from '@/views/design/DesignGroup.vue'
+import { makeDesignCopy, type DesignCopyKey } from '@/design/lab-copy'
 
 const ui = useUiStore()
-const { t } = useI18n()
+const { t, locale } = useI18n()
+// 这个页面自己的文案（开发页，不进产品文案表）；调用时读 locale，切语言立刻跟着变
+const c = (key: DesignCopyKey, params?: Record<string, string | number>): string =>
+  makeDesignCopy(locale.value)(key, params)
 const { name: breakpointName } = useDisplay()
 
 const viewport = ref(0)
@@ -34,15 +38,15 @@ onUnmounted(() => window.removeEventListener('resize', readViewport))
 
 const activeBreakpoint = computed(() => {
   const w = viewport.value
-  if (w >= 1440) return 'xl（≥1440 宽屏）'
-  if (w >= 1280) return 'lg（1280–1439）'
-  if (w >= 900) return 'md（900–1279 桌面布局）'
-  if (w >= 600) return 'sm（600–899 大手机）'
-  return 'xs（<600 手机）'
+  if (w >= 1440) return c('bp.xl')
+  if (w >= 1280) return c('bp.lg')
+  if (w >= 900) return c('bp.md')
+  if (w >= 600) return c('bp.sm')
+  return c('bp.xs')
 })
 
 // 主题一变，色值清单跟着变（数据全部来自 tokens，页面不另存一份）
-const groups = computed(() => designGroups(findTheme(ui.theme) ?? THEMES[0]))
+const groups = computed(() => designGroups(findTheme(ui.theme) ?? THEMES[0], c))
 
 // 手机上的折叠状态：桌面忽略它，永远全展开
 // 手机默认只展开第一组，其余收着；桌面（≥900）不看这个状态，永远全展开
@@ -82,10 +86,10 @@ const bizDialogOpen = computed({
   },
 })
 
-const selectItems = [
-  { title: '自带算法', value: 'standard' },
-  { title: '灰区交给模型复核', value: 'assisted' },
-]
+const selectItems = computed(() => [
+  { title: c('demo.mode.standard'), value: 'standard' },
+  { title: c('demo.mode.assisted'), value: 'assisted' },
+])
 
 // 渠道卡演示：× 要确认；圆点走「未测 → 测试中 → 连通／失败」的状态机（结果只留在内存里）
 type Probe = 'idle' | 'testing' | 'ok' | 'warn' | 'fail'
@@ -103,7 +107,7 @@ function initialChannels(): DemoChannel[] {
   return [
     {
       id: 'c1',
-      name: '我的 Telegram',
+      name: c('demo.channel.mine'),
       type: 'telegram',
       enabled: true,
       tone: 'ok',
@@ -112,7 +116,7 @@ function initialChannels(): DemoChannel[] {
     },
     {
       id: 'c2',
-      name: '有警告的渠道',
+      name: c('demo.channel.warn'),
       type: 'telegram',
       enabled: true,
       tone: 'warn',
@@ -121,7 +125,7 @@ function initialChannels(): DemoChannel[] {
     },
     {
       id: 'c3',
-      name: '还没测过的渠道',
+      name: c('demo.channel.untested'),
       type: 'webhook',
       enabled: true,
       tone: 'neutral',
@@ -130,7 +134,7 @@ function initialChannels(): DemoChannel[] {
     },
     {
       id: 'c4',
-      name: '停用的渠道',
+      name: c('demo.channel.off'),
       type: 'webhook',
       enabled: false,
       tone: 'neutral',
@@ -139,7 +143,7 @@ function initialChannels(): DemoChannel[] {
     },
     {
       id: 'c5',
-      name: '连接失败的渠道',
+      name: c('demo.channel.fail'),
       type: 'telegram',
       enabled: true,
       tone: 'err',
@@ -149,6 +153,12 @@ function initialChannels(): DemoChannel[] {
   ]
 }
 const demoChannels = ref<DemoChannel[]>(initialChannels())
+
+// 演示卡的名字/状态是 setup 时算好的，切语言时按新语言重建一遍（只影响这个预览页）
+watch(locale, () => {
+  demoChannels.value = initialChannels()
+  demoSources.value = initialSources()
+})
 
 // 演示里改过的东西（删过卡、点过测试）才显示复位按钮
 const demoDirty = computed(() => {
@@ -211,10 +221,16 @@ type DemoSource = {
   busy: boolean
 }
 const SOURCE_LABELS = {
-  ok: '有内容',
-  warn: '抓得到但没内容',
-  err: '抓取失败',
-} as const
+  get ok() {
+    return c('demo.sourceStatusOk')
+  },
+  get warn() {
+    return c('demo.sourceStatusWarn')
+  },
+  get err() {
+    return c('demo.sourceStatusFail')
+  },
+}
 /** 演示用：把「下次采集」放在当前时间之后若干分钟 */
 function inMinutes(minutes: number): string {
   return new Date(Date.now() + minutes * 60_000).toISOString()
@@ -224,9 +240,9 @@ function initialSources(): DemoSource[] {
   return [
     {
       id: 's1',
-      name: 'B 站排行榜',
+      name: c('demo.source.bili'),
       icon: 'mdi-video-outline',
-      kindLabel: 'RSSHub 路由',
+      kindLabel: t('discovery.kind.rsshub'),
       enabled: true,
       target: '/bilibili/ranking/all',
       cron: '*/30 * * * *',
@@ -238,9 +254,9 @@ function initialSources(): DemoSource[] {
     },
     {
       id: 's2',
-      name: '刚加的数据源',
+      name: c('demo.source.new'),
       icon: 'mdi-rss',
-      kindLabel: 'RSSHub 路由',
+      kindLabel: t('discovery.kind.rsshub'),
       enabled: true,
       target: '/github/trending/daily',
       cron: '0 * * * *',
@@ -252,9 +268,9 @@ function initialSources(): DemoSource[] {
     },
     {
       id: 's3',
-      name: '抓得到但没内容',
+      name: c('demo.source.empty'),
       icon: 'mdi-web',
-      kindLabel: '网页',
+      kindLabel: t('discovery.kind.web'),
       enabled: true,
       target: 'https://example.com/blog',
       cron: '0 */6 * * *',
@@ -266,9 +282,9 @@ function initialSources(): DemoSource[] {
     },
     {
       id: 's4',
-      name: '路由写错了',
+      name: c('demo.source.bad'),
       icon: 'mdi-rss',
-      kindLabel: 'RSSHub 路由',
+      kindLabel: t('discovery.kind.rsshub'),
       enabled: true,
       target: '/bilibili/ranking/dance',
       cron: '0 */6 * * *',
@@ -280,15 +296,15 @@ function initialSources(): DemoSource[] {
     },
     {
       id: 's5',
-      name: '已停用的源',
+      name: c('demo.source.off'),
       icon: 'mdi-rss',
-      kindLabel: 'RSSHub 路由',
+      kindLabel: t('discovery.kind.rsshub'),
       enabled: false,
       target: '/hackernews/best',
       cron: '*/30 * * * *',
       nextRunAt: null,
       tone: 'neutral',
-      statusText: '已停用',
+      statusText: t('common.disabled'),
       result: 'ok',
       busy: false,
     },
@@ -346,12 +362,12 @@ async function confirmChannelDelete(): Promise<void> {
 <template>
   <AppPage
     width="wide"
-    title="Design System 预览"
-    note="开发/验收页面，不在产品导航里。下面的色值、字号、间距、圆角全部来自 design/tokens，组件全部来自 App* 组件层，页面里不写这些数值。"
+    :title="c('page.title')"
+    :note="c('page.note')"
   >
     <template #actions>
       <span class="app-tag font-mono" data-test="design-viewport">
-        视口 {{ viewport }}px · {{ activeBreakpoint }} · Vuetify {{ breakpointName }}
+        {{ c('page.viewport', { w: viewport, bp: activeBreakpoint, v: breakpointName }) }}
       </span>
     </template>
 
@@ -389,7 +405,7 @@ async function confirmChannelDelete(): Promise<void> {
                 :style="{ boxShadow: item.value }"
               />
               <span v-else-if="group.kind === 'type'" class="ds-token__sample" :style="item.style">
-                示例 Aa 123
+                {{ c('page.sample') }}
               </span>
               <span v-else class="ds-token__sample">{{ item.value }}</span>
               <span class="ds-token__name font-mono">{{ item.name }}</span>
@@ -401,10 +417,10 @@ async function confirmChannelDelete(): Promise<void> {
 
       <!-- 间距阶梯（单独一组，方便手机逐档核对） -->
       <DesignGroup
-        title="Foundation · Spacing 阶梯"
-        note="只用这七档，不再出现随手写的 px"
-        :open="open['Foundation · Spacing 阶梯'] ?? false"
-        @update:open="(value) => setOpen('Foundation · Spacing 阶梯', value)"
+        :title="c('sec.foundation.spacing')"
+        :note="c('sec.foundation.spacingNote')"
+        :open="open[c('sec.foundation.spacing')] ?? false"
+        @update:open="(value) => setOpen(c('sec.foundation.spacing'), value)"
       >
         <AppCard>
           <div class="app-stack">
@@ -420,36 +436,36 @@ async function confirmChannelDelete(): Promise<void> {
       <!-- AppButton -->
       <DesignGroup
         title="AppButton"
-        note="状态：default / hover / active / disabled / loading / danger"
+        :note="c('states.button')"
         :open="open['AppButton'] ?? false"
         @update:open="(value) => setOpen('AppButton', value)"
       >
         <div class="ds-cols">
-          <AppCard title="变体与尺寸" note="hover 与 active 用鼠标或手指直接试">
+          <AppCard :title="c('card.variants')" :note="c('card.variantsNote')">
             <div class="app-stack">
               <div class="app-row ds-wrap">
-                <AppButton variant="primary">主要操作</AppButton>
-                <AppButton>次要操作</AppButton>
-                <AppButton variant="ghost">弱化操作</AppButton>
-                <AppButton variant="danger">删除</AppButton>
+                <AppButton variant="primary">{{ c('btn.primary') }}</AppButton>
+                <AppButton>{{ c('btn.secondary') }}</AppButton>
+                <AppButton variant="ghost">{{ c('btn.ghost') }}</AppButton>
+                <AppButton variant="danger">{{ t('common.delete') }}</AppButton>
               </div>
               <div class="app-row ds-wrap">
-                <AppButton size="sm" variant="primary">小号主要</AppButton>
-                <AppButton size="sm">小号</AppButton>
-                <AppButton size="sm" variant="ghost">小号弱化</AppButton>
+                <AppButton size="sm" variant="primary">{{ c('btn.smPrimary') }}</AppButton>
+                <AppButton size="sm">{{ c('btn.sm') }}</AppButton>
+                <AppButton size="sm" variant="ghost">{{ c('btn.smGhost') }}</AppButton>
               </div>
             </div>
           </AppCard>
 
-          <AppCard title="不可用与加载" note="loading 会自动禁用，避免重复提交">
+          <AppCard :title="c('card.disabled')" :note="c('card.disabledNote')">
             <div class="app-stack">
               <div class="app-row ds-wrap">
-                <AppButton disabled>禁用</AppButton>
-                <AppButton variant="primary" disabled>禁用主要</AppButton>
-                <AppButton loading>保存中</AppButton>
-                <AppButton variant="primary" loading>提交中</AppButton>
+                <AppButton disabled>{{ c('btn.disabled') }}</AppButton>
+                <AppButton variant="primary" disabled>{{ c('btn.disabledPrimary') }}</AppButton>
+                <AppButton loading>{{ c('btn.saving') }}</AppButton>
+                <AppButton variant="primary" loading>{{ c('btn.submitting') }}</AppButton>
               </div>
-              <AppButton variant="primary" block>撑满宽度（弹窗底部与移动端）</AppButton>
+              <AppButton variant="primary" block>{{ c('btn.block') }}</AppButton>
             </div>
           </AppCard>
         </div>
@@ -458,65 +474,65 @@ async function confirmChannelDelete(): Promise<void> {
       <!-- AppInput / AppSelect -->
       <DesignGroup
         title="AppInput / AppSelect"
-        note="状态：default / focus / filled / disabled / readonly / error / 校验提示"
+        :note="c('states.input')"
         :open="open['AppInput / AppSelect'] ?? false"
         @update:open="(value) => setOpen('AppInput / AppSelect', value)"
       >
         <div class="ds-cols">
-          <AppCard title="AppInput" note="focus 点进去看；filled 就是有值的样子">
+          <AppCard title="AppInput" :note="c('card.inputNote')">
             <div class="app-stack">
               <AppInput
                 v-model="inputValue"
-                label="RSSHub 实例地址"
-                hint="只填实例根地址，路由路径在发现里单独填"
+                :label="c('field.instance')"
+                :hint="c('field.instanceHint')"
               />
               <AppInput
                 :model-value="''"
-                label="空值（默认态）"
+                :label="c('field.empty')"
                 placeholder="http://192.168.5.100:1200"
               />
               <AppInput
-                :model-value="'已填好的值'"
-                label="只读"
+                :model-value="c('field.filled')"
+                :label="c('field.readonly')"
                 readonly
-                hint="这条来自模板，不能改"
+                :hint="c('field.readonlyHint')"
               />
-              <AppInput :model-value="'x'" label="禁用" disabled />
+              <AppInput :model-value="'x'" :label="c('btn.disabled')" disabled />
               <AppInput
                 :model-value="'http://192.168.5.100:9999'"
-                label="错误态"
-                error="连不上这个地址（连接被拒绝）"
+                :label="c('field.errorState')"
+                :error="c('field.errorMsg')"
               />
               <AppInput
                 v-model="inputValue"
-                label="带动作"
-                hint="试抓这类动作放在输入框右侧"
-                action-label="试抓"
+                :label="c('field.withAction')"
+                :hint="c('field.actionHint')"
+                :action-label="t('discovery.test')"
               />
             </div>
           </AppCard>
 
-          <AppCard title="AppSelect" note="选项较少时用下拉，别用长列表占地方">
+          <AppCard title="AppSelect" :note="c('card.selectNote')">
             <div class="app-stack">
               <AppSelect
                 v-model="selectValue"
-                label="判定模式"
+                :label="c('field.judgeMode')"
                 :items="selectItems"
-                hint="灰区的处理方式"
+                :hint="c('field.judgeHint')"
               />
               <AppSelect
                 :model-value="null"
-                label="默认态"
+                :label="c('field.defaultState')"
                 :items="selectItems"
-                placeholder="请选择"
+                :placeholder="c('field.select')"
               />
-              <AppSelect :model-value="'standard'" label="禁用" :items="selectItems" disabled />
-              <AppSelect :model-value="'standard'" label="只读" :items="selectItems" readonly />
+              <AppSelect :model-value="'standard'" :label="c('btn.disabled')" :items="selectItems" disabled />
+              <AppSelect :model-value="'standard'" :label="c('field.readonly')" :items="selectItems" readonly />
               <AppSelect
                 :model-value="'bad'"
-                label="错误态"
+                :label="c('field.errorState')"
                 :items="selectItems"
-                error="这个模式已经不存在了"
+                :error="c('field.modeGone')"
               />
             </div>
           </AppCard>
@@ -526,18 +542,18 @@ async function confirmChannelDelete(): Promise<void> {
       <!-- AppSwitch -->
       <DesignGroup
         title="AppSwitch"
-        note="状态：on / off / disabled"
+        :note="c('states.switch')"
         :open="open['AppSwitch'] ?? false"
         @update:open="(value) => setOpen('AppSwitch', value)"
       >
         <AppCard>
           <div class="app-stack">
-            <AppSwitch v-model="switchOn" label="启用这个分组" hint="关掉后不再采集，也不会推送" />
-            <AppSwitch v-model="readonlySwitch" label="开关打开的样子" hint="on" />
+            <AppSwitch v-model="switchOn" :label="c('field.groupSwitch')" :hint="c('field.groupSwitchHint')" />
+            <AppSwitch v-model="readonlySwitch" :label="c('field.switchOn')" hint="on" />
             <AppSwitch
               v-model="disabledSwitch"
-              label="禁用"
-              hint="内置项不能改时用这一态"
+              :label="c('btn.disabled')"
+              :hint="c('field.builtinHint')"
               disabled
             />
           </div>
@@ -547,31 +563,31 @@ async function confirmChannelDelete(): Promise<void> {
       <!-- AppStatus -->
       <DesignGroup
         title="AppStatus"
-        note="状态色只表达状态：success / warning / error / info / neutral（另有 busy 进行中）"
+        :note="c('states.status')"
         :open="open['AppStatus'] ?? false"
         @update:open="(value) => setOpen('AppStatus', value)"
       >
         <AppCard>
           <div class="app-stack">
             <div class="app-row ds-wrap">
-              <AppStatus tone="ok">连通，抓到 100 条</AppStatus>
-              <AppStatus tone="warn">连通但没抓到内容</AppStatus>
-              <AppStatus tone="err">连接失败</AppStatus>
-              <AppStatus tone="info">还没试过</AppStatus>
-              <AppStatus tone="neutral">已停用</AppStatus>
-              <AppStatus busy>测试中…</AppStatus>
+              <AppStatus tone="ok">{{ c('demo.toneOk') }}</AppStatus>
+              <AppStatus tone="warn">{{ c('demo.toneWarn') }}</AppStatus>
+              <AppStatus tone="err">{{ c('demo.toneErr') }}</AppStatus>
+              <AppStatus tone="info">{{ c('demo.toneInfo') }}</AppStatus>
+              <AppStatus tone="neutral">{{ t('common.disabled') }}</AppStatus>
+              <AppStatus busy>{{ c('demo.toneBusy') }}</AppStatus>
             </div>
             <div class="app-row ds-wrap">
-              <AppStatus tone="ok" action>点一下试抓（action 态）</AppStatus>
-              <AppStatus tone="neutral" :dot="false">不带状态点的纯文字徽标</AppStatus>
+              <AppStatus tone="ok" action>{{ c('demo.toneAction') }}</AppStatus>
+              <AppStatus tone="neutral" :dot="false">{{ c('demo.tonePlain') }}</AppStatus>
             </div>
             <div class="app-row ds-wrap">
-              <span class="app-tag app-tag--accent">RSSHub 路由</span>
-              <span class="app-tag">网页</span>
-              <span class="app-tag app-tag--ok">已启用</span>
-              <span class="app-tag app-tag--err">已停用</span>
-              <span class="app-badge">2 发现</span>
-              <span class="app-badge">1 监听</span>
+              <span class="app-tag app-tag--accent">{{ t('discovery.kind.rsshub') }}</span>
+              <span class="app-tag">{{ t('discovery.kind.web') }}</span>
+              <span class="app-tag app-tag--ok">{{ t('common.enabled') }}</span>
+              <span class="app-tag app-tag--err">{{ t('common.disabled') }}</span>
+              <span class="app-badge">{{ c('demo.badgeDiscoveries') }}</span>
+              <span class="app-badge">{{ c('demo.badgeMonitors') }}</span>
             </div>
           </div>
         </AppCard>
@@ -580,29 +596,29 @@ async function confirmChannelDelete(): Promise<void> {
       <!-- AppCard -->
       <DesignGroup
         title="AppCard"
-        note="状态：default / interactive（整卡可点）/ disabled"
+        :note="c('states.card')"
         :open="open['AppCard'] ?? false"
         @update:open="(value) => setOpen('AppCard', value)"
       >
         <div class="ds-cols">
-          <AppCard title="普通卡片" note="标题 + 说明 + 内容 + 卡足">
+          <AppCard :title="c('card.surfaceType')" :note="c('card.surfaceTypeNote')">
             <div class="app-stack">
-              <div class="app-surface">内嵌面板：卡片里再分一层时用它，别叠第二层边框</div>
-              <div class="app-hint app-hint--info">卡片靠细边框与底色分层，不用阴影</div>
+              <div class="app-surface">{{ c('demo.embedded') }}</div>
+              <div class="app-hint app-hint--info">{{ c('demo.cardLayering') }}</div>
             </div>
             <template #footer>
-              <span class="app-card__note">卡足放次要操作与说明</span>
+              <span class="app-card__note">{{ c('demo.cardFoot') }}</span>
               <span class="app-spacer" />
-              <AppButton size="sm" variant="danger">删除</AppButton>
+              <AppButton size="sm" variant="danger">{{ t('common.delete') }}</AppButton>
             </template>
           </AppCard>
 
           <div class="app-stack">
-            <AppCard title="可点卡片" note="点整张卡进编辑" interactive>
-              <span class="app-card__note">这一态用于配置页：整卡可点，键盘 Enter 也能进</span>
+            <AppCard :title="c('card.interactive')" :note="c('card.interactiveNote')" interactive>
+              <span class="app-card__note">{{ c('demo.cardFootInteractive') }}</span>
             </AppCard>
-            <AppCard title="不可用" note="内置项或服务未连通时" disabled>
-              <span class="app-card__note">灰掉，点不动</span>
+            <AppCard :title="c('card.off')" :note="c('card.offNote')" disabled>
+              <span class="app-card__note">{{ c('demo.cardOff') }}</span>
             </AppCard>
           </div>
         </div>
@@ -611,19 +627,19 @@ async function confirmChannelDelete(): Promise<void> {
       <!-- AppDialog -->
       <DesignGroup
         title="AppDialog"
-        note="状态：normal / loading / error / 移动端底部抽屉（<900px 自动贴底）"
+        :note="c('card.dialogNote')"
         :open="open['AppDialog'] ?? false"
         @update:open="(value) => setOpen('AppDialog', value)"
       >
         <AppCard>
           <div class="app-stack">
             <div class="app-row ds-wrap">
-              <AppButton size="sm" variant="primary" @click="dialog = 'normal'">普通弹窗</AppButton>
-              <AppButton size="sm" @click="dialog = 'loading'">加载中</AppButton>
-              <AppButton size="sm" variant="danger" @click="dialog = 'error'">错误</AppButton>
+              <AppButton size="sm" variant="primary" @click="dialog = 'normal'">{{ c('demo.dialogNormal') }}</AppButton>
+              <AppButton size="sm" @click="dialog = 'loading'">{{ c('demo.dialogLoading') }}</AppButton>
+              <AppButton size="sm" variant="danger" @click="dialog = 'error'">{{ c('demo.dialogErrBtn') }}</AppButton>
             </div>
             <div class="app-hint app-hint--info">
-              在手机上打开它会从底部升起（底部抽屉，顶部圆角），桌面上是居中弹窗。关掉可以用右上角、取消按钮或
+              {{ c('demo.dialogNote') }}
               Esc。
             </div>
           </div>
@@ -633,7 +649,7 @@ async function confirmChannelDelete(): Promise<void> {
       <!-- AppEmptyState -->
       <DesignGroup
         title="AppEmptyState"
-        note="两种用法：纯说明 / 带一个动作"
+        :note="c('card.hintNote')"
         :open="open['AppEmptyState'] ?? false"
         @update:open="(value) => setOpen('AppEmptyState', value)"
       >
@@ -641,14 +657,14 @@ async function confirmChannelDelete(): Promise<void> {
           <AppCard>
             <AppEmptyState
               icon="mdi-tray-arrow-down"
-              title="还没有抓过内容"
-              note="选一个发现，点试抓看看能拿到什么"
+              :title="c('demo.emptyTitle')"
+              :note="c('demo.emptyNote')"
             />
           </AppCard>
           <AppCard>
-            <AppEmptyState title="还没有分组" note="一个分组就是一件你关注的事">
+            <AppEmptyState :title="c('demo.emptyGroupTitle')" :note="c('demo.emptyGroupNote')">
               <template #actions>
-                <AppButton size="sm" variant="primary">新建分组</AppButton>
+                <AppButton size="sm" variant="primary">{{ c('demo.groupName') }}</AppButton>
               </template>
             </AppEmptyState>
           </AppCard>
@@ -658,18 +674,18 @@ async function confirmChannelDelete(): Promise<void> {
       <!-- AppSkeleton -->
       <DesignGroup
         title="AppSkeleton"
-        note="版面：text / card / list / page"
+        :note="c('states.skeleton')"
         :open="open['AppSkeleton'] ?? false"
         @update:open="(value) => setOpen('AppSkeleton', value)"
       >
         <div class="ds-cols">
-          <AppCard title="text 与 card">
+          <AppCard :title="c('demo.layoutTextCard')">
             <div class="app-stack">
               <AppSkeleton variant="text" />
               <AppSkeleton variant="card" :rows="2" />
             </div>
           </AppCard>
-          <AppCard title="list 与 page">
+          <AppCard :title="c('demo.layoutListPage')">
             <div class="app-stack">
               <AppSkeleton variant="list" :rows="3" />
               <AppSkeleton variant="page" />
@@ -681,19 +697,19 @@ async function confirmChannelDelete(): Promise<void> {
       <!-- AppHint -->
       <DesignGroup
         title="AppHint"
-        note="语气：info / ok / warn / err"
+        :note="c('states.hint')"
         :open="open['AppHint'] ?? false"
         @update:open="(value) => setOpen('AppHint', value)"
       >
         <AppCard>
           <div class="app-stack">
-            <AppHint tone="info">普通说明：RSSHub 缓存只有 5 分钟</AppHint>
-            <AppHint tone="ok">保存成功</AppHint>
-            <AppHint tone="warn">这个动作还没选渠道，命中后不会发出去</AppHint>
-            <AppHint tone="err">令牌不对，Telegram 返回 401</AppHint>
+            <AppHint tone="info">{{ c('demo.hintInfo') }}</AppHint>
+            <AppHint tone="ok">{{ c('demo.hintOk') }}</AppHint>
+            <AppHint tone="warn">{{ c('demo.hintWarn') }}</AppHint>
+            <AppHint tone="err">{{ c('demo.hintErr') }}</AppHint>
             <div class="app-row">
-              <AppButton size="sm" @click="flashToast">触发一次 Toast</AppButton>
-              <span class="app-card__note">Toast 用 AppHint 的样式浮在底部，避免多一套视觉</span>
+              <AppButton size="sm" @click="flashToast">{{ c('demo.toast') }}</AppButton>
+              <span class="app-card__note">{{ c('demo.toastNote') }}</span>
             </div>
           </div>
         </AppCard>
@@ -702,7 +718,7 @@ async function confirmChannelDelete(): Promise<void> {
       <!-- AppPage / AppSection -->
       <DesignGroup
         title="AppPage / AppSection"
-        note="内容宽度策略与分节：页面只声明用哪一档"
+        :note="c('sec.foundation.width')"
         :open="open['AppPage / AppSection'] ?? false"
         @update:open="(value) => setOpen('AppPage / AppSection', value)"
       >
@@ -712,17 +728,17 @@ async function confirmChannelDelete(): Promise<void> {
               <span class="app-tag font-mono">AppPage :width="{{ w }}"</span>
               <div class="ds-width__bar" :class="`ds-width__bar--${w}`" />
               <span class="app-card__note font-mono">
-                {{ w === 'full' ? '不限宽' : `max-width: var(--k-page-${w})` }}
+                {{ w === 'full' ? c('demo.widthFull') : c('demo.widthValue', { w }) }}
               </span>
             </div>
             <AppHint tone="info">
-              设置、表单用 narrow；普通页 default；仪表盘与多列配置 wide；确实要占满时 full。
+              {{ c('sec.foundation.widthNote') }}
             </AppHint>
-            <AppSection title="AppSection" note="页面内的分节：标题 + 说明 + 右侧操作">
+            <AppSection title="AppSection" :note="c('card.sectionNote')">
               <template #actions>
-                <AppButton size="sm">试抓</AppButton>
+                <AppButton size="sm">{{ t('discovery.test') }}</AppButton>
               </template>
-              <div class="app-surface">分节内容</div>
+              <div class="app-surface">{{ c('demo.sectionContent') }}</div>
             </AppSection>
           </div>
         </AppCard>
@@ -730,13 +746,13 @@ async function confirmChannelDelete(): Promise<void> {
 
       <!-- 业务组件层（P1.5） -->
       <DesignGroup
-        title="业务组件 · P1.5"
-        note="从页面里沉下来的复用件：表单弹窗外壳、cron 选择器、渠道卡、数据源卡、动作卡"
-        :open="open['业务组件 · P1.5'] ?? false"
-        @update:open="(value) => setOpen('业务组件 · P1.5', value)"
+        :title="c('sec.biz')"
+        :note="c('sec.bizNote')"
+        :open="open[c('sec.biz')] ?? false"
+        @update:open="(value) => setOpen(c('sec.biz'), value)"
       >
         <div class="app-stack">
-          <AppCard title="FormDialog" note="状态：normal / 保存中(busy) / 错误 / 手机端贴底">
+          <AppCard title="FormDialog" :note="c('states.formDialog')">
             <div class="app-stack">
               <div class="app-row ds-wrap">
                 <AppButton
@@ -744,37 +760,37 @@ async function confirmChannelDelete(): Promise<void> {
                   variant="primary"
                   data-test="biz-dialog-normal"
                   @click="bizDialog = 'normal'"
-                  >打开表单弹窗</AppButton
+                  >{{ c('demo.dialogOpen') }}</AppButton
                 >
                 <AppButton size="sm" data-test="biz-dialog-busy" @click="bizDialog = 'busy'"
-                  >保存中示例</AppButton
+                  >{{ c('demo.dialogBusy') }}</AppButton
                 >
                 <AppButton
                   size="sm"
                   variant="danger"
                   data-test="biz-dialog-error"
                   @click="bizDialog = 'error'"
-                  >保存失败</AppButton
+                  >{{ c('demo.dialogError') }}</AppButton
                 >
               </div>
               <AppHint tone="info">
-                标题、说明、取消/保存、保存中转圈、错误条、手机贴底都在这一个壳里；页面只管往里放字段。
+                {{ c('demo.formDialogNote') }}
               </AppHint>
             </div>
           </AppCard>
 
-          <AppCard title="CronPicker" note="点输入框展开生成器；表达式不合规时给报错">
+          <AppCard title="CronPicker" :note="c('states.cron')">
             <div class="app-stack">
-              <CronPicker v-model="cronDaily" label="定时汇总时间" hint="例如 0 8 * * *" />
-              <CronPicker v-model="cronStep" label="每 5 分钟" />
-              <CronPicker v-model="cronBad" label="写错的表达式" />
+              <CronPicker v-model="cronDaily" :label="c('field.summaryTime')" :hint="c('field.summaryTimeHint')" />
+              <CronPicker v-model="cronStep" :label="c('field.every5')" />
+              <CronPicker v-model="cronBad" :label="c('field.badCron')" />
             </div>
           </AppCard>
 
           <div class="ds-cols">
             <AppCard
               title="ChannelCard"
-              note="左侧色条＝渠道状态；右下角圆点＝测试连通性：未测（空心圈）→ 点一下 → 测试中（黄色转圈，不可再点）→ 连通（绿，呼吸）／有警告（黄，静止）／失败（红，静止）。停用的渠道圆点不可点；点卡片＝编辑，保存后退回未测；右上角 ×＝删除（要确认）"
+              :note="c('states.channel')"
             >
               <div class="app-stack">
                 <div class="app-card-grid">
@@ -797,7 +813,7 @@ async function confirmChannelDelete(): Promise<void> {
                   variant="ghost"
                   @click="demoChannels = initialChannels()"
                 >
-                  复位演示
+                  {{ c('demo.reset') }}
                 </AppButton>
               </div>
             </AppCard>
@@ -805,7 +821,7 @@ async function confirmChannelDelete(): Promise<void> {
             <div class="app-stack">
               <AppCard
                 title="SourceCard"
-                note="状态块本身就是抓取测试的入口（还没抓过就显示「抓取测试」）；点卡片＝编辑；右上角 ×＝删除（要确认）；开关在右下；脚上只写 cron 表达式 + 下次采集时间（停用的源不显示下次）；不显示实例地址与已收条数，也不再摆底部按钮行"
+                :note="c('states.source')"
               >
                 <div class="app-stack">
                   <div class="app-card-grid">
@@ -833,45 +849,45 @@ async function confirmChannelDelete(): Promise<void> {
                     variant="ghost"
                     @click="demoSources = initialSources()"
                   >
-                    复位演示
+                    {{ c('demo.reset') }}
                   </AppButton>
                 </div>
               </AppCard>
 
-              <AppCard title="ActionCard" note="状态：正常 / 定时汇总 / 缺渠道 / 停用">
+              <AppCard :note="c('states.action')">
                 <div class="app-card-grid">
                   <ActionCard
-                    name="推给 Telegram"
+                    :name="c('demo.action.push')"
                     icon="mdi-bell-ring-outline"
-                    trigger-label="实时推送"
-                    channel-name="我的 Telegram"
-                    template-name="默认模板"
+                    :trigger-label="c('demo.trigger.realtime')"
+                    :channel-name="c('demo.channelName')"
+                    :template-name="c('demo.templateDefault')"
                     :enabled="true"
                     :referenced-count="1"
                   />
                   <ActionCard
-                    name="早报汇总"
+                    :name="c('demo.action.digest')"
                     icon="mdi-clock-outline"
-                    trigger-label="定时汇总"
+                    :trigger-label="c('demo.trigger.digest')"
                     cron-expression="0 8 * * *"
-                    channel-name="企业微信"
-                    template-name="简报模板"
+                    :channel-name="c('demo.channelName')"
+                    :template-name="c('demo.templateBrief')"
                     :enabled="true"
                     :referenced-count="2"
                   />
                   <ActionCard
-                    name="还没选渠道的动作"
+                    :name="c('demo.action.missing')"
                     icon="mdi-bell-off-outline"
-                    trigger-label="实时推送"
-                    template-name="默认模板"
+                    :trigger-label="c('demo.trigger.realtime')"
+                    :template-name="c('demo.templateDefault')"
                     :enabled="true"
                     :referenced-count="1"
                   />
                   <ActionCard
-                    name="已停用的动作"
+                    :name="c('demo.action.off')"
                     icon="mdi-bell-outline"
-                    trigger-label="实时推送"
-                    channel-name="我的 Telegram"
+                    :trigger-label="c('demo.trigger.realtime')"
+                    :channel-name="c('demo.channelName')"
                     :enabled="false"
                     :referenced-count="0"
                   />
@@ -885,19 +901,19 @@ async function confirmChannelDelete(): Promise<void> {
       <!-- AppSidebar / AppHeader -->
       <DesignGroup
         title="AppSidebar / AppHeader"
-        note="外壳：桌面常驻左栏 + 顶栏；窄屏抽屉 + 底部导航"
+        :note="c('sec.shell')"
         :open="open['AppSidebar / AppHeader'] ?? false"
         @update:open="(value) => setOpen('AppSidebar / AppHeader', value)"
       >
         <AppCard>
           <div class="app-stack">
             <AppHint tone="info">
-              你正在看的这个页面的左栏、顶栏与底部导航就是它们。桌上常驻左栏；手机上点左上角汉堡出抽屉，底部五个入口。
+              {{ c('sec.shellNote') }}
             </AppHint>
             <div class="app-row ds-wrap">
               <span class="app-tag font-mono">AppSidebar</span>
               <span class="app-tag font-mono">AppHeader</span>
-              <span class="app-tag font-mono">items 同一份，两处渲染</span>
+              <span class="app-tag font-mono">{{ c('demo.twoRender') }}</span>
             </div>
           </div>
         </AppCard>
@@ -906,31 +922,31 @@ async function confirmChannelDelete(): Promise<void> {
 
     <AppDialog
       v-model="dialogOpen"
-      :title="dialog === 'error' ? '保存失败' : '新建分组'"
+      :title="dialog === 'error' ? c('demo.saveFailed') : c('demo.dialogTitle')"
       :loading="dialog === 'loading'"
-      :error="dialog === 'error' ? '服务器返回 500：数据库写入失败' : undefined"
+      :error="dialog === 'error' ? c('demo.serverError') : undefined"
     >
       <div class="app-stack">
-        <AppInput :model-value="''" label="名称" placeholder="例如：AI 圈动态" required />
-        <AppSwitch v-model="switchOn" label="立刻启用" hint="关掉就先存着，不采集" />
+        <AppInput :model-value="''" :label="t('common.name')" :placeholder="c('field.namePlaceholder')" required />
+        <AppSwitch v-model="switchOn" :label="c('field.enableNow')" :hint="c('field.enableNowHint')" />
       </div>
       <template #footer>
-        <AppButton variant="ghost" @click="dialog = 'none'">取消</AppButton>
+        <AppButton variant="ghost" @click="dialog = 'none'">{{ t('common.cancel') }}</AppButton>
         <span class="app-spacer" />
-        <AppButton variant="primary" @click="dialog = 'none'">保存</AppButton>
+        <AppButton variant="primary" @click="dialog = 'none'">{{ t('common.save') }}</AppButton>
       </template>
     </AppDialog>
 
     <FormDialog
       v-model="bizDialogOpen"
-      :title="bizDialog === 'error' ? '保存失败' : '新建动作'"
-      note="表单弹窗只管字段，标题按钮错误条都由外壳负责"
+      :title="bizDialog === 'error' ? c('demo.saveFailed') : c('demo.bizDialogTitle')"
+      :note="c('demo.formDialogShellNote')"
       :busy="bizDialog === 'busy'"
-      :error="bizDialog === 'error' ? '服务器返回 500：数据库写入失败' : undefined"
+      :error="bizDialog === 'error' ? c('demo.serverError') : undefined"
     >
       <div class="app-stack">
-        <AppInput :model-value="''" label="动作名称" placeholder="例如：推给 Telegram" required />
-        <CronPicker v-model="cronDaily" label="汇总时间" />
+        <AppInput :model-value="''" :label="c('field.actionName')" :placeholder="c('field.actionNamePlaceholder')" required />
+        <CronPicker v-model="cronDaily" :label="c('field.every5Summary')" />
       </div>
     </FormDialog>
 
@@ -942,9 +958,9 @@ async function confirmChannelDelete(): Promise<void> {
       @confirm="confirmSourceDelete"
     />
 
-    <FormDialog v-model="editOpen" title="编辑渠道" @submit="submitChannelEdit">
+    <FormDialog v-model="editOpen" :title="c('demo.channelEdit')" @submit="submitChannelEdit">
       <div class="app-stack">
-        <AppInput v-model="editName" label="名称" />
+        <AppInput v-model="editName" :label="t('common.name')" />
       </div>
     </FormDialog>
 
@@ -957,7 +973,7 @@ async function confirmChannelDelete(): Promise<void> {
     />
 
     <transition name="ds-toast">
-      <div v-if="toastVisible" class="ds-toast app-overlay" data-test="design-toast">保存成功</div>
+      <div v-if="toastVisible" class="ds-toast app-overlay" data-test="design-toast">{{ c('demo.hintOk') }}</div>
     </transition>
   </AppPage>
 </template>

@@ -335,7 +335,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--k-space-1) var(--k-space-2);
+  // 列间距给宽一点：表达式和「下次采集」挨太近会读成一句话
+  gap: var(--k-space-1) var(--k-space-4);
   margin-block-start: auto;
   padding-block-start: var(--k-space-2);
   border-block-start: 1px solid var(--k-border-soft);

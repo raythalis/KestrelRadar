@@ -15,6 +15,11 @@ import {
   colorVars,
 } from '@/design/tokens'
 
+import type { DesignCopyKey } from './lab-copy'
+
+/** 预览页的文案函数（由页面传进来，这个模块自己不碰 i18n） */
+export type DesignCopy = (key: DesignCopyKey, params?: Record<string, string | number>) => string
+
 export type DesignTokenKind = 'color' | 'space' | 'radius' | 'shadow' | 'type' | 'value'
 
 export interface DesignTokenItem {
@@ -52,46 +57,57 @@ export function shadowItems(theme: ThemeDefinition): DesignTokenItem[] {
   return Object.entries(set).map(([key, value]) => ({ name: `--k-elev-${key}`, value }))
 }
 
-export function typeItems(): DesignTokenItem[] {
+export function typeItems(copy: DesignCopy): DesignTokenItem[] {
   const items: DesignTokenItem[] = []
   for (const [key, value] of Object.entries(TYPE)) {
     items.push({ name: `--k-fs-${key}`, value, style: { fontSize: String(value) } })
   }
   for (const [key, value] of Object.entries(LINE_HEIGHT)) {
-    items.push({ name: `行高 · ${key}`, value, style: { fontSize: TYPE.body, lineHeight: value } })
+    items.push({
+      name: copy('preview.lineHeight', { key }),
+      value,
+      style: { fontSize: TYPE.body, lineHeight: value },
+    })
   }
   for (const [key, value] of Object.entries(WEIGHT)) {
-    items.push({ name: `字重 · ${key}`, value, style: { fontSize: TYPE.body, fontWeight: value } })
+    items.push({
+      name: copy('preview.weight', { key }),
+      value,
+      style: { fontSize: TYPE.body, fontWeight: value },
+    })
   }
   return items
 }
 
-export function valueItems(): DesignTokenItem[] {
+export function valueItems(copy: DesignCopy): DesignTokenItem[] {
   return [
-    ...Object.entries(DENSITY).map(([key, value]) => ({ name: `密度 · ${key}`, value })),
+    ...Object.entries(DENSITY).map(([key, value]) => ({
+      name: copy('preview.density', { key }),
+      value,
+    })),
     ...Object.entries(BREAKPOINTS).map(([key, value]) => ({
-      name: `断点 · ${key}`,
+      name: copy('preview.breakpoint', { key }),
       value: `≥${value}px`,
     })),
     ...Object.entries(PAGE_WIDTHS).map(([key, value]) => ({
-      name: `页面宽度 · ${key}`,
-      value: value > 0 ? `${value}px` : '不限宽',
+      name: copy('preview.pageWidth', { key }),
+      value: value > 0 ? `${value}px` : copy('demo.widthFull'),
     })),
   ]
 }
 
-export function designGroups(theme: ThemeDefinition): DesignTokenGroup[] {
+export function designGroups(theme: ThemeDefinition, copy: DesignCopy): DesignTokenGroup[] {
   return [
-    { title: 'Color', note: `${theme.id} · 语义变量`, kind: 'color', items: colorItems(theme) },
-    { title: 'Typography', note: '七档字号 + 行高/字重', kind: 'type', items: typeItems() },
-    { title: 'Spacing', note: '4px 基准的七档', kind: 'space', items: spaceItems() },
-    { title: 'Radius', note: '小徽标 / 控件 / 浮层 / 全圆', kind: 'radius', items: radiusItems() },
-    { title: 'Elevation', note: '只给浮层用', kind: 'shadow', items: shadowItems(theme) },
+    { title: 'Color', note: copy('preview.colorNote', { theme: theme.id }), kind: 'color', items: colorItems(theme) },
+    { title: 'Typography', note: copy('preview.typeNote'), kind: 'type', items: typeItems(copy) },
+    { title: 'Spacing', note: copy('preview.spaceNote'), kind: 'space', items: spaceItems() },
+    { title: 'Radius', note: copy('preview.radiusNote'), kind: 'radius', items: radiusItems() },
+    { title: 'Elevation', note: copy('preview.shadowNote'), kind: 'shadow', items: shadowItems(theme) },
     {
       title: 'Density / Breakpoints / Page width',
-      note: '密度与响应式规则',
+      note: copy('preview.valueNote'),
       kind: 'value',
-      items: valueItems(),
+      items: valueItems(copy),
     },
   ]
 }
