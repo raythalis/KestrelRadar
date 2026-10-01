@@ -28,13 +28,13 @@ export default createVuetify({
     themes,
   },
   defaults: {
-    VCard: { variant: 'flat', rounded: 'lg', elevation: 0 },
-    VBtn: { variant: 'flat', rounded: 'lg' },
+    VCard: { variant: 'flat', rounded: 'sm', elevation: 0 },
+    VBtn: { variant: 'flat', rounded: 'sm' },
     VTextField: { variant: 'outlined', density: 'comfortable', hideDetails: 'auto' },
     VTextarea: { variant: 'outlined', density: 'comfortable', hideDetails: 'auto' },
     VSelect: { variant: 'outlined', density: 'comfortable', hideDetails: 'auto' },
     VCombobox: { variant: 'outlined', density: 'comfortable', hideDetails: 'auto' },
-    VChip: { rounded: 'lg' },
+    VChip: { rounded: 'sm' },
     VSwitch: { density: 'compact', hideDetails: 'auto', color: 'primary' },
   },
 })

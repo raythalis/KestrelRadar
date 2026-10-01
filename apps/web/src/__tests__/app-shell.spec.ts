@@ -66,17 +66,34 @@ describe('AppShell', () => {
     expect(JSON.parse(localStorage.getItem('kestrel-ui') ?? '{}').locale).toBe('en')
   })
 
-  it('顶栏的深色/浅色段控件能换主题并记下来', async () => {
+  it('顶栏的三态主题段控件能换主题并记下来', async () => {
     const { wrapper, pinia } = mountShell()
     const ui = useUiStore(pinia)
-    expect(ui.theme).toBe('kestrelDark')
-
-    await wrapper.get('[data-test="theme-kestrelLight"]').trigger('click')
+    expect(ui.preference).toBe('system')
     expect(ui.theme).toBe('kestrelLight')
-    expect(JSON.parse(localStorage.getItem('kestrel-ui') ?? '{}').theme).toBe('kestrelLight')
 
-    await wrapper.get('[data-test="theme-kestrelDark"]').trigger('click')
+    await wrapper.get('[data-test="theme-dark"]').trigger('click')
+    expect(ui.preference).toBe('dark')
     expect(ui.theme).toBe('kestrelDark')
+    expect(JSON.parse(localStorage.getItem('kestrel-ui') ?? '{}').theme).toBe('dark')
+
+    await wrapper.get('[data-test="theme-light"]').trigger('click')
+    expect(ui.theme).toBe('kestrelLight')
+  })
+
+  it('窄屏底部导航有五个入口，抽屉默认收着', async () => {
+    const { wrapper } = mountShell()
+    for (const name of ['dashboard', 'config', 'channels', 'models', 'settings']) {
+      expect(wrapper.find(`[data-test="tab-${name}"]`).exists()).toBe(true)
+    }
+    expect(wrapper.find('.k-rail.is-open').exists()).toBe(false)
+
+    await wrapper.get('[data-test="drawer-toggle"]').trigger('click')
+    expect(wrapper.find('.k-rail.is-open').exists()).toBe(true)
+    expect(wrapper.find('[data-test="drawer-scrim"]').exists()).toBe(true)
+
+    await wrapper.get('[data-test="drawer-scrim"]').trigger('click')
+    expect(wrapper.find('.k-rail.is-open').exists()).toBe(false)
   })
 
   it('顶栏面包屑跟着当前路由走', async () => {

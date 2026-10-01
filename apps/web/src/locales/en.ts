@@ -3,13 +3,16 @@ export default {
   theme: {
     dark: 'Dark',
     light: 'Light',
+    system: 'System',
   },
   app: {
     name: 'Kestrel',
-    tagline: 'Personal source watching and event response',
+    tagline: 'v0.1',
   },
   nav: {
     sectionMain: 'Main',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
     dashboard: 'Dashboard',
     config: 'Config',
     channels: 'Channels',

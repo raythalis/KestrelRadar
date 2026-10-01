@@ -3,13 +3,16 @@ export default {
   theme: {
     dark: '深色',
     light: '浅色',
+    system: '跟随系统',
   },
   app: {
     name: 'Kestrel',
-    tagline: '个人信息监听与事件响应',
+    tagline: 'v0.1',
   },
   nav: {
     sectionMain: '主导航',
+    openMenu: '打开菜单',
+    closeMenu: '关闭菜单',
     dashboard: '仪表盘',
     config: '配置管理',
     channels: '通知渠道',

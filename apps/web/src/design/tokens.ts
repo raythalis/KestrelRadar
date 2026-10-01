@@ -2,10 +2,11 @@
 //
 // 这里是全项目唯一的色值来源 —— 组件不写死颜色，只用 CSS 变量 --k-*；
 // Vuetify 的主题色也由这里生成，避免同一套色值散落两处。
-// 加一套新主题（后面要做多主题）：在 THEMES 里加一条即可，Vuetify 主题、顶栏切换、
-// 变量注入都会自动跟上（记得补一条 theme.<id> 文案）。
+// 加一套新颜色模板（后面要做多主题）：在 THEMES 里加一条即可，Vuetify 主题、变量注入、
+// 切换控件都会自动跟上（记得补一条 theme.<id> 文案）。
 //
-// 视觉基准：docs/design/config-management.html（尺寸、间距、组件形态都照它来）。
+// 视觉基准：原型 A（Figma 风）——浅色优先、小圆角、克制的蓝作为强调色。
+// 色值的形状层（圆角、字号、间距、等宽小标签）在 styles/main.scss 里。
 
 export interface ThemeTokens {
   /** 页面底色 */
@@ -55,58 +56,84 @@ export interface ThemeDefinition {
 
 export const THEMES = [
   {
-    id: 'kestrelDark',
-    dark: true,
-    labelKey: 'theme.dark',
-    tokens: {
-      bg: '#0d1017',
-      rail: '#12151d',
-      panel: '#161a23',
-      panel2: '#1c212c',
-      border: '#262c38',
-      borderSoft: '#1f2530',
-      text: '#e7eaf1',
-      muted: '#9aa4b6',
-      faint: '#6b7488',
-      accent: '#f0a34a',
-      accentSoft: 'rgba(240, 163, 74, 0.14)',
-      blue: '#6ea8fe',
-      ok: '#46c07a',
-      warn: '#e0a33e',
-      err: '#e2685f',
-      radius: '12px',
-      shadow: '0 1px 0 rgba(255, 255, 255, 0.02) inset, 0 8px 24px rgba(0, 0, 0, 0.25)',
-    },
-  },
-  {
     id: 'kestrelLight',
     dark: false,
     labelKey: 'theme.light',
     tokens: {
-      bg: '#f4f5f8',
+      bg: '#f3f4f7',
       rail: '#ffffff',
       panel: '#ffffff',
       panel2: '#f7f8fb',
-      border: '#e2e6ee',
-      borderSoft: '#edf0f5',
-      text: '#1b1f27',
-      muted: '#6a7383',
-      faint: '#8b94a3',
-      accent: '#c97a12',
-      accentSoft: 'rgba(201, 122, 18, 0.12)',
+      border: '#dde0ea',
+      borderSoft: '#e8eaf0',
+      text: '#0d0f1a',
+      muted: '#6c7280',
+      faint: '#9aa0ad',
+      accent: '#4f6ef7',
+      accentSoft: 'rgba(79, 110, 247, 0.10)',
       blue: '#2f6fd0',
-      ok: '#1f9d5b',
-      warn: '#b7791f',
-      err: '#c9534a',
-      radius: '12px',
-      shadow: '0 1px 2px rgba(20, 25, 35, 0.06), 0 8px 24px rgba(20, 25, 35, 0.06)',
+      ok: '#12a150',
+      warn: '#b58105',
+      err: '#e5484d',
+      radius: '4px',
+      shadow: '0 1px 2px rgba(13, 15, 26, 0.04)',
+    },
+  },
+  {
+    id: 'kestrelDark',
+    dark: true,
+    labelKey: 'theme.dark',
+    tokens: {
+      bg: '#0c0e15',
+      rail: '#12151d',
+      panel: '#141620',
+      panel2: '#1b1e2c',
+      border: '#242738',
+      borderSoft: '#1e2130',
+      text: '#e3e5ef',
+      muted: '#8a90a3',
+      faint: '#5f6478',
+      accent: '#5b7bf8',
+      accentSoft: 'rgba(91, 123, 248, 0.16)',
+      blue: '#6ea8fe',
+      ok: '#30a46c',
+      warn: '#f5a524',
+      err: '#f2555a',
+      radius: '4px',
+      shadow: '0 1px 2px rgba(0, 0, 0, 0.40)',
     },
   },
 ] as const satisfies readonly ThemeDefinition[]
 
 export type AppTheme = (typeof THEMES)[number]['id']
 
-export const DEFAULT_THEME: AppTheme = 'kestrelDark'
+/** Vuetify 的默认主题（界面偏好见 stores/ui.ts，可以跟随系统） */
+export const DEFAULT_THEME: AppTheme = 'kestrelLight'
+
+/** 界面偏好：白天 / 跟随系统 / 黑夜。跟随系统时按系统亮暗选上面两套之一。 */
+export type ThemePreference = 'light' | 'system' | 'dark'
+
+export const THEME_PREFERENCES: { value: ThemePreference; labelKey: string }[] = [
+  { value: 'light', labelKey: 'theme.light' },
+  { value: 'system', labelKey: 'theme.system' },
+  { value: 'dark', labelKey: 'theme.dark' },
+]
+
+export const DEFAULT_PREFERENCE: ThemePreference = 'system'
+
+export function isThemePreference(value: unknown): value is ThemePreference {
+  return value === 'light' || value === 'system' || value === 'dark'
+}
+
+/** 把偏好解析成真正要用的那套色值 */
+export function resolveTheme(
+  preference: ThemePreference,
+  prefersDark: boolean = typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-color-scheme: dark)').matches,
+): AppTheme {
+  if (preference === 'system') return prefersDark ? 'kestrelDark' : 'kestrelLight'
+  return preference === 'dark' ? 'kestrelDark' : 'kestrelLight'
+}
 
 export function findTheme(id: string): ThemeDefinition | undefined {
   return THEMES.find((theme) => theme.id === id)
@@ -147,6 +174,9 @@ export function applyThemeVars(theme: ThemeDefinition): void {
   for (const [name, value] of Object.entries(cssVars(theme.tokens))) {
     root.style.setProperty(name, value)
   }
+  // 让浏览器原生控件（滚动条、输入框）也跟着亮暗
+  root.style.setProperty('color-scheme', theme.dark ? 'dark' : 'light')
+  root.dataset.theme = theme.dark ? 'dark' : 'light'
 }
 
 /** Vuetify 主题色，同样从 tokens 生成 */

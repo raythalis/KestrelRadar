@@ -3,7 +3,7 @@ import { SETTINGS_DEFAULTS, type SettingKey, type UpdateSettingsInput } from '@k
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import type { SettingsCard, SettingsField } from '@/components/settings/types'
+import type { SettingsCard } from '@/components/settings/types'
 import { useConfigStore } from '@/stores/config'
 
 const props = defineProps<{ cards: SettingsCard[] }>()
