@@ -11,6 +11,7 @@ import { useI18n } from 'vue-i18n'
 
 import AppStatus from '@/components/app/AppStatus.vue'
 import AppSwitch from '@/components/app/AppSwitch.vue'
+import { formatShortDateTime } from '@/utils/format'
 
 const props = withDefaults(
   defineProps<{
@@ -22,15 +23,17 @@ const props = withDefaults(
     enabled: boolean
     /** 抓取目标：路由路径或网址 */
     target: string
-    /** 采集频率（已格式化，如"每 30 分钟"） */
-    frequency?: string
+    /** 采集周期：原样展示 cron 表达式，不做人话翻译 */
+    cron: string
+    /** 下次采集时间；停用的源没有下次 */
+    nextRunAt?: string | null
     tone?: 'ok' | 'warn' | 'err' | 'neutral'
     /** 状态短标签；还没抓过时页面传「抓取测试」 */
     statusText: string
     /** 抓取中 */
     busy?: boolean
   }>(),
-  { icon: 'mdi-rss', tone: 'neutral', frequency: undefined, busy: false },
+  { icon: 'mdi-rss', tone: 'neutral', nextRunAt: null, busy: false },
 )
 
 const emit = defineEmits<{
@@ -94,8 +97,9 @@ const probeDisabled = computed(() => props.busy || !props.enabled)
     </div>
 
     <div class="biz-card__foot" data-test="source-foot">
-      <span v-if="frequency" class="biz-card__meta" data-test="source-frequency">
-        {{ frequency }}
+      <span class="biz-card__meta biz-card__meta--mono" data-test="source-cron">{{ cron }}</span>
+      <span v-if="enabled && nextRunAt" class="biz-card__meta" data-test="source-next-run">
+        {{ t('discovery.nextRun') }}{{ formatShortDateTime(nextRunAt) }}
       </span>
       <span class="app-spacer" />
       <span @click.stop>

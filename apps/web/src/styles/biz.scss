@@ -341,6 +341,11 @@
   border-block-start: 1px solid var(--k-border-soft);
 }
 
+// 卡脚里的地址/表达式：等宽，读起来跟正文有区分
+.biz-card__meta--mono {
+  font-family: var(--k-font-mono);
+}
+
 /* 桌面端：卡脚里的开关按内容收高（40 → 24），别为一个小开关白占一行；
    触摸端不跟着收，#components.scss 里的 44px 规矩优先。 */
 @media (min-width: 900px) {

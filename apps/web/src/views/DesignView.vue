@@ -202,7 +202,8 @@ type DemoSource = {
   kindLabel: string
   enabled: boolean
   target: string
-  frequency?: string
+  cron: string
+  nextRunAt: string | null
   tone: DemoTone
   statusText: string
   /** 演示用：抓完落成什么结果 */
@@ -214,6 +215,11 @@ const SOURCE_LABELS = {
   warn: '抓得到但没内容',
   err: '抓取失败',
 } as const
+/** 演示用：把「下次采集」放在当前时间之后若干分钟 */
+function inMinutes(minutes: number): string {
+  return new Date(Date.now() + minutes * 60_000).toISOString()
+}
+
 function initialSources(): DemoSource[] {
   return [
     {
@@ -223,7 +229,8 @@ function initialSources(): DemoSource[] {
       kindLabel: 'RSSHub 路由',
       enabled: true,
       target: '/bilibili/ranking/all',
-      frequency: '每 30 分钟',
+      cron: '*/30 * * * *',
+      nextRunAt: inMinutes(18),
       tone: 'ok',
       statusText: SOURCE_LABELS.ok,
       result: 'ok',
@@ -236,7 +243,8 @@ function initialSources(): DemoSource[] {
       kindLabel: 'RSSHub 路由',
       enabled: true,
       target: '/github/trending/daily',
-      frequency: '每 1 小时',
+      cron: '0 * * * *',
+      nextRunAt: inMinutes(42),
       tone: 'neutral',
       statusText: '',
       result: 'ok',
@@ -249,7 +257,8 @@ function initialSources(): DemoSource[] {
       kindLabel: '网页',
       enabled: true,
       target: 'https://example.com/blog',
-      frequency: '每 6 小时',
+      cron: '0 */6 * * *',
+      nextRunAt: inMinutes(205),
       tone: 'warn',
       statusText: SOURCE_LABELS.warn,
       result: 'warn',
@@ -262,6 +271,8 @@ function initialSources(): DemoSource[] {
       kindLabel: 'RSSHub 路由',
       enabled: true,
       target: '/bilibili/ranking/dance',
+      cron: '0 */6 * * *',
+      nextRunAt: inMinutes(205),
       tone: 'err',
       statusText: SOURCE_LABELS.err,
       result: 'err',
@@ -274,7 +285,8 @@ function initialSources(): DemoSource[] {
       kindLabel: 'RSSHub 路由',
       enabled: false,
       target: '/hackernews/best',
-      frequency: '每 30 分钟',
+      cron: '*/30 * * * *',
+      nextRunAt: null,
       tone: 'neutral',
       statusText: '已停用',
       result: 'ok',
@@ -793,7 +805,7 @@ async function confirmChannelDelete(): Promise<void> {
             <div class="app-stack">
               <AppCard
                 title="SourceCard"
-                note="状态块本身就是抓取测试的入口（还没抓过就显示「抓取测试」）；点卡片＝编辑；右上角 ×＝删除（要确认）；开关在右下；不显示实例地址与已收条数，也不再摆底部按钮行"
+                note="状态块本身就是抓取测试的入口（还没抓过就显示「抓取测试」）；点卡片＝编辑；右上角 ×＝删除（要确认）；开关在右下；脚上只写 cron 表达式 + 下次采集时间（停用的源不显示下次）；不显示实例地址与已收条数，也不再摆底部按钮行"
               >
                 <div class="app-stack">
                   <div class="app-card-grid">
@@ -805,7 +817,8 @@ async function confirmChannelDelete(): Promise<void> {
                       :kind-label="source.kindLabel"
                       :enabled="source.enabled"
                       :target="source.target"
-                      :frequency="source.frequency"
+                      :cron="source.cron"
+                      :next-run-at="source.nextRunAt"
                       :tone="source.tone"
                       :status-text="source.statusText || t('discovery.test')"
                       :busy="source.busy"

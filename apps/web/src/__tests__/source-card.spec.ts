@@ -14,7 +14,8 @@ function mountCard(props: Record<string, unknown> = {}) {
       kindLabel: 'RSSHub 路由',
       enabled: true,
       target: '/bilibili/ranking/all',
-      frequency: '每 30 分钟',
+      cron: '*/30 * * * *',
+      nextRunAt: '2026-10-02T18:00:00+08:00',
       tone: 'ok',
       statusText: '有内容',
       ...props,
@@ -80,11 +81,26 @@ describe('SourceCard', () => {
     expect(wrapper.emitted('edit')).toHaveLength(1)
   })
 
+  it('脚上写 cron 表达式 + 下次采集时间；停用的源只留表达式，不写下次', () => {
+    const on = mountCard()
+    expect(on.find('[data-test="source-cron"]').text()).toBe('*/30 * * * *')
+    // 时区随运行环境，这里只校验形状：标签 + 月-日 时:分
+    expect(on.find('[data-test="source-next-run"]').text()).toMatch(
+      /^下次采集：\d{2}-\d{2} \d{2}:\d{2}$/,
+    )
+
+    const off = mountCard({ enabled: false })
+    expect(off.find('[data-test="source-cron"]').text()).toBe('*/30 * * * *')
+    expect(off.find('[data-test="source-next-run"]').exists()).toBe(false)
+
+    const noTime = mountCard({ nextRunAt: null })
+    expect(noTime.find('[data-test="source-next-run"]').exists()).toBe(false)
+  })
+
   it('开关在卡脚（右下），开关状态由页面接', async () => {
     const wrapper = mountCard()
     const foot = wrapper.find('[data-test="source-foot"]')
     expect(foot.find('[data-test="source-enabled"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="source-frequency"]').text()).toBe('每 30 分钟')
 
     wrapper.findComponent(AppSwitch).vm.$emit('update:modelValue', false)
     expect(wrapper.emitted('toggle')).toEqual([[false]])
