@@ -156,7 +156,7 @@ describe('通知渠道页', () => {
     const wrapper = await mountLoaded()
     await wrapper.get('[data-test="channel-delete"]').trigger('click')
     await flushPromises()
-    expect(wrapper.text()).toContain('还在用它的动作会发不出去')
+    expect(wrapper.text()).toContain('还在用它的动作将无法发送通知')
 
     await wrapper.get('[data-test="confirm-ok"]').trigger('click')
     await flushPromises()

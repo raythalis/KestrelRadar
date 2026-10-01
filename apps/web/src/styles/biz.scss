@@ -265,3 +265,11 @@
   overflow-x: auto;
   padding: var(--k-space-2);
 }
+
+// 确认框里的后果说明：正文语气，不抢确认按钮的注意力
+.confirm-dialog__message {
+  margin: 0;
+  color: var(--k-text);
+  font-size: var(--k-fs-body);
+  line-height: var(--k-lh-normal);
+}

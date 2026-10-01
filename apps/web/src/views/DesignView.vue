@@ -4,12 +4,14 @@
      页面自身只用 App* 与 Vuetify，不写任何色值、间距、圆角。 -->
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useDisplay } from 'vuetify'
 
 import { findTheme, THEMES } from '@/design/tokens'
 import { designGroups, spaceItems } from '@/design/preview'
 import ActionCard from '@/components/biz/ActionCard.vue'
 import ChannelCard from '@/components/biz/ChannelCard.vue'
+import ConfirmDialog from '@/components/biz/ConfirmDialog.vue'
 import CronPicker from '@/components/biz/CronPicker.vue'
 import FormDialog from '@/components/biz/FormDialog.vue'
 import SourceCard from '@/components/biz/SourceCard.vue'
@@ -17,6 +19,7 @@ import { useUiStore } from '@/stores/ui'
 import DesignGroup from '@/views/design/DesignGroup.vue'
 
 const ui = useUiStore()
+const { t } = useI18n()
 const { name: breakpointName } = useDisplay()
 
 const viewport = ref(0)
@@ -83,6 +86,84 @@ const selectItems = [
   { title: '自带算法', value: 'standard' },
   { title: '灰区交给模型复核', value: 'assisted' },
 ]
+
+// 渠道卡演示：× 要确认，确认后才从演示列表里去掉（刷新即还原）
+type DemoChannel = {
+  id: string
+  name: string
+  type: 'telegram' | 'webhook'
+  enabled: boolean
+  tone: 'ok' | 'warn' | 'err' | 'neutral'
+  statusText: string
+}
+function initialChannels(): DemoChannel[] {
+  return [
+    {
+      id: 'c1',
+      name: '我的 Telegram',
+      type: 'telegram',
+      enabled: true,
+      tone: 'ok',
+      statusText: '连通',
+    },
+    {
+      id: 'c2',
+      name: '还没测过的渠道',
+      type: 'telegram',
+      enabled: true,
+      tone: 'neutral',
+      statusText: '还没测过',
+    },
+    {
+      id: 'c3',
+      name: '停用的渠道',
+      type: 'webhook',
+      enabled: false,
+      tone: 'neutral',
+      statusText: '已停用',
+    },
+    {
+      id: 'c4',
+      name: '连接失败的渠道',
+      type: 'webhook',
+      enabled: true,
+      tone: 'err',
+      statusText: '连接失败',
+    },
+    {
+      id: 'c5',
+      name: '正在测试的渠道',
+      type: 'telegram',
+      enabled: true,
+      tone: 'warn',
+      statusText: '测试中',
+    },
+  ]
+}
+const demoChannels = ref<DemoChannel[]>(initialChannels())
+const pendingChannel = ref<DemoChannel | null>(null)
+const channelDeleteOpen = computed({
+  get: () => pendingChannel.value !== null,
+  set: (value: boolean) => {
+    if (!value) pendingChannel.value = null
+  },
+})
+const channelDeleteBusy = ref(false)
+async function confirmChannelDelete(): Promise<void> {
+  channelDeleteBusy.value = true
+  // 演示里假装删一下，好让确认按钮的转圈看得见
+  await new Promise((resolve) => window.setTimeout(resolve, 400))
+  demoChannels.value = demoChannels.value.filter((c) => c.id !== pendingChannel.value?.id)
+  channelDeleteBusy.value = false
+  pendingChannel.value = null
+}
+
+// 测试中：只让那一张卡的圆点转圈
+const testingId = ref<string | null>(null)
+function runChannelTest(channel: DemoChannel): void {
+  testingId.value = channel.id
+  window.setTimeout(() => (testingId.value = null), 900)
+}
 </script>
 
 <template>
@@ -516,45 +597,31 @@ const selectItems = [
           <div class="ds-cols">
             <AppCard
               title="ChannelCard"
-              note="状态只走左侧色条；右下角圆点＝测试连通性（悬停出提示）；点卡片＝编辑；右上角 ×＝删除"
+              note="状态只走左侧色条；右下角圆点＝测试连通性（悬停出提示）；点卡片＝编辑；右上角 ×＝删除，删除要先确认"
             >
-              <div class="app-card-grid">
-                <ChannelCard
-                  name="我的 Telegram"
-                  type="telegram"
-                  :enabled="true"
-                  tone="ok"
-                  status-text="连通"
-                />
-                <ChannelCard
-                  name="还没测过的渠道"
-                  type="telegram"
-                  :enabled="true"
-                  tone="neutral"
-                  status-text="还没测过"
-                />
-                <ChannelCard
-                  name="停用的渠道"
-                  type="webhook"
-                  :enabled="false"
-                  tone="neutral"
-                  status-text="已停用"
-                />
-                <ChannelCard
-                  name="连接失败的渠道"
-                  type="webhook"
-                  :enabled="true"
-                  tone="err"
-                  status-text="连接失败"
-                />
-                <ChannelCard
-                  name="正在测试的渠道"
-                  type="telegram"
-                  :enabled="true"
-                  tone="warn"
-                  status-text="测试中"
-                  busy
-                />
+              <div class="app-stack">
+                <div class="app-card-grid">
+                  <ChannelCard
+                    v-for="channel in demoChannels"
+                    :key="channel.id"
+                    :name="channel.name"
+                    :type="channel.type"
+                    :enabled="channel.enabled"
+                    :tone="channel.tone"
+                    :status-text="channel.statusText"
+                    :busy="testingId === channel.id"
+                    @test="runChannelTest(channel)"
+                    @delete="pendingChannel = channel"
+                  />
+                </div>
+                <AppButton
+                  v-if="demoChannels.length < 5"
+                  size="sm"
+                  variant="ghost"
+                  @click="demoChannels = initialChannels()"
+                >
+                  复位演示
+                </AppButton>
               </div>
             </AppCard>
 
@@ -719,6 +786,14 @@ const selectItems = [
         <CronPicker v-model="cronDaily" label="汇总时间" />
       </div>
     </FormDialog>
+
+    <ConfirmDialog
+      v-model="channelDeleteOpen"
+      :title="t('channel.delete')"
+      :message="t('channel.deleteBody', { name: pendingChannel?.name ?? '' })"
+      :busy="channelDeleteBusy"
+      @confirm="confirmChannelDelete"
+    />
 
     <transition name="ds-toast">
       <div v-if="toastVisible" class="ds-toast app-overlay" data-test="design-toast">保存成功</div>

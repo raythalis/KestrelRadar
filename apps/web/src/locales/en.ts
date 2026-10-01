@@ -161,7 +161,7 @@ export default {
     add: 'New channel',
     edit: 'Edit channel',
     delete: 'Delete channel',
-    deleteBody: 'Delete channel "{name}"? Actions still using it cannot send; switch them first.',
+    deleteBody: 'Delete channel "{name}"? Actions still using it will stop sending notifications.',
     empty: 'No channels yet. Create one first.',
     typeLabel: 'Channel type',
     type: {

@@ -158,7 +158,7 @@ export default {
     add: '新建渠道',
     edit: '编辑渠道',
     delete: '删除渠道',
-    deleteBody: '要删掉渠道「{name}」吗？还在用它的动作会发不出去，先去动作里换一个。',
+    deleteBody: '要删掉渠道「{name}」吗？还在用它的动作将无法发送通知。',
     empty: '还没有通知渠道，先建一个。',
     typeLabel: '渠道类型',
     type: {
