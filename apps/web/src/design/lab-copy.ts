@@ -32,6 +32,13 @@ const ZH = {
   'preview.breakpoint': '断点 · {key}',
   'preview.pageWidth': '页面宽度 · {key}',
 
+  'states.monitor': '状态：关键词匹配 / 意图描述 / 没填关键词（全部通过）/ 仅走指定动作 / 停用',
+  'demo.monitor.dance': '舞蹈相关',
+  'demo.monitor.ai': 'AI 圈动态',
+  'demo.monitor.nokw': '没填关键词的监听',
+  'demo.monitor.off': '已停用的监听',
+  'demo.monitor.intent': '大模型发布与开源项目',
+
   // 分节标题
   'sec.foundation.spacing': 'Foundation · Spacing 阶梯',
   'sec.foundation.spacingNote': '只用这七档，不再出现随手写的 px',
@@ -48,7 +55,8 @@ const ZH = {
   'states.button': '状态：default / hover / active / disabled / loading / danger',
   'states.input': '状态：default / focus / filled / disabled / readonly / error / 校验提示',
   'states.switch': '状态：on / off / disabled',
-  'states.status': '状态色只表达状态：success / warning / error / info / neutral（另有 busy 进行中）',
+  'states.status':
+    '状态色只表达状态：success / warning / error / info / neutral（另有 busy 进行中）',
   'states.card': '状态：default / interactive（整卡可点）/ disabled',
   'states.dialog': '状态：normal / loading / error / 移动端底部抽屉（<900px 自动贴底）',
   'states.formDialog': '状态：normal / 保存中(busy) / 错误 / 手机端贴底',
@@ -173,7 +181,8 @@ const ZH = {
   'demo.reset': '复位演示',
   'demo.dialogNote':
     '在手机上打开它会从底部升起（底部抽屉，顶部圆角），桌面上是居中弹窗。关掉可以用右上角、取消按钮或 Esc。',
-  'demo.formDialogNote': '标题、说明、取消/保存、保存中转圈、错误条、手机贴底都在这一个壳里；页面只管往里放字段。',
+  'demo.formDialogNote':
+    '标题、说明、取消/保存、保存中转圈、错误条、手机贴底都在这一个壳里；页面只管往里放字段。',
   'demo.emptyNote': '选一个数据源，点抓取测试看看能拿到什么',
   'demo.emptyTitle': '还没有抓过内容',
   'demo.emptyGroupTitle': '还没有分组',
@@ -242,6 +251,14 @@ const EN: Record<keyof typeof ZH, string> = {
   'preview.breakpoint': 'Breakpoint · {key}',
   'preview.pageWidth': 'Page width · {key}',
 
+  'states.monitor':
+    'States: keywords / intent / no keywords (everything passes) / limited to chosen actions / disabled',
+  'demo.monitor.dance': 'Dance-related',
+  'demo.monitor.ai': 'AI feed',
+  'demo.monitor.nokw': 'Monitor without keywords',
+  'demo.monitor.off': 'Disabled monitor',
+  'demo.monitor.intent': 'Model releases and open-source projects',
+
   'sec.foundation.spacing': 'Foundation · Spacing scale',
   'sec.foundation.spacingNote': 'These seven steps only — no ad-hoc px',
   'sec.foundation.width': 'Content width & sections: a page only declares which step it uses',
@@ -257,7 +274,8 @@ const EN: Record<keyof typeof ZH, string> = {
   'states.button': 'States: default / hover / active / disabled / loading / danger',
   'states.input': 'States: default / focus / filled / disabled / readonly / error / validation',
   'states.switch': 'States: on / off / disabled',
-  'states.status': 'Tone only expresses state: success / warning / error / info / neutral (plus busy)',
+  'states.status':
+    'Tone only expresses state: success / warning / error / info / neutral (plus busy)',
   'states.card': 'States: default / interactive (whole card clickable) / disabled',
   'states.dialog': 'States: normal / loading / error / bottom sheet on mobile (<900px)',
   'states.formDialog': 'States: normal / saving (busy) / error / bottom sheet on mobile',
@@ -386,17 +404,20 @@ const EN: Record<keyof typeof ZH, string> = {
   'demo.emptyGroupNote': 'A group is one thing you follow',
   'demo.sectionAction': 'Fetch test',
   'demo.sectionContent': 'Section content',
-  'demo.embedded': 'Embedded panel: use it for a second layer inside a card instead of nesting borders',
+  'demo.embedded':
+    'Embedded panel: use it for a second layer inside a card instead of nesting borders',
   'demo.cardLayering': 'Cards separate with a thin border and a tinted surface, never a shadow',
   'demo.cardFoot': 'The footer carries secondary actions and notes',
-  'demo.cardFootInteractive': 'Used on config pages: whole card clickable, keyboard Enter works too',
+  'demo.cardFootInteractive':
+    'Used on config pages: whole card clickable, keyboard Enter works too',
   'demo.cardOff': 'Greyed out, not clickable',
   'demo.hintInfo': 'Note: RSSHub caches for only 5 minutes',
   'demo.hintOk': 'Saved',
   'demo.hintWarn': 'This action has no channel, so nothing will be sent',
   'demo.hintErr': 'Bad token — Telegram returned 401',
   'demo.toast': 'Fire a toast',
-  'demo.toastNote': 'The toast borrows the AppHint look and floats at the bottom — one visual, not two',
+  'demo.toastNote':
+    'The toast borrows the AppHint look and floats at the bottom — one visual, not two',
   'demo.tagsSource': 'RSSHub route',
   'demo.tagsWeb': 'Web page',
   'demo.badgeDiscoveries': '2 sources',
@@ -437,4 +458,25 @@ export function makeDesignCopy(locale: string) {
       name in params ? String(params[name]) : `{${name}}`,
     )
   }
+}
+
+/** 演示用的词表：列表型文案单独放，不塞进 string 字典 */
+const ZH_LISTS = {
+  'demo.monitor.keywords.dance': ['舞蹈', '街舞', 'breaking'],
+  'demo.monitor.keywords.ai': ['大模型', '开源', '新版本', '评测', '论文'],
+  'demo.monitor.excludes': ['广告', '二手'],
+}
+
+type DesignListKey = keyof typeof ZH_LISTS
+
+const EN_LISTS: Record<DesignListKey, string[]> = {
+  'demo.monitor.keywords.dance': ['dance', 'hip hop', 'breaking'],
+  'demo.monitor.keywords.ai': ['LLM', 'open source', 'release', 'benchmark', 'paper'],
+  'demo.monitor.excludes': ['ads', 'second-hand'],
+}
+
+/** 取词表；同样在调用时读 locale */
+export function makeDesignLists(locale: string): (key: DesignListKey) => string[] {
+  const dict = locale.startsWith('en') ? EN_LISTS : ZH_LISTS
+  return (key: DesignListKey) => dict[key] ?? ZH_LISTS[key]
 }

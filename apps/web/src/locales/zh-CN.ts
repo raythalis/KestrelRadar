@@ -102,6 +102,7 @@ export default {
       all: '全部命中',
     },
     excludeKeywords: '排除词',
+    excludeCount: '排除 {n} 个词',
     useGlobalExcludes: '追加全局排除词',
     modeLabel: '模式',
     mode: {

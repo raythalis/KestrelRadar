@@ -10,6 +10,7 @@ import { useDisplay } from 'vuetify'
 import { findTheme, THEMES } from '@/design/tokens'
 import { designGroups, spaceItems } from '@/design/preview'
 import ActionCard from '@/components/biz/ActionCard.vue'
+import MonitorCard from '@/components/biz/MonitorCard.vue'
 import ChannelCard from '@/components/biz/ChannelCard.vue'
 import ConfirmDialog from '@/components/biz/ConfirmDialog.vue'
 import CronPicker from '@/components/biz/CronPicker.vue'
@@ -17,7 +18,7 @@ import FormDialog from '@/components/biz/FormDialog.vue'
 import SourceCard from '@/components/biz/SourceCard.vue'
 import { useUiStore } from '@/stores/ui'
 import DesignGroup from '@/views/design/DesignGroup.vue'
-import { makeDesignCopy, type DesignCopyKey } from '@/design/lab-copy'
+import { makeDesignCopy, makeDesignLists, type DesignCopyKey } from '@/design/lab-copy'
 
 const ui = useUiStore()
 const { t, locale } = useI18n()
@@ -159,6 +160,7 @@ watch(locale, () => {
   demoChannels.value = initialChannels()
   demoSources.value = initialSources()
   demoActions.value = initialActions()
+  demoMonitors.value = initialMonitors()
 })
 
 // 演示里改过的东西（删过卡、点过测试）才显示复位按钮
@@ -341,6 +343,104 @@ function runSourceTest(source: DemoSource): void {
   }, 900)
 }
 
+// 监听卡演示：点卡片＝编辑、右上角 ×＝删除（二级确认）、卡脚开关
+type DemoMonitor = {
+  id: string
+  name: string
+  icon: string
+  modeLabel: string
+  keywords: string[]
+  matchLabel: string
+  excludeCount: number
+  intentText: string
+  sensitivityLabel: string
+  boundActionsLabel: string
+  enabled: boolean
+}
+function initialMonitors(): DemoMonitor[] {
+  const words = makeDesignLists(locale.value)
+  return [
+    {
+      id: 'm1',
+      name: c('demo.monitor.dance'),
+      icon: 'mdi-magnify',
+      modeLabel: t('monitor.mode.algorithm'),
+      keywords: words('demo.monitor.keywords.dance'),
+      matchLabel: t('monitor.matchMode.any'),
+      excludeCount: 2,
+      intentText: '',
+      sensitivityLabel: t('monitor.sensitivity.medium'),
+      boundActionsLabel: '',
+      enabled: true,
+    },
+    {
+      id: 'm2',
+      name: c('demo.monitor.ai'),
+      icon: 'mdi-robot-outline',
+      modeLabel: t('monitor.mode.algorithm_llm'),
+      keywords: words('demo.monitor.keywords.ai'),
+      matchLabel: t('monitor.matchMode.all'),
+      excludeCount: 0,
+      intentText: c('demo.monitor.intent'),
+      sensitivityLabel: t('monitor.sensitivity.high'),
+      boundActionsLabel: '',
+      enabled: true,
+    },
+    {
+      id: 'm3',
+      name: c('demo.monitor.nokw'),
+      icon: 'mdi-filter-variant',
+      modeLabel: t('monitor.mode.follow_global'),
+      keywords: [],
+      matchLabel: '',
+      excludeCount: 0,
+      intentText: '',
+      sensitivityLabel: t('monitor.sensitivity.low'),
+      boundActionsLabel: t('monitor.onlyActions', { names: c('demo.action.push') }),
+      enabled: true,
+    },
+    {
+      id: 'm4',
+      name: c('demo.monitor.off'),
+      icon: 'mdi-text-search',
+      modeLabel: t('monitor.mode.algorithm'),
+      keywords: words('demo.monitor.keywords.dance'),
+      matchLabel: t('monitor.matchMode.all'),
+      excludeCount: 0,
+      intentText: '',
+      sensitivityLabel: t('monitor.sensitivity.medium'),
+      boundActionsLabel: '',
+      enabled: false,
+    },
+  ]
+}
+const demoMonitors = ref<DemoMonitor[]>(initialMonitors())
+const pendingMonitor = ref<DemoMonitor | null>(null)
+const monitorDeleteOpen = computed({
+  get: () => pendingMonitor.value !== null,
+  set: (value: boolean) => {
+    if (!value) pendingMonitor.value = null
+  },
+})
+const monitorDeleteBusy = ref(false)
+async function confirmMonitorDelete(): Promise<void> {
+  monitorDeleteBusy.value = true
+  await new Promise((resolve) => window.setTimeout(resolve, 400))
+  demoMonitors.value = demoMonitors.value.filter((m) => m.id !== pendingMonitor.value?.id)
+  monitorDeleteBusy.value = false
+  pendingMonitor.value = null
+}
+const demoMonitorsDirty = computed(() => {
+  const base = initialMonitors()
+  return (
+    demoMonitors.value.length !== base.length ||
+    demoMonitors.value.some((m, index) => m.enabled !== base[index]?.enabled)
+  )
+})
+function toggleMonitor(monitor: DemoMonitor, value: boolean): void {
+  monitor.enabled = value
+}
+
 // 动作卡演示：点卡片＝编辑、右上角 ×＝删除（二级确认）、卡脚开关
 type DemoAction = {
   id: string
@@ -455,15 +555,10 @@ async function confirmChannelDelete(): Promise<void> {
   channelDeleteBusy.value = false
   pendingChannel.value = null
 }
-
 </script>
 
 <template>
-  <AppPage
-    width="wide"
-    :title="c('page.title')"
-    :note="c('page.note')"
-  >
+  <AppPage width="wide" :title="c('page.title')" :note="c('page.note')">
     <template #actions>
       <span class="app-tag font-mono" data-test="design-viewport">
         {{ c('page.viewport', { w: viewport, bp: activeBreakpoint, v: breakpointName }) }}
@@ -625,8 +720,18 @@ async function confirmChannelDelete(): Promise<void> {
                 :items="selectItems"
                 :placeholder="c('field.select')"
               />
-              <AppSelect :model-value="'standard'" :label="c('btn.disabled')" :items="selectItems" disabled />
-              <AppSelect :model-value="'standard'" :label="c('field.readonly')" :items="selectItems" readonly />
+              <AppSelect
+                :model-value="'standard'"
+                :label="c('btn.disabled')"
+                :items="selectItems"
+                disabled
+              />
+              <AppSelect
+                :model-value="'standard'"
+                :label="c('field.readonly')"
+                :items="selectItems"
+                readonly
+              />
               <AppSelect
                 :model-value="'bad'"
                 :label="c('field.errorState')"
@@ -647,7 +752,11 @@ async function confirmChannelDelete(): Promise<void> {
       >
         <AppCard>
           <div class="app-stack">
-            <AppSwitch v-model="switchOn" :label="c('field.groupSwitch')" :hint="c('field.groupSwitchHint')" />
+            <AppSwitch
+              v-model="switchOn"
+              :label="c('field.groupSwitch')"
+              :hint="c('field.groupSwitchHint')"
+            />
             <AppSwitch v-model="readonlySwitch" :label="c('field.switchOn')" hint="on" />
             <AppSwitch
               v-model="disabledSwitch"
@@ -733,9 +842,15 @@ async function confirmChannelDelete(): Promise<void> {
         <AppCard>
           <div class="app-stack">
             <div class="app-row ds-wrap">
-              <AppButton size="sm" variant="primary" @click="dialog = 'normal'">{{ c('demo.dialogNormal') }}</AppButton>
-              <AppButton size="sm" @click="dialog = 'loading'">{{ c('demo.dialogLoading') }}</AppButton>
-              <AppButton size="sm" variant="danger" @click="dialog = 'error'">{{ c('demo.dialogErrBtn') }}</AppButton>
+              <AppButton size="sm" variant="primary" @click="dialog = 'normal'">{{
+                c('demo.dialogNormal')
+              }}</AppButton>
+              <AppButton size="sm" @click="dialog = 'loading'">{{
+                c('demo.dialogLoading')
+              }}</AppButton>
+              <AppButton size="sm" variant="danger" @click="dialog = 'error'">{{
+                c('demo.dialogErrBtn')
+              }}</AppButton>
             </div>
             <div class="app-hint app-hint--info">
               {{ c('demo.dialogNote') }}
@@ -861,9 +976,9 @@ async function confirmChannelDelete(): Promise<void> {
                   @click="bizDialog = 'normal'"
                   >{{ c('demo.dialogOpen') }}</AppButton
                 >
-                <AppButton size="sm" data-test="biz-dialog-busy" @click="bizDialog = 'busy'"
-                  >{{ c('demo.dialogBusy') }}</AppButton
-                >
+                <AppButton size="sm" data-test="biz-dialog-busy" @click="bizDialog = 'busy'">{{
+                  c('demo.dialogBusy')
+                }}</AppButton>
                 <AppButton
                   size="sm"
                   variant="danger"
@@ -880,17 +995,18 @@ async function confirmChannelDelete(): Promise<void> {
 
           <AppCard title="CronPicker" :note="c('states.cron')">
             <div class="app-stack">
-              <CronPicker v-model="cronDaily" :label="c('field.summaryTime')" :hint="c('field.summaryTimeHint')" />
+              <CronPicker
+                v-model="cronDaily"
+                :label="c('field.summaryTime')"
+                :hint="c('field.summaryTimeHint')"
+              />
               <CronPicker v-model="cronStep" :label="c('field.every5')" />
               <CronPicker v-model="cronBad" :label="c('field.badCron')" />
             </div>
           </AppCard>
 
           <div class="ds-cols">
-            <AppCard
-              title="ChannelCard"
-              :note="c('states.channel')"
-            >
+            <AppCard title="ChannelCard" :note="c('states.channel')">
               <div class="app-stack">
                 <div class="app-card-grid">
                   <ChannelCard
@@ -918,10 +1034,7 @@ async function confirmChannelDelete(): Promise<void> {
             </AppCard>
 
             <div class="app-stack">
-              <AppCard
-                title="SourceCard"
-                :note="c('states.source')"
-              >
+              <AppCard title="SourceCard" :note="c('states.source')">
                 <div class="app-stack">
                   <div class="app-card-grid">
                     <SourceCard
@@ -953,6 +1066,32 @@ async function confirmChannelDelete(): Promise<void> {
                 </div>
               </AppCard>
 
+              <AppCard title="MonitorCard" :note="c('states.monitor')">
+                <div class="app-card-grid">
+                  <MonitorCard
+                    v-for="monitor in demoMonitors"
+                    :key="monitor.id"
+                    :name="monitor.name"
+                    :icon="monitor.icon"
+                    :mode-label="monitor.modeLabel"
+                    :keywords="monitor.keywords"
+                    :match-label="monitor.matchLabel"
+                    :exclude-count="monitor.excludeCount"
+                    :intent-text="monitor.intentText"
+                    :sensitivity-label="monitor.sensitivityLabel"
+                    :bound-actions-label="monitor.boundActionsLabel"
+                    :enabled="monitor.enabled"
+                    @delete="pendingMonitor = monitor"
+                    @toggle="(value: boolean) => toggleMonitor(monitor, value)"
+                  />
+                </div>
+                <div v-if="demoMonitorsDirty" class="app-row-end">
+                  <AppButton size="sm" variant="ghost" @click="demoMonitors = initialMonitors()">
+                    {{ c('demo.reset') }}
+                  </AppButton>
+                </div>
+              </AppCard>
+
               <AppCard title="ActionCard" :note="c('states.action')">
                 <div class="app-card-grid">
                   <ActionCard
@@ -972,11 +1111,7 @@ async function confirmChannelDelete(): Promise<void> {
                   />
                 </div>
                 <div v-if="demoActionsDirty" class="app-row-end">
-                  <AppButton
-                    size="sm"
-                    variant="ghost"
-                    @click="demoActions = initialActions()"
-                  >
+                  <AppButton size="sm" variant="ghost" @click="demoActions = initialActions()">
                     {{ c('demo.reset') }}
                   </AppButton>
                 </div>
@@ -1015,8 +1150,17 @@ async function confirmChannelDelete(): Promise<void> {
       :error="dialog === 'error' ? c('demo.serverError') : undefined"
     >
       <div class="app-stack">
-        <AppInput :model-value="''" :label="t('common.name')" :placeholder="c('field.namePlaceholder')" required />
-        <AppSwitch v-model="switchOn" :label="c('field.enableNow')" :hint="c('field.enableNowHint')" />
+        <AppInput
+          :model-value="''"
+          :label="t('common.name')"
+          :placeholder="c('field.namePlaceholder')"
+          required
+        />
+        <AppSwitch
+          v-model="switchOn"
+          :label="c('field.enableNow')"
+          :hint="c('field.enableNowHint')"
+        />
       </div>
       <template #footer>
         <AppButton variant="ghost" @click="dialog = 'none'">{{ t('common.cancel') }}</AppButton>
@@ -1033,10 +1177,23 @@ async function confirmChannelDelete(): Promise<void> {
       :error="bizDialog === 'error' ? c('demo.serverError') : undefined"
     >
       <div class="app-stack">
-        <AppInput :model-value="''" :label="c('field.actionName')" :placeholder="c('field.actionNamePlaceholder')" required />
+        <AppInput
+          :model-value="''"
+          :label="c('field.actionName')"
+          :placeholder="c('field.actionNamePlaceholder')"
+          required
+        />
         <CronPicker v-model="cronDaily" :label="c('field.every5Summary')" />
       </div>
     </FormDialog>
+
+    <ConfirmDialog
+      v-model="monitorDeleteOpen"
+      :title="t('monitor.delete')"
+      :message="t('monitor.deleteBody')"
+      :busy="monitorDeleteBusy"
+      @confirm="confirmMonitorDelete"
+    />
 
     <ConfirmDialog
       v-model="actionDeleteOpen"
@@ -1069,7 +1226,9 @@ async function confirmChannelDelete(): Promise<void> {
     />
 
     <transition name="ds-toast">
-      <div v-if="toastVisible" class="ds-toast app-overlay" data-test="design-toast">{{ c('demo.hintOk') }}</div>
+      <div v-if="toastVisible" class="ds-toast app-overlay" data-test="design-toast">
+        {{ c('demo.hintOk') }}
+      </div>
     </transition>
   </AppPage>
 </template>
