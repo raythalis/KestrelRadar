@@ -23,10 +23,8 @@ withDefaults(
     usedBy?: number
     /** 正在测试连通性 */
     busy?: boolean
-    /** 没有权限时整卡不可点 */
-    disabled?: boolean
   }>(),
-  { icon: 'mdi-send-outline', tone: 'neutral', usedBy: 0, busy: false, disabled: false },
+  { icon: 'mdi-send-outline', tone: 'neutral', usedBy: 0, busy: false },
 )
 
 const emit = defineEmits<{
@@ -42,12 +40,12 @@ const { t } = useI18n()
 <template>
   <div
     class="biz-card"
-    :class="[`biz-card--${tone}`, { 'is-off': !enabled, 'is-disabled': disabled }]"
-    :role="disabled ? undefined : 'button'"
-    :tabindex="disabled ? undefined : 0"
+    :class="[`biz-card--${tone}`, { 'is-off': !enabled }]"
+    role="button"
+    tabindex="0"
     data-test="channel-card"
-    @click="disabled ? undefined : emit('edit')"
-    @keydown.enter.prevent="disabled ? undefined : emit('edit')"
+    @click="emit('edit')"
+    @keydown.enter.prevent="emit('edit')"
   >
     <div class="biz-card__head">
       <span class="biz-card__icon" data-test="channel-icon">
@@ -61,7 +59,6 @@ const { t } = useI18n()
       <span @click.stop>
         <AppSwitch
           :model-value="enabled"
-          :disabled="disabled"
           :aria-label="enabled ? t('common.enabled') : t('common.disabled')"
           data-test="channel-enabled"
           @update:model-value="(value: boolean) => emit('toggle', value)"
@@ -86,28 +83,15 @@ const { t } = useI18n()
         size="sm"
         variant="ghost"
         :loading="busy"
-        :disabled="disabled"
         data-test="channel-test"
         @click.stop="emit('test')"
       >
         {{ t('channel.test') }}
       </AppButton>
-      <AppButton
-        size="sm"
-        variant="ghost"
-        :disabled="disabled"
-        data-test="channel-edit"
-        @click.stop="emit('edit')"
-      >
+      <AppButton size="sm" variant="ghost" data-test="channel-edit" @click.stop="emit('edit')">
         {{ t('common.edit') }}
       </AppButton>
-      <AppButton
-        size="sm"
-        variant="danger"
-        :disabled="disabled"
-        data-test="channel-delete"
-        @click.stop="emit('delete')"
-      >
+      <AppButton size="sm" variant="danger" data-test="channel-delete" @click.stop="emit('delete')">
         {{ t('common.delete') }}
       </AppButton>
     </div>

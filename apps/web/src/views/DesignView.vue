@@ -276,7 +276,12 @@ const selectItems = [
           <div class="app-stack">
             <AppSwitch v-model="switchOn" label="启用这个分组" hint="关掉后不再采集，也不会推送" />
             <AppSwitch v-model="readonlySwitch" label="开关打开的样子" hint="on" />
-            <AppSwitch v-model="disabledSwitch" label="禁用" hint="没有权限时用这一态" disabled />
+            <AppSwitch
+              v-model="disabledSwitch"
+              label="禁用"
+              hint="内置项不能改时用这一态"
+              disabled
+            />
           </div>
         </AppCard>
       </DesignGroup>
@@ -338,7 +343,7 @@ const selectItems = [
             <AppCard title="可点卡片" note="点整张卡进编辑" interactive>
               <span class="app-card__note">这一态用于配置页：整卡可点，键盘 Enter 也能进</span>
             </AppCard>
-            <AppCard title="不可用" note="没权限或服务未连通时" disabled>
+            <AppCard title="不可用" note="内置项或服务未连通时" disabled>
               <span class="app-card__note">灰掉，点不动</span>
             </AppCard>
           </div>
@@ -555,16 +560,6 @@ const selectItems = [
                   detail="https://example.com/hook"
                   :used-by="1"
                   busy
-                />
-                <ChannelCard
-                  name="没权限的渠道"
-                  icon="mdi-lock-outline"
-                  kind-label="Telegram"
-                  :enabled="true"
-                  tone="neutral"
-                  status-text="只读"
-                  detail="需要管理员权限才能改"
-                  :disabled="true"
                 />
               </div>
             </AppCard>

@@ -51,19 +51,14 @@ describe('ChannelCard', () => {
     expect(busy.find('[data-test="channel-test"] .app-spinner').exists()).toBe(true)
   })
 
-  it('停用与不可用的样子不同：停用只变淡，不可用不让点', async () => {
+  it('停用只是变淡：照样能点进编辑，按钮也能用', async () => {
     const off = mountCard({ enabled: false })
     expect(off.classes()).toContain('is-off')
     await off.trigger('click')
     expect(off.emitted('edit')).toHaveLength(1)
-
-    const disabled = mountCard({ disabled: true })
-    expect(disabled.classes()).toContain('is-disabled')
-    await disabled.trigger('click')
-    expect(disabled.emitted('edit')).toBeUndefined()
-    expect(
-      (disabled.find('[data-test="channel-test"]').element as HTMLButtonElement).disabled,
-    ).toBe(true)
+    expect((off.find('[data-test="channel-test"]').element as HTMLButtonElement).disabled).toBe(
+      false,
+    )
   })
 
   it('点卡片进编辑，按钮各走各的事件（开关不会连带打开编辑）', async () => {
