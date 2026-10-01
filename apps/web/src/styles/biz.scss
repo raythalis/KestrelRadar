@@ -12,7 +12,8 @@
   flex-direction: column;
   gap: var(--k-space-2);
   block-size: 100%;
-  padding: var(--k-space-3) var(--k-space-3) var(--k-space-3) var(--k-space-4);
+  // 卡上信息本来就少，上下留白收到 8px；左侧多留 4px 给强调色条
+  padding: var(--k-space-2) var(--k-space-3) var(--k-space-2) var(--k-space-4);
   overflow: hidden;
   background: var(--k-panel-2);
   border: 1px solid var(--k-border);
@@ -336,8 +337,17 @@
   align-items: center;
   gap: var(--k-space-1) var(--k-space-2);
   margin-block-start: auto;
-  padding-block-start: var(--k-space-3);
+  padding-block-start: var(--k-space-2);
   border-block-start: 1px solid var(--k-border-soft);
+}
+
+/* 桌面端：卡脚里的开关按内容收高（40 → 24），别为一个小开关白占一行；
+   触摸端不跟着收，#components.scss 里的 44px 规矩优先。 */
+@media (min-width: 900px) {
+  .biz-card__foot .v-switch {
+    min-height: 24px;
+    --v-input-control-height: 24px;
+  }
 }
 
 @media (max-width: 599px) {
