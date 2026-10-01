@@ -1,76 +1,30 @@
 import { describe, expect, it } from 'vitest'
 
-import { summarizeCron } from '@/utils/cron'
+import { checkCron } from '@/utils/cron'
 
-describe('cron 表达式人话翻译', () => {
-  it('段数不对就明确报错，不猜', () => {
-    expect(summarizeCron('0 8 * *')).toEqual({ ok: false, reason: 'fieldCount' })
-    expect(summarizeCron('')).toEqual({ ok: false, reason: 'fieldCount' })
+describe('checkCron', () => {
+  it('五段都认识：星号、数字、列表、区间、步长', () => {
+    const ok = [
+      '* * * * *',
+      '0 8 * * *',
+      '30 9 * * 1-5',
+      '0 8,20 * * *',
+      '*/5 8 * * *',
+      '0 */6 * * *',
+      '0 6 1,15 * *',
+    ]
+    for (const expression of ok) expect(checkCron(expression)).toEqual({ ok: true })
   })
 
-  it('每分钟 / 每小时', () => {
-    expect(summarizeCron('* * * * *')).toEqual({ ok: true, kind: 'everyMinute' })
-    expect(summarizeCron('30 * * * *')).toEqual({ ok: true, kind: 'hourly', minute: 30 })
+  it('段数不对，就说段数不对', () => {
+    for (const expression of ['', '   ', '0 8 * *', '0 8 * * * *']) {
+      expect(checkCron(expression)).toEqual({ ok: false, reason: 'fieldCount' })
+    }
   })
 
-  it('每天某个时间 / 多个小时 / 时间区间', () => {
-    expect(summarizeCron('0 8 * * *')).toEqual({ ok: true, kind: 'daily', minute: 0, hour: 8 })
-    expect(summarizeCron('15 8,20 * * *')).toEqual({
-      ok: true,
-      kind: 'hours',
-      minute: 15,
-      hours: [8, 20],
-    })
-    expect(summarizeCron('0 9-11 * * *')).toEqual({
-      ok: true,
-      kind: 'hours',
-      minute: 0,
-      hours: [9, 10, 11],
-    })
-  })
-
-  it('每周 / 每月', () => {
-    expect(summarizeCron('0 8 * * 1')).toEqual({
-      ok: true,
-      kind: 'weekly',
-      minute: 0,
-      hour: 8,
-      days: [1],
-    })
-    expect(summarizeCron('0 8 * * 1-5')).toEqual({
-      ok: true,
-      kind: 'weekly',
-      minute: 0,
-      hour: 8,
-      days: [1, 2, 3, 4, 5],
-    })
-    expect(summarizeCron('0 8 1,15 * *')).toEqual({
-      ok: true,
-      kind: 'monthly',
-      minute: 0,
-      hour: 8,
-      days: [1, 15],
-    })
-  })
-
-  it('`*/N` 步长说清楚，不推给"不常见"', () => {
-    expect(summarizeCron('*/10 * * * *')).toEqual({ ok: true, kind: 'everyMinutes', step: 10 })
-    expect(summarizeCron('0 */6 * * *')).toEqual({
-      ok: true,
-      kind: 'everyHours',
-      step: 6,
-      minute: 0,
-    })
-    expect(summarizeCron('* */6 * * *')).toEqual({
-      ok: true,
-      kind: 'everyHours',
-      step: 6,
-      minute: null,
-    })
-  })
-
-  it('形状不常见的表达式如实说"不常见"，不瞎翻译', () => {
-    const s = summarizeCron('*/5 8 * * *')
-    expect(s.ok && s.kind).toBe('other')
+  it('段数对但写不出来，就说读不出来', () => {
+    for (const expression of ['a b c d e', '0 8 * * abc', '0 8-* * * *', '0 8 x * *']) {
+      expect(checkCron(expression)).toEqual({ ok: false, reason: 'syntax' })
+    }
   })
 })

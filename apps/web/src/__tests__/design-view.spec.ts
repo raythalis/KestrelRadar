@@ -118,7 +118,7 @@ describe('/design 预览页', { timeout: 20000 }, () => {
   it('cron 字段本身就是入口：点输入框展开生成器，没有多余的按钮', () => {
     const wrapper = mountDesign()
     const fields = wrapper.findAll('[data-test="cron-input"]')
-    expect(fields.length).toBeGreaterThanOrEqual(4)
+    expect(fields.length).toBe(3)
     expect(wrapper.find('[data-test="cron-builder"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="cron-hours-toggle"]').exists()).toBe(false)
   })

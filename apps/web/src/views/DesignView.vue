@@ -69,8 +69,7 @@ function flashToast(): void {
 
 // 业务组件演示状态
 const cronDaily = ref('0 8 * * *')
-const cronHourly = ref('30 * * * *')
-const cronOdd = ref('*/5 8 * * *')
+const cronStep = ref('*/5 * * * *')
 const cronBad = ref('0 8 * *')
 const bizDialog = ref<'none' | 'normal' | 'busy' | 'error'>('none')
 const bizDialogOpen = computed({
@@ -501,12 +500,11 @@ const selectItems = [
             </div>
           </AppCard>
 
-          <AppCard title="CronPicker" note="表达式 + 一句人话 + 小时网格（点小时直接改表达式）">
+          <AppCard title="CronPicker" note="点输入框展开生成器；表达式不合规时给报错">
             <div class="app-stack">
-              <CronPicker v-model="cronDaily" label="定时汇总时间" hint="每天 08:00 汇总一次" />
-              <CronPicker v-model="cronHourly" label="每小时" />
-              <CronPicker v-model="cronOdd" label="不常见的形状（提醒色）" />
-              <CronPicker v-model="cronBad" label="写错的时候（错误色）" />
+              <CronPicker v-model="cronDaily" label="定时汇总时间" hint="例如 0 8 * * *" />
+              <CronPicker v-model="cronStep" label="每 5 分钟" />
+              <CronPicker v-model="cronBad" label="写错的表达式" />
             </div>
           </AppCard>
 

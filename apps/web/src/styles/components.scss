@@ -812,8 +812,10 @@
 
 .v-overlay__content > .v-card,
 .v-overlay__content > .v-list,
+.v-overlay__content > .v-sheet,
 .v-menu > .v-overlay__content > .v-list,
-.v-menu > .v-overlay__content > .v-card {
+.v-menu > .v-overlay__content > .v-card,
+.v-menu > .v-overlay__content > .v-sheet {
   border-radius: var(--k-radius-lg);
 }
 
