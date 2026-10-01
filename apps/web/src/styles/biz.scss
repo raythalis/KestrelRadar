@@ -127,7 +127,7 @@
 }
 
 // 右下角测试圆点：颜色与动效只跟它自己的状态走，不跟左侧色条
-// 未测＝灰白（静止）→ 测试中＝转圈（期间不可点）→ 连通＝绿（呼吸）／失败＝红（静止）
+// 未测＝空心圈（静止）→ 测试中＝黄色转圈（期间不可点）→ 连通＝绿（呼吸）／有警告＝黄（静止）／失败＝红（静止）
 .biz-card__probe {
   position: relative;
   flex: none;
@@ -156,6 +156,24 @@
   inset: 0;
 }
 
+// 悬停给一圈反馈：一眼看出这是能点的（用 outline，避免和呼吸的 box-shadow 打架）
+.biz-card__probe:hover {
+  outline: 3px solid color-mix(in srgb, var(--k-text) 12%, transparent);
+  outline-offset: 1px;
+}
+
+.biz-card__probe:focus-visible {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 2px;
+}
+
+// 未测：空心圈，而不是实心灰点——实心点看着像「已定状态」，不像按钮
+.biz-card__probe--idle::before {
+  inset: 8%;
+  background: none;
+  border: 2px solid color-mix(in srgb, var(--k-muted) 65%, transparent);
+}
+
 .biz-card__probe--ok::before {
   background: var(--k-ok);
   box-shadow: 0 0 8px color-mix(in srgb, var(--k-ok) 70%, transparent);
@@ -166,20 +184,34 @@
   animation: biz-probe-pulse 2s ease-out infinite;
 }
 
+.biz-card__probe--warn::before {
+  background: var(--k-warn);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--k-warn) 70%, transparent);
+}
+
 .biz-card__probe--fail::before {
   background: var(--k-err);
   box-shadow: 0 0 8px color-mix(in srgb, var(--k-err) 70%, transparent);
 }
 
-// 测试中：转圈，且不给再点（disabled 由组件打上）
+// 测试中：黄点 + 黄色转圈，结果出来才变绿/黄/红
+.biz-card__probe--testing::before {
+  background: var(--k-warn);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--k-warn) 70%, transparent);
+}
+
 .biz-card__probe--testing::after {
-  border: 1px solid color-mix(in srgb, var(--k-accent) 25%, transparent);
-  border-block-start-color: var(--k-accent);
+  border: 1px solid color-mix(in srgb, var(--k-warn) 25%, transparent);
+  border-block-start-color: var(--k-warn);
   animation: biz-probe-spin 0.8s linear infinite;
 }
 
 .biz-card__probe:disabled {
   cursor: default;
+}
+
+.biz-card__probe:disabled:hover {
+  outline: none;
 }
 
 @keyframes biz-probe-pulse {

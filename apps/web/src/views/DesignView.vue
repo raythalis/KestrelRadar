@@ -88,7 +88,7 @@ const selectItems = [
 ]
 
 // 渠道卡演示：× 要确认；圆点走「未测 → 测试中 → 连通／失败」的状态机（结果只留在内存里）
-type Probe = 'idle' | 'testing' | 'ok' | 'fail'
+type Probe = 'idle' | 'testing' | 'ok' | 'warn' | 'fail'
 type DemoChannel = {
   id: string
   name: string
@@ -96,8 +96,8 @@ type DemoChannel = {
   enabled: boolean
   tone: 'ok' | 'warn' | 'err' | 'neutral'
   probe: Probe
-  /** 演示用：这个渠道点测试就失败 */
-  fails?: boolean
+  /** 演示用：这个渠道点测试会落成什么结果 */
+  result?: 'ok' | 'warn' | 'fail'
 }
 function initialChannels(): DemoChannel[] {
   return [
@@ -108,31 +108,43 @@ function initialChannels(): DemoChannel[] {
       enabled: true,
       tone: 'ok',
       probe: 'ok',
+      result: 'ok',
     },
     {
       id: 'c2',
-      name: '还没测过的渠道',
+      name: '有警告的渠道',
       type: 'telegram',
       enabled: true,
-      tone: 'neutral',
-      probe: 'idle',
+      tone: 'warn',
+      probe: 'warn',
+      result: 'warn',
     },
     {
       id: 'c3',
+      name: '还没测过的渠道',
+      type: 'webhook',
+      enabled: true,
+      tone: 'neutral',
+      probe: 'idle',
+      result: 'ok',
+    },
+    {
+      id: 'c4',
       name: '停用的渠道',
       type: 'webhook',
       enabled: false,
       tone: 'neutral',
       probe: 'idle',
+      result: 'ok',
     },
     {
-      id: 'c4',
+      id: 'c5',
       name: '连接失败的渠道',
-      type: 'webhook',
+      type: 'telegram',
       enabled: true,
       tone: 'err',
       probe: 'fail',
-      fails: true,
+      result: 'fail',
     },
   ]
 }
@@ -152,9 +164,33 @@ function runChannelTest(channel: DemoChannel): void {
   if (channel.probe === 'testing') return
   channel.probe = 'testing'
   window.setTimeout(() => {
-    channel.probe = channel.fails ? 'fail' : 'ok'
-    channel.tone = channel.fails ? 'err' : 'ok'
+    const result = channel.result ?? 'ok'
+    channel.probe = result
+    // 圆点说「失败」，左侧色条说的是「红」——两套枚举各叫各的
+    channel.tone = result === 'fail' ? 'err' : result
   }, 900)
+}
+
+// 点卡片＝编辑：保存后把圆点退回未测（凭证/目标可能改了，旧结论作废）
+const editingChannel = ref<DemoChannel | null>(null)
+const editOpen = computed({
+  get: () => editingChannel.value !== null,
+  set: (value: boolean) => {
+    if (!value) editingChannel.value = null
+  },
+})
+const editName = ref('')
+function openChannelEdit(channel: DemoChannel): void {
+  editingChannel.value = channel
+  editName.value = channel.name
+}
+function submitChannelEdit(): void {
+  const channel = editingChannel.value
+  if (!channel) return
+  channel.name = editName.value
+  channel.probe = 'idle'
+  channel.tone = 'neutral'
+  editingChannel.value = null
 }
 
 const pendingChannel = ref<DemoChannel | null>(null)
@@ -607,7 +643,7 @@ async function confirmChannelDelete(): Promise<void> {
           <div class="ds-cols">
             <AppCard
               title="ChannelCard"
-              note="左侧色条＝渠道状态；右下角圆点＝测试连通性：未测（静止）→ 点一下 → 测试中（转圈，不可再点）→ 连通（绿，呼吸）／失败（红，静止）。点卡片＝编辑，右上角 ×＝删除（要确认）"
+              note="左侧色条＝渠道状态；右下角圆点＝测试连通性：未测（空心圈）→ 点一下 → 测试中（黄色转圈，不可再点）→ 连通（绿，呼吸）／有警告（黄，静止）／失败（红，静止）。停用的渠道圆点不可点；点卡片＝编辑，保存后退回未测；右上角 ×＝删除（要确认）"
             >
               <div class="app-stack">
                 <div class="app-card-grid">
@@ -619,6 +655,7 @@ async function confirmChannelDelete(): Promise<void> {
                     :enabled="channel.enabled"
                     :tone="channel.tone"
                     :probe="channel.probe"
+                    @edit="openChannelEdit(channel)"
                     @test="runChannelTest(channel)"
                     @delete="pendingChannel = channel"
                   />
@@ -793,6 +830,12 @@ async function confirmChannelDelete(): Promise<void> {
       <div class="app-stack">
         <AppInput :model-value="''" label="动作名称" placeholder="例如：推给 Telegram" required />
         <CronPicker v-model="cronDaily" label="汇总时间" />
+      </div>
+    </FormDialog>
+
+    <FormDialog v-model="editOpen" title="编辑渠道" @submit="submitChannelEdit">
+      <div class="app-stack">
+        <AppInput v-model="editName" label="名称" />
       </div>
     </FormDialog>
 

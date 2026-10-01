@@ -72,7 +72,7 @@ describe('ChannelCard', () => {
     expect(wrapper.emitted('edit')).toBeUndefined()
   })
 
-  it('圆点状态机：未测静止、连通呼吸、失败静止、测试中转圈且不可再点', async () => {
+  it('圆点状态机：未测／连通／有警告／失败／测试中五种状态各有自己的类', async () => {
     const idle = mountCard()
     expect(idle.find('[data-test="channel-test"]').classes()).toContain('biz-card__probe--idle')
 
@@ -83,6 +83,9 @@ describe('ChannelCard', () => {
     expect(
       mountCard({ probe: 'ok' }).find('[data-test="channel-test"]').classes(),
     ).toContain('biz-card__probe--ok')
+    expect(
+      mountCard({ probe: 'warn' }).find('[data-test="channel-test"]').classes(),
+    ).toContain('biz-card__probe--warn')
     expect(
       mountCard({ probe: 'fail' }).find('[data-test="channel-test"]').classes(),
     ).toContain('biz-card__probe--fail')
@@ -97,13 +100,15 @@ describe('ChannelCard', () => {
     expect(testing.emitted('test')).toBeUndefined()
   })
 
-  it('停用只是变淡：照样能点进编辑、圆点照样能用', async () => {
+  it('停用只是变淡：还能点进编辑，但测试圆点不可点', async () => {
     const off = mountCard({ enabled: false })
     expect(off.classes()).toContain('is-off')
     await off.trigger('click')
     expect(off.emitted('edit')).toHaveLength(1)
-    expect((off.find('[data-test="channel-test"]').element as HTMLButtonElement).disabled).toBe(
-      false,
-    )
+
+    const dot = off.find('[data-test="channel-test"]')
+    expect((dot.element as HTMLButtonElement).disabled).toBe(true)
+    await dot.trigger('click')
+    expect(off.emitted('test')).toBeUndefined()
   })
 })

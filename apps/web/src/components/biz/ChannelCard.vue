@@ -1,7 +1,10 @@
 <!-- ChannelCard：通知渠道卡片（业务组件层）。
      左侧色条＝渠道状态（跟 tone 走）；右下角圆点＝测试连通性按钮，它自己有一套状态：
-     未测（白，不呼吸）→ 点一下 → 测试中（转圈，期间不能再点）→ 连通（绿，呼吸）／失败（红，不呼吸）。
-     圆点悬停只写「测试连通性」，状态靠颜色和动效表达，不写状态字。
+     未测（空心圈，不呼吸）→ 点一下 → 测试中（转圈，期间不能再点）→
+     连通（绿，呼吸）／有警告（黄，不呼吸）／失败（红，不呼吸）。
+     圆点悬停只写「测试连通性」，状态靠颜色和动效表达，不写状态字；
+     停用的渠道、正在测试的渠道都不能再点圆点。
+     编辑保存后由页面把 probe 退回 idle（凭证可能变了，旧结论作废）。
      点击整张卡片＝编辑；右上角 ×＝删除；启用开关在编辑表单里，不占卡片位置。
      类型文案与图标都由渠道类型枚举决定，页面不手写。
      只出事件，不碰 store：数据、测试结果与写操作都由页面负责（结果只留在前端内存里）。
@@ -21,8 +24,8 @@ const props = withDefaults(
     enabled: boolean
     /** 渠道状态：只决定左侧色条颜色 */
     tone?: 'ok' | 'warn' | 'err' | 'neutral'
-    /** 测试圆点自己的状态：未测 / 测试中 / 连通 / 失败 */
-    probe?: 'idle' | 'testing' | 'ok' | 'fail'
+    /** 测试圆点自己的状态：未测 / 测试中 / 连通 / 有警告 / 失败 */
+    probe?: 'idle' | 'testing' | 'ok' | 'warn' | 'fail'
   }>(),
   { tone: 'neutral', probe: 'idle' },
 )
@@ -36,6 +39,8 @@ const kindLabel = computed(() => t(`channel.type.${props.type}`))
 
 /** 圆点悬停提示只写它是什么，不写状态；测试中不能再点 */
 const testing = computed(() => props.probe === 'testing')
+/** 停用与测试中都不给点 */
+const probeDisabled = computed(() => testing.value || !props.enabled)
 </script>
 
 <template>
@@ -79,7 +84,7 @@ const testing = computed(() => props.probe === 'testing')
         :title="t('channel.probe')"
         :aria-label="t('channel.probe')"
         :aria-busy="testing || undefined"
-        :disabled="testing"
+        :disabled="probeDisabled"
         @click.stop="emit('test')"
       />
     </div>
