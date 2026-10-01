@@ -3,7 +3,7 @@
      未测（空心圈，不呼吸）→ 点一下 → 测试中（转圈，期间不能再点）→
      连通（绿，呼吸）／有警告（黄，不呼吸）／失败（红，不呼吸）。
      圆点悬停只写「测试连通性」，状态靠颜色和动效表达，不写状态字；
-     停用的渠道、正在测试的渠道都不能再点圆点。
+     停用的渠道不出现圆点（停用就该去编辑里启用，留着也不能点）；测试中不给再点。
      编辑保存后由页面把 probe 退回 idle（凭证可能变了，旧结论作废）。
      点击整张卡片＝编辑；右上角 ×＝删除；启用开关在编辑表单里，不占卡片位置。
      类型文案与图标都由渠道类型枚举决定，页面不手写。
@@ -39,8 +39,8 @@ const kindLabel = computed(() => t(`channel.type.${props.type}`))
 
 /** 圆点悬停提示只写它是什么，不写状态；测试中不能再点 */
 const testing = computed(() => props.probe === 'testing')
-/** 停用与测试中都不给点 */
-const probeDisabled = computed(() => testing.value || !props.enabled)
+/** 测试中不给再点 */
+const probeDisabled = computed(() => testing.value)
 </script>
 
 <template>
@@ -77,6 +77,7 @@ const probeDisabled = computed(() => testing.value || !props.enabled)
     <div class="biz-card__foot">
       <span class="app-spacer" />
       <button
+        v-if="enabled"
         type="button"
         class="biz-card__probe"
         :class="`biz-card__probe--${probe}`"
