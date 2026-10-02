@@ -106,7 +106,7 @@ describe('MonitorDialog', () => {
     expect(submit().disabled).toBe(false)
     await click(submit())
     expect(
-      (wrapper.emitted('submit')?.[0]?.[0] as { includeKeywords: string[] }).includeKeywords,
+      (wrapper.emitted('submit')![0]![0] as { includeKeywords: string[] }).includeKeywords,
     ).toEqual([])
   })
 
@@ -151,7 +151,7 @@ describe('MonitorDialog', () => {
     await flushPromises()
     expect(document.body.textContent).toContain('留空＝跟随分组')
     await click(submit())
-    expect((wrapper.emitted('submit')?.[0]?.[0] as { actionIds: string[] }).actionIds).toEqual([])
+    expect((wrapper.emitted('submit')![0]![0] as { actionIds: string[] }).actionIds).toEqual([])
   })
 
   it('这次没保存的输入不会留到下次打开', async () => {

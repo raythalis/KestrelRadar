@@ -80,15 +80,15 @@ describe('ChannelCard', () => {
     expect(idle.emitted('test')).toHaveLength(1)
     expect(idle.emitted('edit')).toBeUndefined()
 
-    expect(
-      mountCard({ probe: 'ok' }).find('[data-test="channel-test"]').classes(),
-    ).toContain('biz-card__probe--ok')
-    expect(
-      mountCard({ probe: 'warn' }).find('[data-test="channel-test"]').classes(),
-    ).toContain('biz-card__probe--warn')
-    expect(
-      mountCard({ probe: 'fail' }).find('[data-test="channel-test"]').classes(),
-    ).toContain('biz-card__probe--fail')
+    expect(mountCard({ probe: 'ok' }).find('[data-test="channel-test"]').classes()).toContain(
+      'biz-card__probe--ok',
+    )
+    expect(mountCard({ probe: 'warn' }).find('[data-test="channel-test"]').classes()).toContain(
+      'biz-card__probe--warn',
+    )
+    expect(mountCard({ probe: 'fail' }).find('[data-test="channel-test"]').classes()).toContain(
+      'biz-card__probe--fail',
+    )
 
     // 测试中：转圈，并且点不动
     const testing = mountCard({ probe: 'testing' })

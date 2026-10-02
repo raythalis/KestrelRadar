@@ -91,7 +91,7 @@ describe('SourceDialog', () => {
 
     await click(document.querySelector('.v-list-item'))
     await click(submit())
-    expect((wrapper.emitted('submit')?.[0]?.[0] as { kind: string }).kind).toBe('rss')
+    expect((wrapper.emitted('submit')![0]![0] as { kind: string }).kind).toBe('rss')
 
     await click(chip)
     expect(wrapper.emitted('configureRsshub')).toBeTruthy()
@@ -113,7 +113,7 @@ describe('SourceDialog', () => {
 
     await click(document.querySelector('.v-list-item'))
     await click(submit())
-    expect((wrapper.emitted('submit')?.[0]?.[0] as { kind: string }).kind).toBe('rsshub')
+    expect((wrapper.emitted('submit')![0]![0] as { kind: string }).kind).toBe('rsshub')
   })
 
   it('RSSHub 模式下路由框前面挂实例地址前缀，前缀只展示不参与输入', async () => {
@@ -207,7 +207,7 @@ describe('SourceDialog', () => {
     })
     await flushPromises()
     await click(submit())
-    expect((wrapper.emitted('submit')?.[0]?.[0] as { enabled: boolean }).enabled).toBe(false)
+    expect((wrapper.emitted('submit')![0]![0] as { enabled: boolean }).enabled).toBe(false)
   })
 
   it('这次没保存的输入不会留到下次打开', async () => {

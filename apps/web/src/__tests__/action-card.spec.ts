@@ -66,7 +66,9 @@ describe('ActionCard', () => {
     const foot = wrapper.find('[data-test="action-foot"]')
     expect(foot.find('[data-test="action-cron"]').text()).toBe('0 8 * * *')
     expect(foot.find('[data-test="action-cron"]').classes()).toContain('biz-card__meta--mono')
-    expect(foot.find('[data-test="action-next-run"]').text()).toMatch(/^下次汇总：\d{2}-\d{2} \d{2}:\d{2}$/)
+    expect(foot.find('[data-test="action-next-run"]').text()).toMatch(
+      /^下次汇总：\d{2}-\d{2} \d{2}:\d{2}$/,
+    )
   })
 
   it('实时推送没有 cron：卡脚只留开关，不写下次汇总', () => {
@@ -76,7 +78,11 @@ describe('ActionCard', () => {
   })
 
   it('停用的动作不写下次汇总（它不会触发）', () => {
-    const wrapper = mountCard({ enabled: false, cron: '0 8 * * *', nextRunAt: '2026-10-02T18:00:00+08:00' })
+    const wrapper = mountCard({
+      enabled: false,
+      cron: '0 8 * * *',
+      nextRunAt: '2026-10-02T18:00:00+08:00',
+    })
     expect(wrapper.find('[data-test="action-cron"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="action-next-run"]').exists()).toBe(false)
   })

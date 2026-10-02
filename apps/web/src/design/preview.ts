@@ -98,11 +98,21 @@ export function valueItems(copy: DesignCopy): DesignTokenItem[] {
 
 export function designGroups(theme: ThemeDefinition, copy: DesignCopy): DesignTokenGroup[] {
   return [
-    { title: 'Color', note: copy('preview.colorNote', { theme: theme.id }), kind: 'color', items: colorItems(theme) },
+    {
+      title: 'Color',
+      note: copy('preview.colorNote', { theme: theme.id }),
+      kind: 'color',
+      items: colorItems(theme),
+    },
     { title: 'Typography', note: copy('preview.typeNote'), kind: 'type', items: typeItems(copy) },
     { title: 'Spacing', note: copy('preview.spaceNote'), kind: 'space', items: spaceItems() },
     { title: 'Radius', note: copy('preview.radiusNote'), kind: 'radius', items: radiusItems() },
-    { title: 'Elevation', note: copy('preview.shadowNote'), kind: 'shadow', items: shadowItems(theme) },
+    {
+      title: 'Elevation',
+      note: copy('preview.shadowNote'),
+      kind: 'shadow',
+      items: shadowItems(theme),
+    },
     {
       title: 'Density / Breakpoints / Page width',
       note: copy('preview.valueNote'),

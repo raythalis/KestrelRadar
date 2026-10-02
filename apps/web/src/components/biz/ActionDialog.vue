@@ -63,14 +63,14 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const name = ref('')
-const triggerType = ref<ActionTrigger>('instant')
-const cron = ref('')
-const channelId = ref('')
-const templateId = ref('')
-const mergeMessages = ref(true)
-const includeDelivered = ref(false)
-const enabled = ref(true)
+const name = ref(props.name)
+const triggerType = ref<ActionTrigger>(props.triggerType)
+const cron = ref(props.cron)
+const channelId = ref(props.channelId)
+const templateId = ref(props.templateId)
+const mergeMessages = ref(props.mergeMessages)
+const includeDelivered = ref(props.includeDelivered)
+const enabled = ref(props.enabled)
 
 watch(
   () => props.modelValue,

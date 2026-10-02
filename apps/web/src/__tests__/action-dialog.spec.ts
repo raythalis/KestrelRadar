@@ -113,7 +113,7 @@ describe('ActionDialog', () => {
     })
     await flushPromises()
     await click(submit())
-    const values = wrapper.emitted('submit')?.[0]?.[0] as { cron: string | null }
+    const values = wrapper.emitted('submit')![0]![0] as { cron: string | null }
     expect(values.cron).toBe('0 9 * * *')
   })
 
@@ -127,7 +127,7 @@ describe('ActionDialog', () => {
 
     await click(submit())
     expect(
-      (wrapper.emitted('submit')?.[0]?.[0] as { templateId: string | null }).templateId,
+      (wrapper.emitted('submit')![0]![0] as { templateId: string | null }).templateId,
     ).toBeNull()
   })
 
