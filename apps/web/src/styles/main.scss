@@ -435,9 +435,10 @@ a {
     border-color 0.15s ease,
     background 0.15s ease;
 }
-
-.k-item:hover {
-  border-color: color-mix(in srgb, var(--k-border) 45%, var(--k-text) 25%);
+@media (hover: hover) and (pointer: fine) {
+  .k-item:hover {
+    border-color: color-mix(in srgb, var(--k-border) 45%, var(--k-text) 25%);
+  }
 }
 
 .k-item--off {
@@ -533,14 +534,17 @@ a {
   cursor: pointer;
   border-radius: 3px;
 }
-
-.k-link:hover {
-  color: var(--k-text);
-  background: var(--k-panel-2);
+@media (hover: hover) and (pointer: fine) {
+  .k-link:hover {
+    color: var(--k-text);
+    background: var(--k-panel-2);
+  }
 }
 
-.k-link--danger:hover {
-  color: var(--k-err);
+@media (hover: hover) and (pointer: fine) {
+  .k-link--danger:hover {
+    color: var(--k-err);
+  }
 }
 
 .k-link:disabled {
@@ -594,10 +598,11 @@ a {
     border-color 0.15s ease,
     color 0.15s ease;
 }
-
-.status-dot:hover {
-  color: var(--k-text);
-  border-color: color-mix(in srgb, var(--k-border) 55%, var(--k-text));
+@media (hover: hover) and (pointer: fine) {
+  .status-dot:hover {
+    color: var(--k-text);
+    border-color: color-mix(in srgb, var(--k-border) 55%, var(--k-text));
+  }
 }
 
 .status-dot:disabled {
@@ -760,11 +765,6 @@ a {
 @media (max-width: 899px) {
   .k-topbar__title {
     font-size: 14px;
-  }
-
-  /* 窄屏时顶栏就是页面标题，内容里不再重复一遍 */
-  .page-head__title {
-    display: none;
   }
 
   .k-btn {

@@ -55,14 +55,19 @@
 }
 
 // 可点的卡片才有悬停反馈：边框往强调色靠、抬起 1px
-.biz-card[role='button']:hover {
-  border-color: color-mix(in srgb, var(--k-border) 40%, var(--biz-accent, var(--k-accent)) 60%);
-  box-shadow: var(--k-shadow);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .biz-card[role='button']:hover {
+    border-color: color-mix(in srgb, var(--k-border) 40%, var(--biz-accent, var(--k-accent)) 60%);
+    box-shadow: var(--k-shadow);
+    transform: translateY(-1px);
+  }
 }
-.biz-card[role='button']:hover::before {
-  opacity: 0.9;
+@media (hover: hover) and (pointer: fine) {
+  .biz-card[role='button']:hover::before {
+    opacity: 0.9;
+  }
 }
+
 .biz-card[role='button']:active {
   transform: translateY(0);
 }
@@ -72,12 +77,6 @@
 }
 
 // 触摸端不做位移（容易误触，也白费性能）
-@media (hover: none) {
-  .biz-card[role='button']:hover {
-    box-shadow: none;
-    transform: none;
-  }
-}
 
 .biz-card.is-off {
   opacity: 0.62;
@@ -118,10 +117,11 @@
   border-radius: var(--k-radius-pill);
   cursor: pointer;
 }
-
-.biz-card__chipbtn:hover {
-  outline: 2px solid color-mix(in srgb, var(--k-text) 12%, transparent);
-  outline-offset: 3px;
+@media (hover: hover) and (pointer: fine) {
+  .biz-card__chipbtn:hover {
+    outline: 2px solid color-mix(in srgb, var(--k-text) 12%, transparent);
+    outline-offset: 3px;
+  }
 }
 
 .biz-card__chipbtn:focus-visible {
@@ -132,9 +132,10 @@
 .biz-card__chipbtn:disabled {
   cursor: default;
 }
-
-.biz-card__chipbtn:disabled:hover {
-  outline: none;
+@media (hover: hover) and (pointer: fine) {
+  .biz-card__chipbtn:disabled:hover {
+    outline: none;
+  }
 }
 
 // 右上角删除：低权重，悬停才显危险色
@@ -156,10 +157,11 @@
     color 0.2s ease,
     background 0.2s ease;
 }
-
-.biz-card__remove:hover {
-  color: var(--k-err);
-  background: color-mix(in srgb, var(--k-err) 12%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .biz-card__remove:hover {
+    color: var(--k-err);
+    background: color-mix(in srgb, var(--k-err) 12%, transparent);
+  }
 }
 
 // 右下角测试圆点：颜色与动效只跟它自己的状态走，不跟左侧色条
@@ -193,9 +195,11 @@
 }
 
 // 悬停给一圈反馈：一眼看出这是能点的（用 outline，避免和呼吸的 box-shadow 打架）
-.biz-card__probe:hover {
-  outline: 3px solid color-mix(in srgb, var(--k-text) 12%, transparent);
-  outline-offset: 1px;
+@media (hover: hover) and (pointer: fine) {
+  .biz-card__probe:hover {
+    outline: 3px solid color-mix(in srgb, var(--k-text) 12%, transparent);
+    outline-offset: 1px;
+  }
 }
 
 .biz-card__probe:focus-visible {
@@ -245,9 +249,10 @@
 .biz-card__probe:disabled {
   cursor: default;
 }
-
-.biz-card__probe:disabled:hover {
-  outline: none;
+@media (hover: hover) and (pointer: fine) {
+  .biz-card__probe:disabled:hover {
+    outline: none;
+  }
 }
 
 @keyframes biz-probe-pulse {

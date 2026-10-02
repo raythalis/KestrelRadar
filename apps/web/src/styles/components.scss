@@ -200,9 +200,10 @@
   cursor: pointer;
   white-space: nowrap;
 }
-
-.app-btn:hover {
-  background: color-mix(in srgb, var(--k-panel-2) 90%, var(--k-text) 6%);
+@media (hover: hover) and (pointer: fine) {
+  .app-btn:hover {
+    background: color-mix(in srgb, var(--k-panel-2) 90%, var(--k-text) 6%);
+  }
 }
 
 .app-btn--primary {
@@ -210,9 +211,10 @@
   border-color: transparent;
   color: var(--k-on-accent);
 }
-
-.app-btn--primary:hover {
-  background: color-mix(in srgb, var(--k-accent) 88%, #000 12%);
+@media (hover: hover) and (pointer: fine) {
+  .app-btn--primary:hover {
+    background: color-mix(in srgb, var(--k-accent) 88%, #000 12%);
+  }
 }
 
 .app-btn--ghost {
@@ -220,10 +222,11 @@
   border-color: transparent;
   color: var(--k-muted);
 }
-
-.app-btn--ghost:hover {
-  background: var(--k-panel-2);
-  color: var(--k-text);
+@media (hover: hover) and (pointer: fine) {
+  .app-btn--ghost:hover {
+    background: var(--k-panel-2);
+    color: var(--k-text);
+  }
 }
 
 .app-btn--danger {
@@ -231,9 +234,10 @@
   border-color: transparent;
   color: var(--k-err);
 }
-
-.app-btn--danger:hover {
-  background: color-mix(in srgb, var(--k-err) 10%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .app-btn--danger:hover {
+    background: color-mix(in srgb, var(--k-err) 10%, transparent);
+  }
 }
 
 .app-btn--sm {
@@ -337,10 +341,11 @@
 .app-status--action {
   cursor: pointer;
 }
-
-.app-status--action:hover {
-  color: var(--k-text);
-  border-color: color-mix(in srgb, var(--k-border) 55%, var(--k-text));
+@media (hover: hover) and (pointer: fine) {
+  .app-status--action:hover {
+    color: var(--k-text);
+    border-color: color-mix(in srgb, var(--k-border) 55%, var(--k-text));
+  }
 }
 
 .app-status__dot {
@@ -558,9 +563,10 @@
   animation: k-brand-glow 6s ease-in-out infinite;
   transition: transform 0.2s ease;
 }
-
-.app-rail__brand:hover .app-rail__logo {
-  transform: scale(1.08);
+@media (hover: hover) and (pointer: fine) {
+  .app-rail__brand:hover .app-rail__logo {
+    transform: scale(1.08);
+  }
 }
 
 .app-rail__name {
@@ -596,10 +602,11 @@
     background 0.15s ease,
     color 0.15s ease;
 }
-
-.app-rail__item:hover {
-  background: var(--k-panel-2);
-  color: var(--k-text);
+@media (hover: hover) and (pointer: fine) {
+  .app-rail__item:hover {
+    background: var(--k-panel-2);
+    color: var(--k-text);
+  }
 }
 
 .app-rail__item.is-active {
@@ -660,10 +667,11 @@
   color: var(--k-muted);
   cursor: pointer;
 }
-
-.app-iconbtn:hover {
-  background: var(--k-panel-2);
-  color: var(--k-text);
+@media (hover: hover) and (pointer: fine) {
+  .app-iconbtn:hover {
+    background: var(--k-panel-2);
+    color: var(--k-text);
+  }
 }
 
 .app-shell__content {
@@ -763,9 +771,10 @@
     border-color 0.15s ease,
     background 0.15s ease;
 }
-
-.app-card.is-interactive:hover {
-  border-color: color-mix(in srgb, var(--k-border) 45%, var(--k-text) 25%);
+@media (hover: hover) and (pointer: fine) {
+  .app-card.is-interactive:hover {
+    border-color: color-mix(in srgb, var(--k-border) 45%, var(--k-text) 25%);
+  }
 }
 
 .app-card.is-disabled {
