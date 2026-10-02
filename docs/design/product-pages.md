@@ -42,3 +42,14 @@
 
 文案规则见 `docs/design/ux-writing.md`（界面自解释；需求文档是唯一语义来源）。
 两份规则一起用：**结构先按用户任务定，文案只写标签、状态、报错、影响范围。**
+
+## 六、P1.5 业务组件层：已定版（2026-10-02）
+
+这一层冻结，P2 起不再改它，只作为零件被正式页面调用：
+
+- 卡片：`ChannelCard`、`SourceCard`、`ActionCard`、`MonitorCard`
+- 弹窗：`FormDialog`（外壳）、`ChannelDialog`、`SourceDialog`、`MonitorDialog`、`ActionDialog`、`ConfirmDialog`
+- 其他零件：`CronPicker`、`components/biz/icons.ts`、`AppTagsInput` / `AppTextarea`（App 层新增的两个输入件）
+
+改这一层里的任何东西之前先问一声。逐项决定记在 `plan-p3-*-dialog.md` 与 `plan-p3-*.md` 里；
+主题色的只读审计见 `theme-audit.md`。
