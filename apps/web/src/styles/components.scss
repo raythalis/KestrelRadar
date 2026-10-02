@@ -1021,6 +1021,12 @@
   align-items: stretch;
 }
 
+/* 下拉项：图标与文字之间收紧一点（Vuetify 默认塞了 32px 的间隔，看着太散） */
+.app-select-menu .v-list-item__prepend > .v-list-item__spacer,
+.app-select-menu .v-list-item__append > .v-list-item__spacer {
+  width: var(--k-space-2);
+}
+
 /* 卡片网格后面跟操作行（新建这类）：留一点气口，不然紧贴着网格 */
 .app-card-grid + .app-row {
   margin-top: var(--k-space-3);

@@ -24,7 +24,11 @@ const model = defineModel<string | number | string[] | null>({ default: null })
  * 选项名字再长也不撑破弹窗或屏幕，超出部分用省略号——不设上限时
  * Vuetify 会按最长那一项把菜单撑宽，长名字能把 640 的弹窗撑到 790 多。
  */
-const menuProps = { maxWidth: 'min(640px, calc(100vw - 2 * var(--k-space-4)))' }
+const menuProps = {
+  maxWidth: 'min(640px, calc(100vw - 2 * var(--k-space-4)))',
+  // 挂个类名：菜单会被 teleport 到 body，样式只能在全局里按这个类名写
+  contentClass: 'app-select-menu',
+}
 </script>
 
 <template>

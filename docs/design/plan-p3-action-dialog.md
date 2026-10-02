@@ -27,6 +27,10 @@
 渠道候选因此带上 `type` 与 `enabled` 两个字段：页面传来的 `channels` 形状是 `{ id, name, type, enabled }[]`。
 字段本身（收起时）还是纯文字写渠道名，没加图标。
 
+**图标与文字的间距**：Vuetify 在 prepend 后面塞了 32px 的间隔，看着太散，收到 8px（`--k-space-2`）。
+做法是给 AppSelect 的菜单挂上 `contentClass: 'app-select-menu'`，样式写在 `components.scss` 里——
+菜单是 teleport 到 body 的，组件内的 scoped 样式够不着它。
+
 ## 超长渠道名实测（2026-10-02）
 
 把演示里的 `demo.channel.mine` 临时换成一个 43 字的渠道名，实测三处：
