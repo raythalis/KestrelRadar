@@ -11,11 +11,13 @@ withDefaults(
     disabled?: boolean
     readonly?: boolean
     placeholder?: string
+    /** 多选：值是数组，选中项显示成可删的标签 */
+    multiple?: boolean
   }>(),
-  { disabled: false, readonly: false },
+  { disabled: false, readonly: false, multiple: false },
 )
 
-const model = defineModel<string | number | null>({ default: null })
+const model = defineModel<string | number | string[] | null>({ default: null })
 </script>
 
 <template>
@@ -27,6 +29,9 @@ const model = defineModel<string | number | null>({ default: null })
       :placeholder="placeholder"
       :disabled="disabled"
       :readonly="readonly"
+      :multiple="multiple"
+      :chips="multiple"
+      :closable-chips="multiple"
       :error="Boolean(error)"
     >
       <!-- 下拉项要自己画的时候（灰掉某项、右侧挂个动作）由调用方提供 -->

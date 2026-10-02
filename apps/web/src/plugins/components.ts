@@ -12,6 +12,8 @@ import AppInput from '@/components/app/AppInput.vue'
 import AppPage from '@/components/app/AppPage.vue'
 import AppSection from '@/components/app/AppSection.vue'
 import AppSelect from '@/components/app/AppSelect.vue'
+import AppTagsInput from '@/components/app/AppTagsInput.vue'
+import AppTextarea from '@/components/app/AppTextarea.vue'
 import AppSidebar from '@/components/app/AppSidebar.vue'
 import AppSkeleton from '@/components/app/AppSkeleton.vue'
 import AppStatus from '@/components/app/AppStatus.vue'
@@ -29,6 +31,8 @@ const components = {
   AppPage,
   AppSection,
   AppSelect,
+  AppTagsInput,
+  AppTextarea,
   AppSidebar,
   AppSkeleton,
   AppStatus,

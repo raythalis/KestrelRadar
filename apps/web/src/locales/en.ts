@@ -108,7 +108,7 @@ export default {
     delete: 'Delete monitor',
     deleteBody: 'Only this monitor is removed; collected items are unaffected.',
     keywords: 'Keywords',
-    keywordsHint: 'Empty means everything passes; otherwise the match mode below applies',
+    keywordsHint: 'Empty means everything passes',
     nowIs: 'now',
     noKeywords: 'No keywords (everything passes)',
     matchModeLabel: 'Match mode',
@@ -126,8 +126,7 @@ export default {
       algorithm_llm: 'Algorithm + LLM',
     },
     intent: 'Intent',
-    intentHint:
-      'One plain sentence, e.g. "new movies with that actress"; only used in Algorithm + LLM',
+    intentHint: 'One plain sentence, e.g. "new movies with that actress"',
     intentGlobalHint:
       'This monitor follows the global mode, which is algorithm-only, so no intent is needed. Turn on LLM globally (or for this monitor) and the intent field appears.',
     sensitivityLabel: 'Sensitivity',
@@ -137,6 +136,8 @@ export default {
       high: 'Strict',
     },
     onlyActions: 'Only through {names}',
+    onlyActionsLabel: 'Only these actions',
+    onlyActionsHint: 'Empty means follow the group',
   },
   action: {
     add: 'Add action',

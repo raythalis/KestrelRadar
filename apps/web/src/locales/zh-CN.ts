@@ -107,7 +107,7 @@ export default {
     delete: '删除监听',
     deleteBody: '只删这条监听本身，已经采到的内容不受影响。',
     keywords: '关键词',
-    keywordsHint: '留空表示全部通过；填了就按下面的匹配方式来',
+    keywordsHint: '留空＝全部通过',
     nowIs: '当前',
     noKeywords: '没填关键词（全部通过）',
     matchModeLabel: '匹配方式',
@@ -125,7 +125,7 @@ export default {
       algorithm_llm: '算法 + LLM',
     },
     intent: '意图描述',
-    intentHint: '用人话写一句，例如「杨幂的新电影」；只在「算法 + LLM」模式下生效',
+    intentHint: '用人话写一句，例如「杨幂的新电影」',
     intentGlobalHint:
       '这条监听跟随全局，全局现在是纯算法，所以不用写意图描述。全局（或这条监听）开了 LLM，这里就会出现意图描述。',
     sensitivityLabel: '灵敏度',
@@ -135,6 +135,8 @@ export default {
       high: '严格',
     },
     onlyActions: '仅走 {names}',
+    onlyActionsLabel: '只走这几个动作',
+    onlyActionsHint: '留空＝跟随分组',
   },
   action: {
     add: '添加动作',

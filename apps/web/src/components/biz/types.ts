@@ -29,3 +29,19 @@ export interface SourceDialogValues {
   cronExpression: string
   enabled: boolean
 }
+
+/** 监听弹窗交出去的值（页面负责拼成 create/update 入参） */
+export interface MonitorDialogValues {
+  name: string
+  mode: 'follow_global' | 'algorithm' | 'algorithm_llm'
+  /** 语义化意图描述，只在「算法 + LLM」模式下用得上 */
+  intentText: string
+  includeKeywords: string[]
+  excludeKeywords: string[]
+  useGlobalExcludes: boolean
+  matchMode: 'any' | 'all'
+  sensitivity: 'low' | 'medium' | 'high'
+  enabled: boolean
+  /** 非空＝只走这几个动作，空＝跟随分组 */
+  actionIds: string[]
+}

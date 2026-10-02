@@ -824,6 +824,14 @@
   max-height: calc(100vh - var(--k-space-6));
 }
 
+/* 字段多的弹窗：头尾留在原位，中间那层自己滚。
+   缺了 min-height: 0，flex 子项不肯缩，内容多的时候会把脚（取消/保存）顶到视口外面点不到。 */
+.app-dialog .app-card__body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .app-dialog__state {
   display: flex;
   align-items: center;

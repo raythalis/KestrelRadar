@@ -28,6 +28,8 @@ declare module 'vue' {
     AppStatus: typeof import('./components/app/AppStatus.vue')['default']
     AppSwitch: typeof import('./components/app/AppSwitch.vue')['default']
     AppTag: typeof import('./components/app/AppTag.vue')['default']
+    AppTagsInput: typeof import('./components/app/AppTagsInput.vue')['default']
+    AppTextarea: typeof import('./components/app/AppTextarea.vue')['default']
     ChannelCard: typeof import('./components/biz/ChannelCard.vue')['default']
     ChannelDialog: typeof import('./components/ChannelDialog.vue')['default']
     ConfirmDialog: typeof import('./components/ConfirmDialog.vue')['default']

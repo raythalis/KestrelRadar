@@ -11,6 +11,7 @@ import { findTheme, THEMES } from '@/design/tokens'
 import { designGroups, spaceItems } from '@/design/preview'
 import ActionCard from '@/components/biz/ActionCard.vue'
 import MonitorCard from '@/components/biz/MonitorCard.vue'
+import MonitorDialog from '@/components/biz/MonitorDialog.vue'
 import ChannelCard from '@/components/biz/ChannelCard.vue'
 import ChannelDialog from '@/components/biz/ChannelDialog.vue'
 import ConfirmDialog from '@/components/biz/ConfirmDialog.vue'
@@ -21,7 +22,12 @@ import SourceDialog from '@/components/biz/SourceDialog.vue'
 import { useUiStore } from '@/stores/ui'
 import DesignGroup from '@/views/design/DesignGroup.vue'
 import { makeDesignCopy, makeDesignLists, type DesignCopyKey } from '@/design/lab-copy'
-import type { ChannelChat, ChannelDialogValues, SourceDialogValues } from '@/components/biz/types'
+import type {
+  ChannelChat,
+  ChannelDialogValues,
+  MonitorDialogValues,
+  SourceDialogValues,
+} from '@/components/biz/types'
 
 const ui = useUiStore()
 const { t, locale } = useI18n()
@@ -472,12 +478,14 @@ type DemoMonitor = {
   id: string
   name: string
   icon: string
-  modeLabel: string
+  mode: 'follow_global' | 'algorithm' | 'algorithm_llm'
   keywords: string[]
-  matchLabel: string
-  excludeCount: number
+  matchMode: 'any' | 'all'
+  excludeKeywords: string[]
+  useGlobalExcludes: boolean
   intentText: string
-  sensitivityLabel: string
+  sensitivity: 'low' | 'medium' | 'high'
+  actionIds: string[]
   enabled: boolean
 }
 function initialMonitors(): DemoMonitor[] {
@@ -487,48 +495,56 @@ function initialMonitors(): DemoMonitor[] {
       id: 'm1',
       name: c('demo.monitor.dance'),
       icon: 'mdi-magnify',
-      modeLabel: t('monitor.mode.algorithm'),
+      mode: 'algorithm',
       keywords: words('demo.monitor.keywords.dance'),
-      matchLabel: t('monitor.matchMode.any'),
-      excludeCount: 2,
+      matchMode: 'any',
+      excludeKeywords: words('demo.monitor.excludes'),
+      useGlobalExcludes: true,
       intentText: '',
-      sensitivityLabel: t('monitor.sensitivity.medium'),
+      sensitivity: 'medium',
+      actionIds: [],
       enabled: true,
     },
     {
       id: 'm2',
       name: c('demo.monitor.ai'),
       icon: 'mdi-robot-outline',
-      modeLabel: t('monitor.mode.algorithm_llm'),
+      mode: 'algorithm_llm',
       keywords: words('demo.monitor.keywords.ai'),
-      matchLabel: t('monitor.matchMode.all'),
-      excludeCount: 0,
+      matchMode: 'all',
+      excludeKeywords: [],
+      useGlobalExcludes: true,
       intentText: c('demo.monitor.intent'),
-      sensitivityLabel: t('monitor.sensitivity.high'),
+      sensitivity: 'high',
+      actionIds: ['a1'],
       enabled: true,
     },
     {
       id: 'm3',
       name: c('demo.monitor.nokw'),
       icon: 'mdi-filter-variant',
-      modeLabel: t('monitor.mode.follow_global'),
+      mode: 'follow_global',
       keywords: [],
-      matchLabel: '',
-      excludeCount: 0,
+      matchMode: 'any',
+      excludeKeywords: [],
+      useGlobalExcludes: false,
       intentText: '',
-      sensitivityLabel: t('monitor.sensitivity.low'),
+      sensitivity: 'low',
+      actionIds: [],
       enabled: true,
     },
     {
       id: 'm4',
       name: c('demo.monitor.off'),
       icon: 'mdi-text-search',
-      modeLabel: t('monitor.mode.algorithm'),
+      mode: 'algorithm',
       keywords: words('demo.monitor.keywords.dance'),
-      matchLabel: t('monitor.matchMode.all'),
-      excludeCount: 0,
+      matchMode: 'all',
+      excludeKeywords: [],
+      useGlobalExcludes: true,
       intentText: '',
-      sensitivityLabel: t('monitor.sensitivity.medium'),
+      sensitivity: 'medium',
+      actionIds: [],
       enabled: false,
     },
   ]
@@ -549,13 +565,58 @@ async function confirmMonitorDelete(): Promise<void> {
   monitorDeleteBusy.value = false
   pendingMonitor.value = null
 }
-const demoMonitorsDirty = computed(() => {
-  const base = initialMonitors()
-  return (
-    demoMonitors.value.length !== base.length ||
-    demoMonitors.value.some((m, index) => m.enabled !== base[index]?.enabled)
-  )
+const demoMonitorsDirty = computed(
+  () => JSON.stringify(demoMonitors.value) !== JSON.stringify(initialMonitors()),
+)
+// 点卡片＝编辑、点「新建监听」＝新建（弹窗里填全部字段）
+const editingMonitor = ref<DemoMonitor | null>(null)
+const creatingMonitor = ref(false)
+const monitorDialogOpen = computed({
+  get: () => editingMonitor.value !== null || creatingMonitor.value,
+  set: (value: boolean) => {
+    if (value) return
+    editingMonitor.value = null
+    creatingMonitor.value = false
+  },
 })
+function openMonitorEdit(monitor: DemoMonitor): void {
+  editingMonitor.value = monitor
+  creatingMonitor.value = false
+}
+function openMonitorCreate(): void {
+  editingMonitor.value = null
+  creatingMonitor.value = true
+}
+/** 「只走这几个动作」那一栏的候选（真页面拿动作列表） */
+const monitorActionOptions = computed(() =>
+  demoActions.value.map((action) => ({ id: action.id, name: action.name })),
+)
+function submitMonitorEdit(values: MonitorDialogValues): void {
+  const monitor = editingMonitor.value
+  const next = {
+    name: values.name,
+    mode: values.mode,
+    intentText: values.intentText,
+    keywords: values.includeKeywords,
+    matchMode: values.matchMode,
+    excludeKeywords: values.excludeKeywords,
+    useGlobalExcludes: values.useGlobalExcludes,
+    sensitivity: values.sensitivity,
+    actionIds: values.actionIds,
+    enabled: values.enabled,
+  }
+  if (monitor) {
+    Object.assign(monitor, next)
+  } else {
+    demoMonitors.value.push({
+      id: `m${demoMonitors.value.length + 1}-${Date.now()}`,
+      icon: 'mdi-magnify',
+      ...next,
+    })
+  }
+  monitorDialogOpen.value = false
+}
+
 function toggleMonitor(monitor: DemoMonitor, value: boolean): void {
   monitor.enabled = value
 }
@@ -1217,19 +1278,30 @@ async function confirmChannelDelete(): Promise<void> {
                     :key="monitor.id"
                     :name="monitor.name"
                     :icon="monitor.icon"
-                    :mode-label="monitor.modeLabel"
+                    :mode-label="t(`monitor.mode.${monitor.mode}`)"
                     :keywords="monitor.keywords"
-                    :match-label="monitor.matchLabel"
-                    :exclude-count="monitor.excludeCount"
+                    :match-label="
+                      monitor.keywords.length ? t(`monitor.matchMode.${monitor.matchMode}`) : ''
+                    "
+                    :exclude-count="monitor.excludeKeywords.length"
                     :intent-text="monitor.intentText"
-                    :sensitivity-label="monitor.sensitivityLabel"
+                    :sensitivity-label="t(`monitor.sensitivity.${monitor.sensitivity}`)"
                     :enabled="monitor.enabled"
+                    @edit="openMonitorEdit(monitor)"
                     @delete="pendingMonitor = monitor"
                     @toggle="(value: boolean) => toggleMonitor(monitor, value)"
                   />
                 </div>
-                <div v-if="demoMonitorsDirty" class="app-row-end">
-                  <AppButton size="sm" variant="ghost" @click="demoMonitors = initialMonitors()">
+                <div class="app-row ds-wrap">
+                  <AppButton size="sm" data-test="monitor-create" @click="openMonitorCreate()">
+                    {{ t('monitor.add') }}
+                  </AppButton>
+                  <AppButton
+                    v-if="demoMonitorsDirty"
+                    size="sm"
+                    variant="ghost"
+                    @click="demoMonitors = initialMonitors()"
+                  >
                     {{ c('demo.reset') }}
                   </AppButton>
                 </div>
@@ -1340,6 +1412,22 @@ async function confirmChannelDelete(): Promise<void> {
       :rsshub-base-url="rsshubConfigured ? RSSHUB_BASE_URL : ''"
       @submit="submitSourceEdit"
       @configure-rsshub="flashToast()"
+    />
+
+    <MonitorDialog
+      v-model="monitorDialogOpen"
+      :name="editingMonitor?.name ?? ''"
+      :mode="editingMonitor?.mode ?? 'follow_global'"
+      :intent-text="editingMonitor?.intentText ?? ''"
+      :include-keywords="editingMonitor?.keywords ?? []"
+      :exclude-keywords="editingMonitor?.excludeKeywords ?? []"
+      :use-global-excludes="editingMonitor?.useGlobalExcludes ?? true"
+      :match-mode="editingMonitor?.matchMode ?? 'any'"
+      :sensitivity="editingMonitor?.sensitivity ?? 'medium'"
+      :enabled="editingMonitor?.enabled ?? true"
+      :action-ids="editingMonitor?.actionIds ?? []"
+      :actions="monitorActionOptions"
+      @submit="submitMonitorEdit"
     />
 
     <ConfirmDialog
