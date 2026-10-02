@@ -34,6 +34,10 @@
 }
 
 /* AppPage 的头部：标题 + 说明 + 右侧操作 */
+.app-page__error {
+  margin-bottom: var(--k-space-4);
+}
+
 .app-page__head {
   display: flex;
   flex-wrap: wrap;
@@ -155,6 +159,11 @@
 
 .app-spacer {
   flex: 1;
+}
+
+/* 顶栏里的空档只在桌面用：窄屏靠品牌标的 auto 外边距居中，多一个撑开的空档会把它挤没 */
+.app-topbar .app-spacer {
+  display: none;
 }
 
 /* 统计块网格：手机两列，桌面四列 */
@@ -537,6 +546,13 @@
   width: 28px;
   height: 28px;
   object-fit: contain;
+  /* 极轻的呼吸光晕；悬停时整块标抬一点（光晕跟着 Svg 形状走，所以用 drop-shadow） */
+  animation: k-brand-glow 6s ease-in-out infinite;
+  transition: transform 0.2s ease;
+}
+
+.app-rail__brand:hover .app-rail__logo {
+  transform: scale(1.08);
 }
 
 .app-rail__name {
@@ -614,9 +630,39 @@
   border-bottom: 1px solid var(--k-border);
 }
 
-.app-topbar__title {
-  font-size: var(--k-fs-bodyLg);
-  font-weight: var(--k-fw-medium);
+/* 窄屏顶栏中间的文字品牌标：居中，且不吃点击（它不是按钮）。 */
+.app-topbar__brand {
+  /* 在抽屉按钮与右侧控件之间居中；不做屏幕绝对居中：390 宽下右侧那排
+     控件（语言 + 三态）就占掉 192px，屏幕正中央一定会压到它们。 */
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  margin-inline: auto;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-fs-meta);
+  font-weight: var(--k-fw-semibold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* 一段缓慢扫过文字的高光。只在支持文字裁切的浏览器上做，否则退回纯色文字。 */
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .app-topbar__brand {
+    background-image: linear-gradient(
+      100deg,
+      var(--k-muted) 35%,
+      var(--k-text) 50%,
+      var(--k-muted) 65%
+    );
+    background-size: 260% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: k-brand-sheen 7s ease-in-out infinite;
+  }
 }
 
 .app-topbar__actions {
@@ -937,6 +983,12 @@
     min-height: var(--k-control-h-touch);
   }
 
+  /* 光有高度会变成细长条（主题三态、语言按钮都中过招），宽度也要够点 */
+  .app-langbtn,
+  .app-seg button {
+    min-width: var(--k-control-h-touch);
+  }
+
   .app-iconbtn {
     width: var(--k-control-h-touch);
     height: var(--k-control-h-touch);
@@ -969,18 +1021,25 @@
   .app-rail {
     position: sticky;
     inset: auto;
+    /* 铺满整屏：原来只跟内容一样高，看着像半截 */
+    height: 100%;
     transform: none;
   }
 
   .app-scrim,
   .app-tabbar,
   .app-topbar__menu,
-  .app-topbar__title {
+  .app-topbar__brand {
     display: none !important;
   }
 
   .app-topbar {
     padding-inline: var(--k-space-5);
+  }
+
+  .app-topbar .app-spacer {
+    display: block;
+    flex: 1;
   }
 
   .app-shell__content {
@@ -1004,6 +1063,35 @@
     overflow-y: auto;
     border-radius: var(--k-radius-lg) var(--k-radius-lg) 0 0;
     border-bottom: 0;
+  }
+}
+
+@keyframes k-brand-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+
+  50% {
+    filter: drop-shadow(0 0 7px color-mix(in srgb, var(--k-accent) 55%, transparent));
+  }
+}
+
+@keyframes k-brand-sheen {
+  0%,
+  40% {
+    background-position: 140% 0;
+  }
+
+  100% {
+    background-position: -40% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-rail__logo,
+  .app-topbar__brand {
+    animation: none;
   }
 }
 

@@ -1,7 +1,8 @@
-<!-- AppHeader：顶栏。窄屏左边是抽屉开关、中间是当前页标题；桌面只留右侧操作。
+<!-- AppHeader：顶栏。窄屏是「抽屉开关 + 中间文字品牌标 + 右侧操作」；桌面只留右侧操作。
+     这里不显示页名：一页的标题由页面的 AppPage 承担，顶栏再写一遍就是同一句话说两次。
      操作区（语言、主题切换等）由外壳通过 actions 插槽传进来。 -->
 <script setup lang="ts">
-defineProps<{ title?: string; menuLabel?: string }>()
+withDefaults(defineProps<{ brand?: string; menuLabel?: string }>(), { brand: '' })
 const emit = defineEmits<{ (e: 'toggle-menu'): void }>()
 </script>
 
@@ -17,9 +18,7 @@ const emit = defineEmits<{ (e: 'toggle-menu'): void }>()
       <v-icon size="18">mdi-menu</v-icon>
     </button>
 
-    <span class="app-topbar__title" data-test="page-title">
-      <slot name="title">{{ title }}</slot>
-    </span>
+    <span v-if="brand" class="app-topbar__brand" data-test="topbar-brand">{{ brand }}</span>
 
     <span class="app-spacer" />
 

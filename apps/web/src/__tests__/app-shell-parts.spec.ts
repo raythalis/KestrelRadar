@@ -74,15 +74,15 @@ function mountHeader(props: Record<string, unknown> = {}, slots: Record<string, 
 }
 
 describe('AppHeader', () => {
-  it('标题走插槽与 props 两条路', () => {
-    expect(mountHeader({ title: '设置' }).get('[data-test="page-title"]').text()).toBe('设置')
-    expect(mountHeader({}, { title: '自定义标题' }).get('[data-test="page-title"]').text()).toBe(
-      '自定义标题',
-    )
+  it('给了品牌名才渲染品牌标，且不显示页名', () => {
+    const wrapper = mountHeader({ brand: 'Kestrel' })
+    expect(wrapper.get('[data-test="topbar-brand"]').text()).toBe('Kestrel')
+    expect(wrapper.find('[data-test="page-title"]').exists()).toBe(false)
+    expect(mountHeader({}).find('[data-test="topbar-brand"]').exists()).toBe(false)
   })
 
   it('菜单按钮把事件抛给外壳', async () => {
-    const wrapper = mountHeader({ title: 'x' })
+    const wrapper = mountHeader({ brand: 'x' })
     await wrapper.get('[data-test="drawer-toggle"]').trigger('click')
     expect(wrapper.emitted('toggle-menu')).toHaveLength(1)
   })

@@ -101,11 +101,9 @@ describe('AppShell', () => {
     expect(wrapper.find('.app-rail.is-open').exists()).toBe(false)
   })
 
-  it('顶栏面包屑跟着当前路由走', async () => {
-    const { wrapper, router } = mountShell()
-    expect(wrapper.get('[data-test="page-title"]').text()).toBe('仪表盘')
-    await router.push({ name: 'settings' })
-    await wrapper.vm.$nextTick()
-    expect(wrapper.get('[data-test="page-title"]').text()).toBe('设置')
+  it('顶栏只有品牌标与操作，页名不在这里显示（归页面自己的 AppPage）', () => {
+    const { wrapper } = mountShell()
+    expect(wrapper.get('[data-test="topbar-brand"]').text()).toBe('Kestrel')
+    expect(wrapper.find('[data-test="page-title"]').exists()).toBe(false)
   })
 })

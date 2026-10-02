@@ -1,5 +1,6 @@
 <!-- 外壳：只负责组织 AppSidebar + AppHeader + 内容区，自己不写样式。
-     桌面是常驻左栏，窄屏是抽屉导航 + 底部导航；顶栏管当前页标题、语言与主题三态。 -->
+     桌面是常驻左栏，窄屏是抽屉导航 + 底部导航；顶栏管品牌标、语言与主题三态。
+     页名不归顶栏（那是页面自己 AppPage 的事）。 -->
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -33,12 +34,6 @@ const drawerOpen = ref(false)
 
 const navItems = computed<AppNavItem[]>(() =>
   NAV.map((item) => ({ ...item, label: t(`nav.${item.name}`) })),
-)
-
-const currentName = computed(() => String(route.name ?? 'dashboard'))
-// 开发用的 /design 不在产品导航里，标题单独给一个（它不在 locales 里，不该为它加产品文案）
-const currentTitle = computed(() =>
-  route.meta.devOnly ? 'Design System' : t(`nav.${currentName.value}`),
 )
 
 const brand = computed(() => ({
@@ -109,7 +104,7 @@ function changeLocale(): void {
 
       <main class="app-shell__main">
         <AppHeader
-          :title="currentTitle"
+          :brand="brand.name"
           :menu-label="t('nav.openMenu')"
           @toggle-menu="drawerOpen = !drawerOpen"
         >

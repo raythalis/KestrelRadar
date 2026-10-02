@@ -10,7 +10,11 @@ withDefaults(
     items: AppNavItem[]
     /** 窄屏抽屉是否展开（桌面忽略） */
     open?: boolean
-    brand?: { name: string; tagline?: string; /** 品牌标图片地址；不给就只显示文字标 */ logo?: string }
+    brand?: {
+      name: string
+      tagline?: string
+      /** 品牌标图片地址；不给就只显示文字标 */ logo?: string
+    }
     closeLabel?: string
     version?: string
   }>(),
