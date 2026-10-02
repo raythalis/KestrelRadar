@@ -194,3 +194,25 @@ MP 走的是「**运行时覆盖**」路线（主题清单固定 + 主色作为�
 - **覆盖式（同 MP）**：亮暗两套主题不动，主色作为一个覆盖值写进 `--k-accent*` 并改写 Vuetify 的 primary。
   改动最小，但「单一来源」变成「来源 + 覆盖」两层。
 - **组合式（我上一条建议）**：色板作为第二个轴与亮暗组合生成主题条目，派生链不变，条目数变多。
+
+## 补：v3 分支（用户实际在用的版本）
+
+把 `v3` 也浅克隆下来逐文件对过：**机制完全一样**，`src/plugins/vuetify/theme.ts` 与 v2 **字节相同**
+（8984 B，六个主题：light / dark / purple / transparent / glass / auto），
+`ThemeCustomizer.vue` 也基本一样（29826 → 29907 B，多了玻璃与自定义色的入口）。
+
+v3 相对 v2 的差异：
+
+| 项 | v2 | v3 |
+| --- | --- | --- |
+| 默认皮肤 | `auto` | **`glass`** |
+| 外观设置存储 | 仅 `localStorage` | **同时镜像到服务端**：MoviePilot 的 `userconfig` 表，按用户名隔离，键 `ThemeCustomizerSettings`；读取策略「本地优先、缺失才用服务端回填」 |
+| 玻璃参数 | 基础 | 多了 UI 风格（adaptive / clear）等参数，`useThemeCustomizer.ts` 3.7 K → 4.1 K |
+| 主题样式 | 只有 JS 里的主题定义 | 多了 `src/styles/themes/{glass,transparent,_glass-v3}.scss`（31 K / 80 K / 13 K） |
+| 其它 | — | `themeManager.ts`、`themePalette.ts`、`themeLogo.ts`、`colorUtils.ts`、`useCardAccentColor.ts`（卡片强调色），favicon 与 logo 跟着主色重着色 |
+
+**主题色可以超出 12 个预设**：面板底部那个调色板按钮会拉起一个原生颜色选择器（`input type="color"`），
+所以是「12 个常用色 + 任意自定义色」，主色一律经 `getTextColorForHex()` 自动配前景色。
+
+架构上的启示：MP 把「用户偏好」当**跨设备资产**（镜像到服务端），而不是纯浏览器本地状态。
+我们的主题偏好目前只在自己浏览器的 `localStorage` 里 —— 要不要也存后端，是另一个可以单独决定的问题。
