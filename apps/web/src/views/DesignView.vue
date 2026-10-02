@@ -11,6 +11,7 @@ import { findTheme, THEMES } from '@/design/tokens'
 import { designGroups, spaceItems } from '@/design/preview'
 import ActionCard from '@/components/biz/ActionCard.vue'
 import MonitorCard from '@/components/biz/MonitorCard.vue'
+import ActionDialog from '@/components/biz/ActionDialog.vue'
 import MonitorDialog from '@/components/biz/MonitorDialog.vue'
 import ChannelCard from '@/components/biz/ChannelCard.vue'
 import ChannelDialog from '@/components/biz/ChannelDialog.vue'
@@ -23,6 +24,8 @@ import { useUiStore } from '@/stores/ui'
 import DesignGroup from '@/views/design/DesignGroup.vue'
 import { makeDesignCopy, makeDesignLists, type DesignCopyKey } from '@/design/lab-copy'
 import type {
+  ActionDialogValues,
+  ActionTrigger,
   ChannelChat,
   ChannelDialogValues,
   MonitorDialogValues,
@@ -579,6 +582,49 @@ const monitorDialogOpen = computed({
     creatingMonitor.value = false
   },
 })
+const editingAction = ref<DemoAction | null>(null)
+const creatingAction = ref(false)
+const actionDialogOpen = computed({
+  get: () => editingAction.value !== null || creatingAction.value,
+  set: (value: boolean) => {
+    if (!value) {
+      editingAction.value = null
+      creatingAction.value = false
+    }
+  },
+})
+function openActionEdit(action: DemoAction): void {
+  editingAction.value = action
+  creatingAction.value = false
+}
+function openActionCreate(): void {
+  editingAction.value = null
+  creatingAction.value = true
+}
+function submitActionEdit(values: ActionDialogValues): void {
+  const action = editingAction.value
+  const next = {
+    name: values.name,
+    triggerType: values.triggerType,
+    cron: values.cron,
+    nextRunAt: null,
+    channelId: values.channelId,
+    templateId: values.templateId ?? undefined,
+    mergeMessages: values.mergeMessages,
+    includeDelivered: values.includeDelivered,
+    enabled: values.enabled,
+  }
+  if (action) {
+    Object.assign(action, next)
+  } else {
+    demoActions.value.push({
+      id: `a${demoActions.value.length + 1}-${Date.now()}`,
+      icon: 'mdi-bell-ring-outline',
+      ...next,
+    })
+  }
+  actionDialogOpen.value = false
+}
 function openMonitorEdit(monitor: DemoMonitor): void {
   editingMonitor.value = monitor
   creatingMonitor.value = false
@@ -626,12 +672,16 @@ type DemoAction = {
   id: string
   name: string
   icon: string
-  triggerLabel: string
+  triggerType: ActionTrigger
+  /** 汇总动作的发送时间；发现即发为 null */
   cron: string | null
   nextRunAt: string | null
-  channelName?: string
-  channelEnabled?: boolean
-  templateName?: string
+  /** 目标渠道；缺了就是没选 */
+  channelId?: string
+  /** 消息模板；缺了就是系统内置 */
+  templateId?: string
+  mergeMessages: boolean
+  includeDelivered: boolean
   enabled: boolean
 }
 function initialActions(): DemoAction[] {
@@ -640,59 +690,86 @@ function initialActions(): DemoAction[] {
       id: 'a1',
       name: c('demo.action.push'),
       icon: 'mdi-bell-ring-outline',
-      triggerLabel: c('demo.trigger.realtime'),
+      triggerType: 'instant',
       cron: null,
       nextRunAt: null,
-      channelName: c('demo.channelName'),
-      templateName: c('demo.templateDefault'),
+      channelId: 'c1',
+      templateId: 't1',
+      mergeMessages: true,
+      includeDelivered: false,
       enabled: true,
     },
     {
       id: 'a2',
       name: c('demo.action.digest'),
       icon: 'mdi-clock-outline',
-      triggerLabel: c('demo.trigger.digest'),
+      triggerType: 'digest',
       cron: '0 8 * * *',
       nextRunAt: inMinutes(480),
-      channelName: c('demo.channelName'),
-      templateName: c('demo.templateBrief'),
+      channelId: 'c1',
+      templateId: 't2',
+      mergeMessages: true,
+      includeDelivered: true,
       enabled: true,
     },
     {
       id: 'a3',
       name: c('demo.action.missing'),
       icon: 'mdi-bell-off-outline',
-      triggerLabel: c('demo.trigger.realtime'),
+      triggerType: 'instant',
       cron: null,
       nextRunAt: null,
-      templateName: c('demo.templateDefault'),
+      templateId: 't1',
+      mergeMessages: true,
+      includeDelivered: false,
       enabled: true,
     },
     {
       id: 'a5',
       name: c('demo.action.channelOff'),
       icon: 'mdi-bell-alert-outline',
-      triggerLabel: c('demo.trigger.realtime'),
+      triggerType: 'instant',
       cron: null,
       nextRunAt: null,
-      channelName: c('demo.channelName'),
-      channelEnabled: false,
-      templateName: c('demo.templateDefault'),
+      channelId: 'c4',
+      templateId: 't1',
+      mergeMessages: true,
+      includeDelivered: false,
       enabled: true,
     },
     {
       id: 'a4',
       name: c('demo.action.off'),
       icon: 'mdi-bell-outline',
-      triggerLabel: c('demo.trigger.realtime'),
+      triggerType: 'instant',
       cron: null,
       nextRunAt: null,
-      channelName: c('demo.channelName'),
+      channelId: 'c1',
+      mergeMessages: false,
+      includeDelivered: false,
       enabled: false,
     },
   ]
 }
 const demoActions = ref<DemoAction[]>(initialActions())
+
+/** 演示里的渠道/模板候选（真页面拿接口数据） */
+const actionChannelOptions = computed(() =>
+  demoChannels.value.map((channel) => ({ id: channel.id, name: channel.name })),
+)
+const actionTemplateOptions = computed(() => [
+  { id: 't1', name: c('demo.templateDefault') },
+  { id: 't2', name: c('demo.templateBrief') },
+])
+function channelOf(action: DemoAction): DemoChannel | undefined {
+  return demoChannels.value.find((channel) => channel.id === action.channelId)
+}
+/** 模板名：没选就是系统内置 */
+function templateNameOf(action: DemoAction): string {
+  const template = actionTemplateOptions.value.find((item) => item.id === action.templateId)
+  return template ? template.name : t('action.templateBuiltin')
+}
+
 const pendingAction = ref<DemoAction | null>(null)
 const actionDeleteOpen = computed({
   get: () => pendingAction.value !== null,
@@ -708,13 +785,9 @@ async function confirmActionDelete(): Promise<void> {
   actionDeleteBusy.value = false
   pendingAction.value = null
 }
-const demoActionsDirty = computed(() => {
-  const base = initialActions()
-  return (
-    demoActions.value.length !== base.length ||
-    demoActions.value.some((a, index) => a.enabled !== base[index]?.enabled)
-  )
-})
+const demoActionsDirty = computed(
+  () => JSON.stringify(demoActions.value) !== JSON.stringify(initialActions()),
+)
 function toggleAction(action: DemoAction, value: boolean): void {
   action.enabled = value
 }
@@ -1313,19 +1386,28 @@ async function confirmChannelDelete(): Promise<void> {
                     :key="action.id"
                     :name="action.name"
                     :icon="action.icon"
-                    :trigger-label="action.triggerLabel"
+                    :trigger-label="t(`action.trigger.${action.triggerType}`)"
                     :cron="action.cron"
                     :next-run-at="action.nextRunAt"
-                    :channel-name="action.channelName"
-                    :channel-enabled="action.channelEnabled !== false"
-                    :template-name="action.templateName"
+                    :channel-name="channelOf(action)?.name"
+                    :channel-enabled="channelOf(action)?.enabled !== false"
+                    :template-name="templateNameOf(action)"
                     :enabled="action.enabled"
+                    @edit="openActionEdit(action)"
                     @delete="pendingAction = action"
                     @toggle="(value: boolean) => toggleAction(action, value)"
                   />
                 </div>
-                <div v-if="demoActionsDirty" class="app-row-end">
-                  <AppButton size="sm" variant="ghost" @click="demoActions = initialActions()">
+                <div class="app-row ds-wrap">
+                  <AppButton size="sm" data-test="action-create" @click="openActionCreate()">
+                    {{ t('action.add') }}
+                  </AppButton>
+                  <AppButton
+                    v-if="demoActionsDirty"
+                    size="sm"
+                    variant="ghost"
+                    @click="demoActions = initialActions()"
+                  >
                     {{ c('demo.reset') }}
                   </AppButton>
                 </div>
@@ -1413,6 +1495,20 @@ async function confirmChannelDelete(): Promise<void> {
       @configure-rsshub="flashToast()"
     />
 
+    <ActionDialog
+      v-model="actionDialogOpen"
+      :name="editingAction?.name ?? ''"
+      :trigger-type="editingAction?.triggerType ?? 'instant'"
+      :cron="editingAction?.cron ?? ''"
+      :channel-id="editingAction?.channelId ?? ''"
+      :template-id="editingAction?.templateId ?? ''"
+      :merge-messages="editingAction?.mergeMessages ?? true"
+      :include-delivered="editingAction?.includeDelivered ?? false"
+      :enabled="editingAction?.enabled ?? true"
+      :channels="actionChannelOptions"
+      :templates="actionTemplateOptions"
+      @submit="submitActionEdit"
+    />
     <MonitorDialog
       v-model="monitorDialogOpen"
       :name="editingMonitor?.name ?? ''"
