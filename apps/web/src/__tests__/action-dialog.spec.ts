@@ -12,8 +12,8 @@ function mountDialog(props: Record<string, unknown> = {}) {
     props: {
       modelValue: true,
       channels: [
-        { id: 'c1', name: '我的 Telegram' },
-        { id: 'c4', name: '停用的 Webhook' },
+        { id: 'c1', name: '我的 Telegram', type: 'telegram', enabled: true },
+        { id: 'c4', name: '停用的 Webhook', type: 'webhook', enabled: false },
       ],
       templates: [
         { id: 't1', name: '默认模板' },
@@ -211,5 +211,24 @@ describe('ActionDialog', () => {
     await wrapper.setProps({ modelValue: true })
     await flushPromises()
     expect(input('action-dialog-name').value).toBe('实时推送')
+  })
+
+  it('渠道下拉：左边标出渠道类型，右边标出还没启用的渠道', async () => {
+    mountDialog({ name: '看渠道', channelId: 'c1' })
+    await flushPromises()
+    await openMenu('action-dialog-channel')
+
+    const items = [...document.querySelectorAll('.v-list-item')]
+    expect(items).toHaveLength(2)
+    // 类型图标：telegram → mdi-send、webhook → mdi-webhook
+    // （v-icon 用字体连字，名字在 class 上，不在文字里）
+    expect(items[0]?.querySelector('.v-icon')?.className).toContain('mdi-send')
+    expect(items[1]?.querySelector('.v-icon')?.className).toContain('mdi-webhook')
+
+    // 停用的那个才有「未启用」
+    const off = document.querySelectorAll('[data-test="action-dialog-channel-off"]')
+    expect(off).toHaveLength(1)
+    expect(off[0]?.textContent.trim()).toBe('未启用')
+    expect(items[1]?.contains(off[0] as Node)).toBe(true)
   })
 })

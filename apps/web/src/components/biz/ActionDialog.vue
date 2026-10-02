@@ -8,10 +8,13 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppInput from '@/components/app/AppInput.vue'
+import AppStatus from '@/components/app/AppStatus.vue'
 import AppSelect from '@/components/app/AppSelect.vue'
 import AppSwitch from '@/components/app/AppSwitch.vue'
+import type { ChannelType } from '@kestrel/contracts'
 import CronPicker from '@/components/biz/CronPicker.vue'
 import FormDialog from '@/components/biz/FormDialog.vue'
+import { CHANNEL_ICONS } from '@/components/biz/icons'
 import type { ActionDialogValues, ActionTrigger } from '@/components/biz/types'
 import { checkCron } from '@/utils/cron'
 
@@ -29,8 +32,8 @@ const props = withDefaults(
     mergeMessages?: boolean
     includeDelivered?: boolean
     enabled?: boolean
-    /** 可选渠道（真页面拿渠道列表） */
-    channels?: { id: string; name: string }[]
+    /** 可选渠道（真页面拿渠道列表）；带上类型与启用状态，下拉里要画图标、标「未启用」 */
+    channels?: { id: string; name: string; type: ChannelType; enabled: boolean }[]
     /** 可选模板；系统内置那一项由弹窗自己加 */
     templates?: { id: string; name: string }[]
     busy?: boolean
@@ -90,8 +93,23 @@ const triggerItems = computed(() => [
   { title: t('action.trigger.digest'), value: 'digest' },
 ])
 const channelItems = computed(() =>
-  props.channels.map((channel) => ({ title: channel.name, value: channel.id })),
+  props.channels.map((channel) => ({
+    title: channel.name,
+    value: channel.id,
+    type: channel.type,
+    enabled: channel.enabled,
+  })),
 )
+
+/** 下拉项里要拿回自己塞的字段（Vuetify 把原对象放在 raw 里） */
+function itemRaw(item: unknown): { type?: ChannelType; enabled?: boolean } {
+  const raw = (
+    typeof item === 'object' && item !== null && 'raw' in item
+      ? (item as { raw: unknown }).raw
+      : item
+  ) as { type?: ChannelType; enabled?: boolean } | null
+  return raw && typeof raw === 'object' ? raw : {}
+}
 /** 系统内置那一项用空串占位，交出去的时候换回 null */
 const templateItems = computed(() => [
   { title: t('action.templateBuiltin'), value: '' },
@@ -165,7 +183,27 @@ function submit(): void {
         :label="t('action.channelLabel')"
         :items="channelItems"
         data-test="action-dialog-channel"
-      />
+      >
+        <!-- 左边图标标渠道类型，右边标出还没启用的渠道（这种动作打不出去） -->
+        <template #item="{ props: itemProps, item }">
+          <v-list-item v-bind="itemProps">
+            <template #prepend>
+              <v-icon size="18" data-test="action-dialog-channel-icon">
+                {{ itemRaw(item).type ? CHANNEL_ICONS[itemRaw(item).type as ChannelType] : '' }}
+              </v-icon>
+            </template>
+            <template #append>
+              <AppStatus
+                v-if="itemRaw(item).enabled === false"
+                tone="err"
+                data-test="action-dialog-channel-off"
+              >
+                {{ t('action.channelDisabled') }}
+              </AppStatus>
+            </template>
+          </v-list-item>
+        </template>
+      </AppSelect>
 
       <AppSelect
         v-model="templateId"

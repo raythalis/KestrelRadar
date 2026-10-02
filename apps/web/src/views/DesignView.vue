@@ -755,7 +755,12 @@ const demoActions = ref<DemoAction[]>(initialActions())
 
 /** 演示里的渠道/模板候选（真页面拿接口数据） */
 const actionChannelOptions = computed(() =>
-  demoChannels.value.map((channel) => ({ id: channel.id, name: channel.name })),
+  demoChannels.value.map((channel) => ({
+    id: channel.id,
+    name: channel.name,
+    type: channel.type,
+    enabled: channel.enabled,
+  })),
 )
 const actionTemplateOptions = computed(() => [
   { id: 't1', name: c('demo.templateDefault') },
