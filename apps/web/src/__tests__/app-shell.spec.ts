@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { useUiStore } from '@/stores/ui'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
+import { BRAND_LOGO } from '@/brand'
 import AppShell from '@/layouts/AppShell.vue'
 // App* 组件是全局注册的，挂载外壳也要带上这个插件
 import appComponents from '@/plugins/components'
@@ -44,9 +45,11 @@ describe('AppShell', () => {
     i18n.global.locale.value = 'zh-CN'
   })
 
-  it('渲染应用名与五个导航入口', () => {
+  it('渲染品牌标、应用名与五个导航入口', () => {
     const { wrapper } = mountShell()
     expect(wrapper.get('[data-test="app-name"]').text()).toContain('Kestrel')
+    // 品牌标走 brand.ts 的路径；换 logo 只改那一处
+    expect(wrapper.get('[data-test="app-logo"]').attributes('src')).toBe(BRAND_LOGO)
     for (const name of ['dashboard', 'config', 'channels', 'models', 'settings']) {
       expect(wrapper.find(`[data-test="${`nav-${name}`}"]`).exists()).toBe(true)
     }

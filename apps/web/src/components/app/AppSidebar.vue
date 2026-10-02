@@ -10,7 +10,7 @@ withDefaults(
     items: AppNavItem[]
     /** 窄屏抽屉是否展开（桌面忽略） */
     open?: boolean
-    brand?: { name: string; tagline?: string }
+    brand?: { name: string; tagline?: string; /** 品牌标图片地址；不给就只显示文字标 */ logo?: string }
     closeLabel?: string
     version?: string
   }>(),
@@ -34,6 +34,13 @@ const route = useRoute()
 
     <aside class="app-rail" :class="{ 'is-open': open }">
       <div v-if="brand" class="app-rail__brand">
+        <img
+          v-if="brand.logo"
+          class="app-rail__logo"
+          data-test="app-logo"
+          :src="brand.logo"
+          alt=""
+        />
         <span class="app-rail__name" data-test="app-name">{{ brand.name }}</span>
         <span v-if="brand.tagline" class="app-rail__tagline">{{ brand.tagline }}</span>
       </div>

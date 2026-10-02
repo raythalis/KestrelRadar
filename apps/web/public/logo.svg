@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Kestrel">
+  <!-- 占位 logo：换成自己的图片时，把文件放到 public/logo.svg（或改 src/brand.ts 里的路径） -->
+  <path
+    fill="#7c8698"
+    d="M5 3h5.6l6.3 8.9 4.6-5.9H27l-7.6 9.6L28.3 29h-6.9l-4.9-7.4L10.6 29H4.3l8.9-11.6z"
+  />
+</svg>

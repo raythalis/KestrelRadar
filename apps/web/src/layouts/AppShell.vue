@@ -5,6 +5,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 
+import { BRAND_LOGO } from '@/brand'
 import type { AppNavItem } from '@/components/app/types'
 import { THEME_PREFERENCES, applyThemeVars, findTheme, type ThemePreference } from '@/design/tokens'
 import type { AppLocale } from '@/plugins/i18n'
@@ -40,7 +41,11 @@ const currentTitle = computed(() =>
   route.meta.devOnly ? 'Design System' : t(`nav.${currentName.value}`),
 )
 
-const brand = computed(() => ({ name: t('app.name'), tagline: t('app.tagline') }))
+const brand = computed(() => ({
+  name: t('app.name'),
+  tagline: t('app.tagline'),
+  logo: BRAND_LOGO,
+}))
 
 // 界面语言以 store 为准（它管着持久化）：刷新后也要把存着的语言装回去
 watch(
