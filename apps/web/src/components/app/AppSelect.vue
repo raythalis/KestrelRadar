@@ -18,6 +18,13 @@ withDefaults(
 )
 
 const model = defineModel<string | number | string[] | null>({ default: null })
+
+/**
+ * 下拉最宽到这里为止（不超过弹窗宽度，窄屏留出边距）。
+ * 选项名字再长也不撑破弹窗或屏幕，超出部分用省略号——不设上限时
+ * Vuetify 会按最长那一项把菜单撑宽，长名字能把 640 的弹窗撑到 790 多。
+ */
+const menuProps = { maxWidth: 'min(640px, calc(100vw - 2 * var(--k-space-4)))' }
 </script>
 
 <template>
@@ -33,6 +40,7 @@ const model = defineModel<string | number | string[] | null>({ default: null })
       :chips="multiple"
       :closable-chips="multiple"
       :error="Boolean(error)"
+      :menu-props="menuProps"
     >
       <!-- 下拉项要自己画的时候（灰掉某项、右侧挂个动作）由调用方提供 -->
       <template v-if="$slots.item" #item="scope">
