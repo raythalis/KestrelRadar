@@ -69,13 +69,12 @@ describe('MonitorCard', () => {
     expect(wrapper.find('[data-test="monitor-intent"]').text()).toBe('大模型发布与开源项目')
   })
 
-  it('卡脚：只有一个方角状态写档位，不写「灵敏度」三个字；开关在右下', async () => {
+  it('卡脚：纯文字写档位，不写「灵敏度」三个字；开关在右下', async () => {
     const wrapper = mountCard()
     const foot = wrapper.find('[data-test="monitor-foot"]')
     const status = foot.find('[data-test="monitor-sensitivity"]')
     expect(status.text()).toBe('标准')
-    expect(status.classes()).toContain('app-status--square')
-    expect(status.find('.app-status__dot').exists()).toBe(false)
+    expect(status.find('.app-status').exists()).toBe(false)
     expect(foot.text()).not.toContain('灵敏度')
 
     await wrapper.findComponent({ name: 'VSwitch' }).vm.$emit('update:modelValue', false)
