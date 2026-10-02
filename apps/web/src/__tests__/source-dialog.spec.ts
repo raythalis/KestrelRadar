@@ -54,40 +54,65 @@ describe('SourceDialog', () => {
     expect(q('source-dialog-kind')).toBeTruthy()
   })
 
-  it('地址提示按种类给：三种来源各说各的例子', async () => {
+  it('地址栏的名称与例子按类型给：RSSHub 叫路由、RSS 叫订阅地址、网页叫网页地址', async () => {
     mountDialog()
     await flushPromises()
-    expect(document.body.textContent).toContain('RSSHub 路由，例如 /bilibili/ranking/all')
+    expect(q('source-dialog-target')?.textContent).toContain('路由')
+    expect(document.body.textContent).toContain('例如 /bilibili/ranking/all')
 
     document.body.innerHTML = ''
     mountDialog({ kind: 'rss' })
     await flushPromises()
-    expect(document.body.textContent).toContain('订阅地址，例如 https://example.com/feed.xml')
+    expect(q('source-dialog-target')?.textContent).toContain('订阅地址')
+    expect(document.body.textContent).toContain('例如 https://example.com/feed.xml')
 
     document.body.innerHTML = ''
     mountDialog({ kind: 'web' })
     await flushPromises()
-    expect(document.body.textContent).toContain('网页地址，例如 https://example.com/news')
+    expect(q('source-dialog-target')?.textContent).toContain('网页地址')
+    expect(document.body.textContent).toContain('例如 https://example.com/news')
   })
 
-  it('RSSHub 没配实例地址：这一项灰掉不可选，右侧挂一个可点的「前往配置」', async () => {
-    const wrapper = mountDialog({ rsshubBaseUrl: '' })
+  it('RSSHub 没配实例地址：这一项灰掉、点了也不换类型，右侧挂一个能点的「前往配置」', async () => {
+    const wrapper = mountDialog({
+      name: '有名字',
+      kind: 'rss',
+      target: 'https://example.com/feed.xml',
+      cron: '0 * * * *',
+      rsshubBaseUrl: '',
+    })
     await flushPromises()
     await openMenu('source-dialog-kind')
     const chip = q('source-dialog-rsshub-configure')
-    expect(chip).toBeTruthy()
     expect(chip?.textContent).toContain('前往配置')
-    expect(document.querySelector('.v-list-item--disabled')).toBeTruthy()
+    expect(chip?.closest('.v-list-item')?.className).toContain('source-dialog__kindrow--muted')
+    // 整行不能再用 opacity / pointer-events 压（会把里面的 chip 一起废掉）
+    expect(document.querySelector('.v-list-item--disabled')).toBeNull()
+
+    await click(document.querySelector('.v-list-item'))
+    await click(submit())
+    expect((wrapper.emitted('submit')?.[0]?.[0] as { kind: string }).kind).toBe('rss')
+
     await click(chip)
     expect(wrapper.emitted('configureRsshub')).toBeTruthy()
   })
 
   it('RSSHub 配好了：这一项可选，也不出现「前往配置」', async () => {
-    mountDialog({ rsshubBaseUrl: 'http://192.168.5.100:1200' })
+    const wrapper = mountDialog({
+      name: '有名字',
+      kind: 'rss',
+      target: 'https://example.com/feed.xml',
+      cron: '0 * * * *',
+      rsshubBaseUrl: 'http://192.168.5.100:1200',
+    })
     await flushPromises()
     await openMenu('source-dialog-kind')
     expect(q('source-dialog-rsshub-configure')).toBeNull()
-    expect(document.querySelector('.v-list-item--disabled')).toBeNull()
+    expect(q('source-dialog-kind-item')?.className).not.toContain('muted')
+
+    await click(document.querySelector('.v-list-item'))
+    await click(submit())
+    expect((wrapper.emitted('submit')?.[0]?.[0] as { kind: string }).kind).toBe('rsshub')
   })
 
   it('RSSHub 模式下路由框前面挂实例地址前缀，前缀只展示不参与输入', async () => {

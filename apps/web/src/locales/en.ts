@@ -83,9 +83,14 @@ export default {
     goConfigure: 'Set up',
     editSource: 'Edit source',
     targetHint: {
-      rsshub: 'RSSHub route, e.g. /bilibili/ranking/all',
-      rss: 'Feed URL, e.g. https://example.com/feed.xml',
-      web: 'Page URL, e.g. https://example.com/news',
+      rsshub: 'e.g. /bilibili/ranking/all',
+      rss: 'e.g. https://example.com/feed.xml',
+      web: 'e.g. https://example.com/news',
+    },
+    targetLabel: {
+      rsshub: 'Route',
+      rss: 'Feed URL',
+      web: 'Page URL',
     },
     kindLabel: 'Type',
     kind: {

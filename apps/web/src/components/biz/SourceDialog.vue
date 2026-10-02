@@ -76,20 +76,33 @@ const rsshubConfigured = computed(() => props.rsshubBaseUrl.trim().length > 0)
 const rsshubPrefix = computed(() => props.rsshubBaseUrl.trim().replace(/\/+$/, ''))
 
 const kindItems = computed(() => [
-  {
-    title: t('discovery.kind.rsshub'),
-    value: 'rsshub',
-    props: { disabled: !rsshubConfigured.value },
-  },
-  { title: t('discovery.kind.rss'), value: 'rss' },
-  { title: t('discovery.kind.web'), value: 'web' },
+  { title: t('discovery.kind.rsshub'), value: 'rsshub', muted: !rsshubConfigured.value },
+  { title: t('discovery.kind.rss'), value: 'rss', muted: false },
+  { title: t('discovery.kind.web'), value: 'web', muted: false },
 ])
+
+/** 灰掉的那一项不可选：点了不改类型（只有里面的「前往配置」能点） */
+function onKindChange(value: unknown): void {
+  const next = String(value)
+  if (next === 'rsshub' && !rsshubConfigured.value) return
+  kind.value = next as 'rsshub' | 'rss' | 'web'
+}
 
 /** 下拉项取值/取标题：Vuetify 给的 item 是原样对象，类型上可能是裸字符串，这里两种都兜住 */
 function itemValue(item: unknown): string {
   return typeof item === 'object' && item !== null && 'value' in item
     ? String((item as { value: unknown }).value)
     : String(item)
+}
+
+/** 灰态标记挂在 item 自己的字段上（Vuetify 会把原对象放在 raw 里） */
+function itemMuted(item: unknown): boolean {
+  const raw = (
+    typeof item === 'object' && item !== null && 'raw' in item
+      ? (item as { raw: unknown }).raw
+      : item
+  ) as { muted?: unknown } | null
+  return Boolean(raw && typeof raw === 'object' && raw.muted)
 }
 
 function itemTitle(item: unknown): string {
@@ -139,16 +152,20 @@ function submit(): void {
       <AppInput v-model="name" :label="t('common.name')" required data-test="source-dialog-name" />
 
       <AppSelect
-        v-model="kind"
+        :model-value="kind"
         :label="t('discovery.kindLabel')"
         :items="kindItems"
         data-test="source-dialog-kind"
+        @update:model-value="onKindChange"
       >
         <template #item="{ props: itemProps, item }">
-          <v-list-item v-bind="itemProps">
+          <v-list-item
+            v-bind="itemProps"
+            :class="{ 'source-dialog__kindrow--muted': itemMuted(item) }"
+          >
             <template #title>
               <span class="source-dialog__kind" data-test="source-dialog-kind-item">
-                <span>{{ itemTitle(item) }}</span>
+                <span class="source-dialog__kindlabel">{{ itemTitle(item) }}</span>
                 <AppStatus
                   v-if="itemValue(item) === 'rsshub' && !rsshubConfigured"
                   tone="info"
@@ -169,7 +186,7 @@ function submit(): void {
         v-model="target"
         mono
         required
-        :label="t('discovery.target')"
+        :label="t(`discovery.targetLabel.${kind}`)"
         :hint="t(`discovery.targetHint.${kind}`)"
         :prefix="kind === 'rsshub' && rsshubConfigured ? rsshubPrefix : undefined"
         data-test="source-dialog-target"
@@ -188,5 +205,11 @@ function submit(): void {
   justify-content: space-between;
   gap: var(--k-space-3);
   width: 100%;
+}
+
+/* 没配 RSSHub 的那一项：只把标题压灰。整行不做 opacity / pointer-events 处理，
+   否则行里的「前往配置」会被一起压暗、也点不动 */
+.source-dialog__kindrow--muted .source-dialog__kindlabel {
+  color: var(--k-muted);
 }
 </style>
