@@ -321,6 +321,10 @@
   cursor: pointer;
 }
 
+.app-status--square {
+  border-radius: var(--k-radius-sm);
+}
+
 .app-status--action:hover {
   color: var(--k-text);
   border-color: color-mix(in srgb, var(--k-border) 55%, var(--k-text));

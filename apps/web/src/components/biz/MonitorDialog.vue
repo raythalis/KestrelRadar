@@ -137,14 +137,19 @@ function submit(): void {
     :error="error"
     :persistent="busy"
     :submit-disabled="submitDisabled"
-    :width="560"
+    :width="640"
     data-test="monitor-dialog"
     @update:model-value="emit('update:modelValue', $event)"
     @submit="submit"
     @cancel="emit('cancel')"
   >
-    <div class="app-stack">
-      <AppSwitch v-model="enabled" :label="t('common.enable')" data-test="monitor-dialog-enabled" />
+    <div class="monitor-dialog__grid">
+      <AppSwitch
+        v-model="enabled"
+        class="monitor-dialog__wide"
+        :label="t('common.enable')"
+        data-test="monitor-dialog-enabled"
+      />
 
       <AppInput v-model="name" :label="t('common.name')" required data-test="monitor-dialog-name" />
 
@@ -158,6 +163,7 @@ function submit(): void {
       <AppTextarea
         v-if="needsIntent"
         v-model="intentText"
+        class="monitor-dialog__wide"
         :label="t('monitor.intent')"
         :hint="t('monitor.intentHint')"
         :maxlength="500"
@@ -166,6 +172,7 @@ function submit(): void {
 
       <AppTagsInput
         v-model="includeKeywords"
+        class="monitor-dialog__wide"
         :label="t('monitor.keywords')"
         :hint="t('monitor.keywordsHint')"
         data-test="monitor-dialog-keywords"
@@ -178,18 +185,6 @@ function submit(): void {
         data-test="monitor-dialog-match-mode"
       />
 
-      <AppTagsInput
-        v-model="excludeKeywords"
-        :label="t('monitor.excludeKeywords')"
-        data-test="monitor-dialog-excludes"
-      />
-
-      <AppSwitch
-        v-model="useGlobalExcludes"
-        :label="t('monitor.useGlobalExcludes')"
-        data-test="monitor-dialog-global-excludes"
-      />
-
       <AppSelect
         v-model="sensitivity"
         :label="t('monitor.sensitivityLabel')"
@@ -197,9 +192,24 @@ function submit(): void {
         data-test="monitor-dialog-sensitivity"
       />
 
+      <AppTagsInput
+        v-model="excludeKeywords"
+        class="monitor-dialog__wide"
+        :label="t('monitor.excludeKeywords')"
+        data-test="monitor-dialog-excludes"
+      />
+
+      <AppSwitch
+        v-model="useGlobalExcludes"
+        class="monitor-dialog__wide"
+        :label="t('monitor.useGlobalExcludes')"
+        data-test="monitor-dialog-global-excludes"
+      />
+
       <AppSelect
         v-model="actionIds"
         multiple
+        class="monitor-dialog__wide"
         :label="t('monitor.onlyActionsLabel')"
         :hint="t('monitor.onlyActionsHint')"
         :items="actionItems"
@@ -208,3 +218,22 @@ function submit(): void {
     </div>
   </FormDialog>
 </template>
+
+<style scoped>
+/* 字段成对的地方并成两列，窄屏自动回到一列；整行的那些（开关、标签输入、意图描述）跨满两列 */
+.monitor-dialog__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--k-space-4);
+}
+
+@media (min-width: 900px) {
+  .monitor-dialog__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .monitor-dialog__wide {
+    grid-column: 1 / -1;
+  }
+}
+</style>

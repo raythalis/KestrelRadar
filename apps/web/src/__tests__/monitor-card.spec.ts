@@ -69,19 +69,22 @@ describe('MonitorCard', () => {
     expect(wrapper.find('[data-test="monitor-intent"]').text()).toBe('大模型发布与开源项目')
   })
 
-  it('卡脚：灵敏度、排除词数量，开关在右下', async () => {
-    const wrapper = mountCard({ excludeCount: 2 })
+  it('卡脚：只有一个方角状态写档位，不写「灵敏度」三个字；开关在右下', async () => {
+    const wrapper = mountCard()
     const foot = wrapper.find('[data-test="monitor-foot"]')
-    expect(foot.find('[data-test="monitor-sensitivity"]').text()).toBe('灵敏度 标准')
-    expect(foot.find('[data-test="monitor-excludes"]').text()).toBe('排除 2 个词')
+    const status = foot.find('[data-test="monitor-sensitivity"]')
+    expect(status.text()).toBe('标准')
+    expect(status.classes()).toContain('app-status--square')
+    expect(status.find('.app-status__dot').exists()).toBe(false)
+    expect(foot.text()).not.toContain('灵敏度')
 
     await wrapper.findComponent({ name: 'VSwitch' }).vm.$emit('update:modelValue', false)
     expect(wrapper.emitted('toggle')).toEqual([[false]])
   })
 
-  it('没有排除词时卡脚不占位置；推送目标不上卡', () => {
-    const foot = mountCard().find('[data-test="monitor-foot"]')
-    expect(foot.find('[data-test="monitor-excludes"]').exists()).toBe(false)
+  it('卡脚不显示排除词、也不提动作；推送目标不上卡', () => {
+    const foot = mountCard({ keywords: ['a'] }).find('[data-test="monitor-foot"]')
+    expect(foot.text()).toBe('标准')
     expect(foot.find('[data-test="monitor-bound-actions"]').exists()).toBe(false)
   })
 

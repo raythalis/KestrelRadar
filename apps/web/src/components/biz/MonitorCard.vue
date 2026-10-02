@@ -1,12 +1,13 @@
 <!-- MonitorCard：监听卡片（业务组件层）。
      结构跟数据源卡/动作卡对齐：右上角 ×＝删除（二级确认由页面做）、点整张卡片＝编辑、不摆底部按钮行、不要左侧色条。
      卡上回答一件事：这条监听「留下什么」——关键词是一排标签，意图描述是一句话；没填关键词就写清楚「全部通过」。
-     只走个别动作、灵敏度这类附属信息放卡脚，开关也在卡脚右下。
+     灵敏度这类附属信息放卡脚（方角 AppStatus，不写字段名），开关也在卡脚右下。
      只出事件，不碰 store：数据、写操作与删除确认都由页面负责。 -->
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import AppStatus from '@/components/app/AppStatus.vue'
 import AppSwitch from '@/components/app/AppSwitch.vue'
 
 const props = withDefaults(
@@ -20,8 +21,6 @@ const props = withDefaults(
     keywords?: string[]
     /** 关键词的匹配方式文案（任意命中 / 全部命中）；没关键词时不显示 */
     matchLabel?: string
-    /** 排除词数量；0 不显示 */
-    excludeCount?: number
     /** 意图描述，只有「算法 + LLM」模式才有 */
     intentText?: string
     /** 灵敏度文案（宽松 / 标准 / 严格） */
@@ -32,7 +31,6 @@ const props = withDefaults(
     icon: 'mdi-magnify',
     keywords: () => [],
     matchLabel: '',
-    excludeCount: 0,
     intentText: '',
   },
 )
@@ -100,12 +98,9 @@ const restKeywordCount = computed(() => Math.max(0, props.keywords.length - VISI
     </div>
 
     <div class="biz-card__foot" data-test="monitor-foot">
-      <span class="biz-card__meta" data-test="monitor-sensitivity">
-        {{ t('monitor.sensitivityLabel') }} {{ sensitivityLabel }}
-      </span>
-      <span v-if="excludeCount" class="biz-card__meta" data-test="monitor-excludes">
-        {{ t('monitor.excludeCount', { n: excludeCount }) }}
-      </span>
+      <AppStatus square :dot="false" data-test="monitor-sensitivity">{{
+        sensitivityLabel
+      }}</AppStatus>
       <span class="app-spacer" />
       <span @click.stop>
         <AppSwitch

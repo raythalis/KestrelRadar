@@ -117,7 +117,6 @@ export default {
       all: 'All keywords',
     },
     excludeKeywords: 'Exclude words',
-    excludeCount: 'Excludes {n}',
     useGlobalExcludes: 'Also use global exclude words',
     modeLabel: 'Mode',
     mode: {

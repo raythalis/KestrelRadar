@@ -166,4 +166,37 @@ describe('MonitorDialog', () => {
     await flushPromises()
     expect(input('monitor-dialog-name').value).toBe('AI 圈动态')
   })
+
+  it('桌面两列：成对的字段并排、整行的字段跨满两列，窄屏回到一列', async () => {
+    mountDialog()
+    await flushPromises()
+
+    const grid = document.querySelector('.monitor-dialog__grid')
+    expect(grid).toBeTruthy()
+
+    // 整行：开关、意图描述、关键词、排除词、追加全局排除词、只走这几个动作
+    for (const test of [
+      'monitor-dialog-enabled',
+      'monitor-dialog-keywords',
+      'monitor-dialog-excludes',
+      'monitor-dialog-global-excludes',
+      'monitor-dialog-actions',
+    ]) {
+      expect(
+        grid?.querySelector(`[data-test="${test}"]`)?.classList.contains('monitor-dialog__wide'),
+      ).toBe(true)
+    }
+
+    // 成对：名称 + 模式、匹配方式 + 灵敏度
+    for (const test of [
+      'monitor-dialog-name',
+      'monitor-dialog-mode',
+      'monitor-dialog-match-mode',
+      'monitor-dialog-sensitivity',
+    ]) {
+      expect(
+        grid?.querySelector(`[data-test="${test}"]`)?.classList.contains('monitor-dialog__wide'),
+      ).toBe(false)
+    }
+  })
 })

@@ -1283,7 +1283,6 @@ async function confirmChannelDelete(): Promise<void> {
                     :match-label="
                       monitor.keywords.length ? t(`monitor.matchMode.${monitor.matchMode}`) : ''
                     "
-                    :exclude-count="monitor.excludeKeywords.length"
                     :intent-text="monitor.intentText"
                     :sensitivity-label="t(`monitor.sensitivity.${monitor.sensitivity}`)"
                     :enabled="monitor.enabled"
