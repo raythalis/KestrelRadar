@@ -132,3 +132,65 @@ color.ts 的 THEMES  ──┬─→ --k-* CSS 变量（applyThemeVars 灌到 <h
 - 主题色要不要连带 `blue`（info 色）一起变？我建议不。
 - 入口放顶栏还是设置页？（设置页目前还没有外观分组）
 - 要几个主题色、哪几个？（或者第一版只保留现有蓝，先把轴做出来）
+
+---
+
+# 附录：MoviePilot 前端怎么做的（只读参考，v2 分支）
+
+来源：`jxxghp/MoviePilot-Frontend` @ `v2`（浅克隆读源码；`src/plugins/vuetify/theme.ts`、
+`src/composables/useThemeCustomizer.ts`、`src/@core/utils/theme.ts`、`src/App.vue`）。
+
+## 它把「主题」和「主题色」拆成两套独立机制
+
+**① 主题 / 皮肤 = 一张平铺的完整主题清单**（`vuetify/theme.ts`）：
+
+| 主题名 | dark | 主色 |
+| --- | --- | --- |
+| `light` | false | `#8D51F9` |
+| `dark` | true | `#6E66ED` |
+| `purple` | true | `#8D51F9` |
+| `transparent` | true | `#A370F7` |
+| `glass` | true | `#8D51F9` |
+
+每条都是一整套 Vuetify 主题（自己的 dark 标志 + 全部颜色 + variables）。用户可见选项是
+`auto | light | dark | purple | transparent | glass`，`auto` 在运行时按系统解析：
+`getResolvedThemeName()` → `checkPrefersColorSchemeIsDark() ? 'dark' : 'light'`。
+**不是**「N 个主题色 × 亮暗」的组合，而是「N 套成品皮肤」，其中多数刚好是暗色。
+
+**② 主题色 = 单独一份 12 色清单，运行时改写所有主题的 primary**
+
+```ts
+themeCustomizerPrimaryColors = [Purple #8D51F9, Indigo, Blue, Cyan, Teal, Green, Amber, Orange, Coral, Pink, Sky, Slate]
+```
+
+`applyPrimaryColorToVuetify()` 直接遍历 **所有**主题定义改写：
+
+```ts
+for (const themeDefinition of Object.values(themeApi.themes.value)) {
+  themeDefinition.colors.primary = color
+  themeDefinition.colors['on-primary'] = getTextColorForHex(color)  // 按色值亮度自动算前景色
+}
+```
+
+Vuetify 的主题对象是响应式的，改完 CSS 变量立刻跟着变，不用重建主题。语义色
+（success / info / warning / error）不动 —— 这点和我们的结论一致。
+
+## 持久化与首帧
+
+- `localStorage['moviepilot-theme-customizer']`：整个外观设置 JSON（theme、primaryColor、radius、shadow、
+  skin、layout、semiDarkMenu、一堆 glass 参数），配合同名自定义事件做响应式。
+- `localStorage['theme']`：只存主题名，供首帧用。
+- `materio-initial-loader-bg` / `materio-initial-loader-color`：把首屏 loading 的背景色与主色也存下来，
+  避免刷新时先亮一下；`auto` 还额外存 `materio-initial-resolved-theme`（上次解析出的亮暗），
+  因为媒体查询首帧可能短暂返回浅色。
+- 根节点与 body 挂 `data-theme="<解析后的主题名>"`，CSS 据此反应；favicon 也跟着主色重新着色。
+
+## 对我们的意义
+
+MP 走的是「**运行时覆盖**」路线（主题清单固定 + 主色作为覆盖层），不是「组合生成主题」。
+这条路已经被验证可行，好处是加一个主题色不用新增主题条目；代价是多一层运行时改写，
+且首帧颜色要单独存（否则会闪）。我们如果要加主题色轴，两条路都能走：
+
+- **覆盖式（同 MP）**：亮暗两套主题不动，主色作为一个覆盖值写进 `--k-accent*` 并改写 Vuetify 的 primary。
+  改动最小，但「单一来源」变成「来源 + 覆盖」两层。
+- **组合式（我上一条建议）**：色板作为第二个轴与亮暗组合生成主题条目，派生链不变，条目数变多。
