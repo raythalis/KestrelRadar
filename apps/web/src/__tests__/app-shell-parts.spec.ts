@@ -74,20 +74,17 @@ function mountHeader(props: Record<string, unknown> = {}, slots: Record<string, 
 }
 
 describe('AppHeader', () => {
-  it('给了品牌名才渲染品牌标，且不显示页名', () => {
-    const wrapper = mountHeader({ brand: 'Kestrel' })
-    expect(wrapper.get('[data-test="topbar-brand"]').text()).toBe('Kestrel')
-    expect(wrapper.find('[data-test="page-title"]').exists()).toBe(false)
-    expect(mountHeader({}).find('[data-test="topbar-brand"]').exists()).toBe(false)
+  it('顶栏不显示页名（页名归页面自己的 AppPage）', () => {
+    expect(mountHeader().find('[data-test="page-title"]').exists()).toBe(false)
   })
 
   it('菜单按钮把事件抛给外壳', async () => {
-    const wrapper = mountHeader({ brand: 'x' })
+    const wrapper = mountHeader()
     await wrapper.get('[data-test="drawer-toggle"]').trigger('click')
     expect(wrapper.emitted('toggle-menu')).toHaveLength(1)
   })
 
-  it('右侧操作区放什么都行（语言、主题切换）', () => {
+  it('右侧操作区放什么都行（现在放的是主题切换）', () => {
     const wrapper = mountHeader({}, { actions: '<button>EN</button>' })
     expect(wrapper.get('.app-topbar__actions').text()).toContain('EN')
   })

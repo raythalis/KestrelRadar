@@ -71,19 +71,37 @@ describe('AppShell', () => {
     expect(JSON.parse(localStorage.getItem('kestrel-ui') ?? '{}').locale).toBe('en')
   })
 
-  it('顶栏的三态主题段控件能换主题并记下来', async () => {
+  it('顶栏一个按钮循环换主题：跟随系统 → 深色 → 浅色 → 跟随系统，并且记下来', async () => {
     const { wrapper, pinia } = mountShell()
     const ui = useUiStore(pinia)
     expect(ui.preference).toBe('system')
     expect(ui.theme).toBe('kestrelLight')
 
-    await wrapper.get('[data-test="theme-dark"]').trigger('click')
+    const toggle = wrapper.get('[data-test="theme-toggle"]')
+    await toggle.trigger('click')
     expect(ui.preference).toBe('dark')
     expect(ui.theme).toBe('kestrelDark')
     expect(JSON.parse(localStorage.getItem('kestrel-ui') ?? '{}').theme).toBe('dark')
 
-    await wrapper.get('[data-test="theme-light"]').trigger('click')
+    await toggle.trigger('click')
+    expect(ui.preference).toBe('light')
     expect(ui.theme).toBe('kestrelLight')
+
+    await toggle.trigger('click')
+    expect(ui.preference).toBe('system')
+  })
+
+  it('主题按钮的图标与提示跟着当前模式走', async () => {
+    const { wrapper, pinia } = mountShell()
+    const ui = useUiStore(pinia)
+    const toggle = wrapper.get('[data-test="theme-toggle"]')
+    expect(toggle.attributes('title')).toBe('跟随系统')
+    expect(toggle.get('i').classes()).toContain('mdi-monitor')
+
+    ui.setPreference('dark')
+    await wrapper.vm.$nextTick()
+    expect(toggle.attributes('title')).toBe('深色')
+    expect(toggle.get('i').classes()).toContain('mdi-weather-night')
   })
 
   it('窄屏底部导航有五个入口，抽屉默认收着', async () => {
@@ -101,9 +119,11 @@ describe('AppShell', () => {
     expect(wrapper.find('.app-rail.is-open').exists()).toBe(false)
   })
 
-  it('顶栏只有品牌标与操作，页名不在这里显示（归页面自己的 AppPage）', () => {
+  it('顶栏右侧只剩主题按钮：没有页名、没有语言按钮', () => {
     const { wrapper } = mountShell()
-    expect(wrapper.get('[data-test="topbar-brand"]').text()).toBe('Kestrel')
     expect(wrapper.find('[data-test="page-title"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="locale-btn"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="topbar-brand"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="theme-toggle"]').exists()).toBe(true)
   })
 })

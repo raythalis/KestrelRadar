@@ -24,25 +24,13 @@ describe('触摸端尺寸', () => {
     )
   })
 
-  it('可点状态、抽屉项、开关、顶栏控件都不低于 44px', () => {
+  it('可点状态、抽屉项、开关都不低于 44px', () => {
     const block = mobileBlock()
-    for (const selector of [
-      '.app-status--action',
-      '.app-rail__item',
-      '.app-langbtn',
-      '.app-seg button',
-      '.v-switch',
-    ]) {
+    for (const selector of ['.app-status--action', '.app-rail__item', '.v-switch']) {
       expect(block).toContain(selector)
     }
     expect(block).toMatch(/min-height:\s*var\(--k-control-h-touch\)/)
     expect(block).toMatch(/\.app-iconbtn\s*{[^}]*width:\s*var\(--k-control-h-touch\)/s)
-  })
-
-  it('顶栏那排控件宽度也要够（只抬高度会变成细长条）', () => {
-    expect(mobileBlock()).toMatch(
-      /\.app-langbtn,\s*\.app-seg button\s*{[^}]*min-width:\s*var\(--k-control-h-touch\)/s,
-    )
   })
 
   it('桌面密度保持 32 / 40 的层级差（按钮在 CSS，输入框走 Vuetify 的 compact）', () => {

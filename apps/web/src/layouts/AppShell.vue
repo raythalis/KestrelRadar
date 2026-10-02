@@ -1,6 +1,6 @@
 <!-- 外壳：只负责组织 AppSidebar + AppHeader + 内容区，自己不写样式。
-     桌面是常驻左栏，窄屏是抽屉导航 + 底部导航；顶栏管品牌标、语言与主题三态。
-     页名不归顶栏（那是页面自己 AppPage 的事）。 -->
+     桌面是常驻左栏，窄屏是抽屉导航 + 底部导航；顶栏右侧只有主题切换。
+     页名不归顶栏（那是页面自己 AppPage 的事），语言切换在设置页。 -->
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -9,8 +9,8 @@ import { useRoute } from 'vue-router'
 import { BRAND_LOGO } from '@/brand'
 import type { AppNavItem } from '@/components/app/types'
 import { THEME_PREFERENCES, applyThemeVars, findTheme, type ThemePreference } from '@/design/tokens'
-import type { AppLocale } from '@/plugins/i18n'
 import { useUiStore } from '@/stores/ui'
+import { applyThemeWithReveal } from '@/utils/theme-reveal'
 
 const NAV: { name: string; icon: string }[] = [
   { name: 'dashboard', icon: 'mdi-view-dashboard-outline' },
@@ -41,6 +41,27 @@ const brand = computed(() => ({
   tagline: t('app.tagline'),
   logo: BRAND_LOGO,
 }))
+
+// 顶栏只有一个主题按钮：图标显示当前模式，点一下循环到下一个
+const currentTheme = computed(() => {
+  const option = THEME_PREFERENCES.find((item) => item.value === ui.preference)
+  return {
+    icon: themeIcons[option?.value ?? 'system'],
+    labelKey: option?.labelKey ?? 'theme.system',
+  }
+})
+
+/** 以点击位置为中心扩散换主题（不支持 View Transitions 时直接换） */
+function onThemeClick(event: MouseEvent): void {
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  applyThemeWithReveal(
+    {
+      x: event.clientX || rect.left + rect.width / 2,
+      y: event.clientY || rect.top + rect.height / 2,
+    },
+    () => ui.cyclePreference(),
+  )
+}
 
 // 界面语言以 store 为准（它管着持久化）：刷新后也要把存着的语言装回去
 watch(
@@ -84,11 +105,6 @@ watch(
 function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape') drawerOpen.value = false
 }
-
-function changeLocale(): void {
-  const next: AppLocale = ui.locale === 'zh-CN' ? 'en' : 'zh-CN'
-  ui.setLocale(next)
-}
 </script>
 
 <template>
@@ -103,30 +119,18 @@ function changeLocale(): void {
       />
 
       <main class="app-shell__main">
-        <AppHeader
-          :brand="brand.name"
-          :menu-label="t('nav.openMenu')"
-          @toggle-menu="drawerOpen = !drawerOpen"
-        >
+        <AppHeader :menu-label="t('nav.openMenu')" @toggle-menu="drawerOpen = !drawerOpen">
           <template #actions>
-            <button type="button" class="app-langbtn" data-test="locale-btn" @click="changeLocale">
-              {{ ui.locale === 'zh-CN' ? 'EN' : '中文' }}
+            <button
+              type="button"
+              class="app-iconbtn"
+              data-test="theme-toggle"
+              :title="t(currentTheme.labelKey)"
+              :aria-label="t(currentTheme.labelKey)"
+              @click="onThemeClick"
+            >
+              <v-icon size="18">{{ currentTheme.icon }}</v-icon>
             </button>
-
-            <div class="app-seg" data-test="theme-seg">
-              <button
-                v-for="option in THEME_PREFERENCES"
-                :key="option.value"
-                type="button"
-                :class="{ on: ui.preference === option.value }"
-                :data-test="`theme-${option.value}`"
-                :title="t(option.labelKey)"
-                :aria-label="t(option.labelKey)"
-                @click="ui.setPreference(option.value)"
-              >
-                <v-icon size="14">{{ themeIcons[option.value] }}</v-icon>
-              </button>
-            </div>
           </template>
         </AppHeader>
 

@@ -283,7 +283,7 @@ export default {
       rsshubAccessKey: 'RSSHub 访问密钥',
     },
     hint: {
-      language: '决定「有更新」这类标记和来源行的标点；界面语言看右上角',
+      language: '决定「有更新」这类标记和来源行的标点',
       timezone: '例如 Asia/Shanghai；填 system 表示跟随服务器',
       judgeMode: '纯算法就是关键词加打分；开了 LLM 会额外让模型复核灰区',
       scoreHighLine: '分数到这条线直接放行',

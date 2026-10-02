@@ -161,11 +161,19 @@
   flex: 1;
 }
 
-/* 顶栏里的空档只在桌面用：窄屏靠品牌标的 auto 外边距居中，多一个撑开的空档会把它挤没 */
-.app-topbar .app-spacer {
-  display: none;
+/* 主题圆形扩散（View Transitions API）：新主题那层贴在上面，由 utils/theme-reveal.ts
+   用 clip-path 从点击位置把它"圆"出来；两层自己的动画都关掉，免得跟扩散打架。 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }
 
+::view-transition-new(root) {
+  z-index: 1;
+}
+
+/* 顶栏里的空档只在桌面用：窄屏靠品牌标的 auto 外边距居中，多一个撑开的空档会把它挤没 */
 /* 统计块网格：手机两列，桌面四列 */
 .app-grid--stats {
   display: grid;
@@ -631,40 +639,6 @@
 }
 
 /* 窄屏顶栏中间的文字品牌标：居中，且不吃点击（它不是按钮）。 */
-.app-topbar__brand {
-  /* 在抽屉按钮与右侧控件之间居中；不做屏幕绝对居中：390 宽下右侧那排
-     控件（语言 + 三态）就占掉 192px，屏幕正中央一定会压到它们。 */
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  margin-inline: auto;
-  font-family: var(--k-font-mono);
-  font-size: var(--k-fs-meta);
-  font-weight: var(--k-fw-semibold);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  pointer-events: none;
-}
-
-/* 一段缓慢扫过文字的高光。只在支持文字裁切的浏览器上做，否则退回纯色文字。 */
-@supports ((background-clip: text) or (-webkit-background-clip: text)) {
-  .app-topbar__brand {
-    background-image: linear-gradient(
-      100deg,
-      var(--k-muted) 35%,
-      var(--k-text) 50%,
-      var(--k-muted) 65%
-    );
-    background-size: 260% 100%;
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    animation: k-brand-sheen 7s ease-in-out infinite;
-  }
-}
-
 .app-topbar__actions {
   display: flex;
   align-items: center;
@@ -690,46 +664,6 @@
 .app-iconbtn:hover {
   background: var(--k-panel-2);
   color: var(--k-text);
-}
-
-.app-langbtn {
-  padding-inline: var(--k-space-1);
-  border: 0;
-  background: none;
-  font-family: var(--k-font-mono);
-  font-size: var(--k-fs-label);
-  font-weight: var(--k-fw-medium);
-  color: var(--k-muted);
-  cursor: pointer;
-}
-
-.app-langbtn:hover {
-  color: var(--k-text);
-}
-
-.app-seg {
-  display: flex;
-  gap: 2px;
-  padding: 2px;
-  border-radius: var(--k-radius-md);
-  background: var(--k-panel-2);
-}
-
-.app-seg button {
-  display: grid;
-  place-items: center;
-  padding: 5px;
-  border: 0;
-  border-radius: var(--k-radius-sm);
-  background: none;
-  color: var(--k-muted);
-  cursor: pointer;
-}
-
-.app-seg button.on {
-  background: var(--k-panel);
-  color: var(--k-text);
-  box-shadow: var(--k-elev-1);
 }
 
 .app-shell__content {
@@ -977,16 +911,8 @@
   .app-status--action,
   .app-rail__item,
   .app-rail__brand,
-  .app-langbtn,
-  .app-seg button,
   .v-switch {
     min-height: var(--k-control-h-touch);
-  }
-
-  /* 光有高度会变成细长条（主题三态、语言按钮都中过招），宽度也要够点 */
-  .app-langbtn,
-  .app-seg button {
-    min-width: var(--k-control-h-touch);
   }
 
   .app-iconbtn {
@@ -1028,18 +954,12 @@
 
   .app-scrim,
   .app-tabbar,
-  .app-topbar__menu,
-  .app-topbar__brand {
+  .app-topbar__menu {
     display: none !important;
   }
 
   .app-topbar {
     padding-inline: var(--k-space-5);
-  }
-
-  .app-topbar .app-spacer {
-    display: block;
-    flex: 1;
   }
 
   .app-shell__content {
@@ -1077,20 +997,8 @@
   }
 }
 
-@keyframes k-brand-sheen {
-  0%,
-  40% {
-    background-position: 140% 0;
-  }
-
-  100% {
-    background-position: -40% 0;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .app-rail__logo,
-  .app-topbar__brand {
+  .app-rail__logo {
     animation: none;
   }
 }
