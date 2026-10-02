@@ -76,7 +76,13 @@ const rsshubConfigured = computed(() => props.rsshubBaseUrl.trim().length > 0)
 const rsshubPrefix = computed(() => props.rsshubBaseUrl.trim().replace(/\/+$/, ''))
 
 const kindItems = computed(() => [
-  { title: t('discovery.kind.rsshub'), value: 'rsshub', muted: !rsshubConfigured.value },
+  {
+    title: t('discovery.kind.rsshub'),
+    value: 'rsshub',
+    muted: !rsshubConfigured.value,
+    // 灰掉时交给 Vuetify 的 disabled：整行不响应点击、不响应悬停、点了也不会关掉下拉
+    props: { disabled: !rsshubConfigured.value },
+  },
   { title: t('discovery.kind.rss'), value: 'rss', muted: false },
   { title: t('discovery.kind.web'), value: 'web', muted: false },
 ])
@@ -207,9 +213,18 @@ function submit(): void {
   width: 100%;
 }
 
-/* 没配 RSSHub 的那一项：只把标题压灰。整行不做 opacity / pointer-events 处理，
-   否则行里的「前往配置」会被一起压暗、也点不动 */
+/* 没配 RSSHub 的那一项：整行交给 Vuetify 的 disabled 处理——不响应点击、不响应悬停、
+   点了也不会把下拉关掉。但它顺手把整行压成 opacity .6，会把行里的「前往配置」一起压暗，
+   这里把整行的透明度还回来、只压灰标题，并把指针事件还给它里面的那个 chip。 */
+.source-dialog__kindrow--muted.v-list-item--disabled {
+  opacity: 1;
+}
+
 .source-dialog__kindrow--muted .source-dialog__kindlabel {
   color: var(--k-muted);
+}
+
+.source-dialog__kindrow--muted .app-status--action {
+  pointer-events: auto;
 }
 </style>

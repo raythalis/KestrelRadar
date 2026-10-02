@@ -85,9 +85,9 @@ describe('SourceDialog', () => {
     await openMenu('source-dialog-kind')
     const chip = q('source-dialog-rsshub-configure')
     expect(chip?.textContent).toContain('前往配置')
+    // 整行走 Vuetify 的 disabled：不响应点击、不响应悬停，也不会把下拉关掉
+    expect(document.querySelector('.v-list-item--disabled')).toBeTruthy()
     expect(chip?.closest('.v-list-item')?.className).toContain('source-dialog__kindrow--muted')
-    // 整行不能再用 opacity / pointer-events 压（会把里面的 chip 一起废掉）
-    expect(document.querySelector('.v-list-item--disabled')).toBeNull()
 
     await click(document.querySelector('.v-list-item'))
     await click(submit())
@@ -108,6 +108,7 @@ describe('SourceDialog', () => {
     await flushPromises()
     await openMenu('source-dialog-kind')
     expect(q('source-dialog-rsshub-configure')).toBeNull()
+    expect(document.querySelector('.v-list-item--disabled')).toBeNull()
     expect(q('source-dialog-kind-item')?.className).not.toContain('muted')
 
     await click(document.querySelector('.v-list-item'))

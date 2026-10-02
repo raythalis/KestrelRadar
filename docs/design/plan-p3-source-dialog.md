@@ -30,10 +30,14 @@
    `AppStatus`（tone=info，`action`）写着「前往配置」，点击出 `configureRsshub` 事件，由页面决定跳去全局设置。
    这种情况下就算填了路由也保存不了（保存按钮不可点）。
 
-   实现上**不用 Vuetify 的 `item.props.disabled`**：Vuetify 会把整行压成 `opacity .6` + `pointer-events: none`，
-   行里的「前往配置」会被一起压暗、真鼠标也点不动（脚本 `.click()` 能过，手点不行）。
-   这里改成：自己给这一行挂灰态类（只压灰标题文字），选择上用一个守卫——点了 RSSHub 这一项不改变当前类型。
-   列表项的 title / 高亮 / 可选状态都由这套自己控制。
+   这一行的交互要求：**整行不响应任何点击（点了不换类型、也不把下拉关掉）、悬停没有任何样式变化，
+   只有里面的「前往配置」可点**。
+
+   做法：用 Vuetify 的 `item.props.disabled`（它给整行 `pointer-events: none`，悬停高亮连元素都不渲染），
+   再补两条自己的规则把副作用抵消掉——
+   ① 整行 `opacity: 1`（Vuetify 默认会压成 .6，会把行里的 chip 一起压暗），灰只压标题文字；
+   ② 行里的「前往配置」`pointer-events: auto`（`pointer-events` 可继承，子元素显式写 auto 就能收回来）。
+   另外 `@update:model-value` 里仍留一道守卫，点到这一项不改类型。
 2. **配了**：把实例地址当**固定前缀**挂在路由输入框前面（`AppInput` 的 `prefix`），前缀只展示、
    不参与输入、不进提交值；后端自己拼前缀，所以库里存的还是 `/bilibili/ranking/all` 这种纯路由。
    前缀末尾的斜杠会去掉再展示（后端拼地址时也是这么处理的）。
