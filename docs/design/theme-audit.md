@@ -83,3 +83,52 @@
    要不要在 /design 加一栏「另一套主题的值」方便两边对拍？
 2. 旧 `main.scss` 里那处 `#fff` 留给 P6 清理，现在不动。
 3. 上面第 6 节列的那些「定义了没人用」的变量里，`--k-space-7` 要不要删（其余建议留着，是 DS 的对外口子）。
+
+---
+
+# 追加：主题色（accent）能不能换（2026-10-02 澄清后重查）
+
+上面第 1–9 节查的是**亮暗模式**；这里回答**主题色**：现在只有一套蓝色，而且没有任何切换机制。
+
+## 现状（证据）
+
+| 问题 | 答案 |
+| --- | --- |
+| 主题色值在哪 | 只在 `design/tokens/color.ts`：亮 `accent: #3b5cf0`、暗 `accent: #5b7bf8`（外加 `accentSoft` / `onAccent` / `blue`） |
+| 别处还写过蓝色吗 | 没有。全项目再无第二处（grep 过 4 个色值的十六进制） |
+| 谁在消费它 | 只经 `--k-accent*` 变量 → `styles/{foundation,components,biz}.scss`、旧 `main.scss`、`/design` 色板 |
+| 有切换入口吗 | 没有。偏好只有一个维度 `light / system / dark`（`localStorage.kestrel-ui`），设置页没有任何「外观」分组 |
+
+## 为什么加主题色是「改一处」的事
+
+派生链已经是单源的，换色板不用碰组件：
+
+```
+color.ts 的 THEMES  ──┬─→ --k-* CSS 变量（applyThemeVars 灌到 <html>）
+                      ├─→ Vuetify 主题（vuetify.ts 用 Object.fromEntries(THEMES.map(…)) 自动注册）
+                      └─→ v-theme--<id> 类（按 THEMES 逐个开关，浮层不掉色）
+```
+
+**现在的耦合点**：`THEMES` 里的一条同时扮演三个角色——① 亮暗模式 ② 色板 ③ 用户可见的偏好项
+（`THEME_PREFERENCES` 就是 light/system/dark）。所以「主题色」要独立成第二个轴，不能只是往 THEMES 里塞。
+
+## 要做的事（还没做，等确认）
+
+1. `color.ts`：tokens 拆成两轴——**中性面（跟亮暗走）** + **主题色（跟色板走）**，再组合生成 `THEMES`。
+   建议归属：
+   - 跟主题色走：`accent`、`accentSoft`、`onAccent`（`onAccent` 必须按该主题色的亮度算）
+   - 跟亮暗走：`bg` / `rail` / `panel` / `panel2` / `border` / `borderSoft` / `text` / `muted` / `faint` + 阴影
+   - **不要动**：`ok` / `warn` / `err`（语义色，换主题色不该跟着变）；`blue`（info）建议固定
+2. `stores/ui.ts`：偏好加第二个值（`accent: 'blue' | …`），`resolveTheme` 组合出主题 id。
+3. `THEME_PREFERENCES` 旁边加一份主题色清单 + `theme.accent.*` 文案；顶栏或设置页给入口。
+4. `layouts/AppShell.vue`：顶栏要不要放色板入口（现在只有亮暗三态段控件）。
+5. `/design`：色板清单现在只列当前主题，加色板切换才能逐套对拍。
+6. 测试：`app-shell.spec.ts`、`design-foundation.spec.ts` 里写死了 `kestrelDark` / `kestrelLight`，id 命名变了要跟着改。
+7. 建议加个**对比度守卫**：新主题色的 `onAccent` 对它本身、`accent` 对面板都要 ≥ 4.5，塞进去就跑测试，
+   避免以后有人挑个亮黄主题色导致白字看不清。
+
+## 待定夺
+
+- 主题色要不要连带 `blue`（info 色）一起变？我建议不。
+- 入口放顶栏还是设置页？（设置页目前还没有外观分组）
+- 要几个主题色、哪几个？（或者第一版只保留现有蓝，先把轴做出来）
