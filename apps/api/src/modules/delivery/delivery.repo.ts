@@ -70,6 +70,9 @@ export function createDeliveryRepo(db: Db) {
   const countSentSince = db.prepare(
     "select count(*) as total from deliveries where status = 'sent' and created_at >= ?",
   )
+  const countByStatus = db.prepare(
+    'select count(*) as total from deliveries where status = ? and created_at >= ?',
+  )
 
   return {
     create(input: NewDelivery): Delivery {
@@ -119,6 +122,12 @@ export function createDeliveryRepo(db: Db) {
     /** 今天已经成功发了几条（每日投递上限用它） */
     countSentSince(iso: string): number {
       const row = countSentSince.get(iso) as unknown as { total: number }
+      return row.total
+    },
+
+    /** 某个状态在某个时间点之后有几条（投递成功率用它） */
+    countByStatusSince(status: 'sent' | 'failed', iso: string): number {
+      const row = countByStatus.get(status, iso) as unknown as { total: number }
       return row.total
     },
 

@@ -1,3 +1,5 @@
+import { dirname, join } from 'node:path'
+
 import { API_PREFIX } from '@kestrel/contracts'
 import Fastify, { type FastifyInstance } from 'fastify'
 
@@ -14,6 +16,8 @@ export interface BuildAppOptions {
   enableScheduler?: boolean
   /** 测试用：换成假的 Telegram 网关，别真去打 Telegram */
   telegram?: TelegramGateway
+  /** 测试用：替掉真网络（图标抓取、RSSHub 探测走它） */
+  fetchImpl?: typeof fetch
 }
 
 export async function buildApp(options: BuildAppOptions): Promise<FastifyInstance> {
@@ -28,6 +32,9 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
       else app.log.info(message)
     },
     telegram: options.telegram,
+    fetchImpl: options.fetchImpl,
+    // 图标与数据库放在同一个数据目录下
+    iconDir: options.dbPath === ':memory:' ? undefined : join(dirname(options.dbPath), 'icons'),
   })
   await app.register(
     async (instance) => {
@@ -45,6 +52,9 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
       const sweep = (): void => {
         const archived = container.merger.archiveStale()
         if (archived > 0) app.log.info(`事件归档：${archived} 个`)
+        // 采集轮次流水也在这个清理任务里收：只保留最近 N 天（隐藏配置项）
+        const runs = container.runs.pruneOlderThan(container.hidden.runRetentionDays())
+        if (runs > 0) app.log.info(`采集流水清理：${runs} 条`)
       }
       sweep()
       maintenance = setInterval(sweep, 60 * 60 * 1000)

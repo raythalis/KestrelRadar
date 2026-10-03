@@ -1,4 +1,10 @@
-import { DeliveryError, type DeliverableMessage, type DeliverySender } from './sender.ts'
+import {
+  DeliveryError,
+  resolveTimeout,
+  type DeliverableMessage,
+  type DeliverySender,
+  type TimeoutOption,
+} from './sender.ts'
 
 export interface TelegramChat {
   id: string
@@ -36,12 +42,12 @@ function chatTitle(chat: NonNullable<TelegramUpdate['message']>['chat']): string
 
 /** Telegram：bot token 当密钥，chat id 放渠道参数里 */
 export function createTelegramGateway(
-  options: { fetchImpl?: typeof fetch; timeoutSeconds?: number } = {},
+  options: { fetchImpl?: typeof fetch; timeoutSeconds?: TimeoutOption } = {},
 ): TelegramGateway {
   const doFetch = options.fetchImpl ?? fetch
-  const timeoutSeconds = options.timeoutSeconds ?? 15
 
   async function call<T>(token: string, method: string, body: unknown): Promise<T> {
+    const timeoutSeconds = resolveTimeout(options.timeoutSeconds, 15)
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), timeoutSeconds * 1000)
     try {
@@ -55,14 +61,16 @@ export function createTelegramGateway(
       if (!response.ok || !payload?.ok) {
         const reason = payload?.description ?? `HTTP ${response.status}`
         throw new DeliveryError(
+          'delivery.telegramFailed',
           response.status === 401 ? `bot token 不对：${reason}` : `Telegram 说：${reason}`,
         )
       }
       return payload.result as T
     } catch (error) {
-      if ((error as Error).name === 'AbortError') throw new DeliveryError('Telegram 超时')
+      if ((error as Error).name === 'AbortError')
+        throw new DeliveryError('delivery.telegramTimeout')
       if (error instanceof DeliveryError) throw error
-      throw new DeliveryError((error as Error).message || 'Telegram 请求失败')
+      throw new DeliveryError('delivery.telegramFailed', (error as Error).message || undefined)
     } finally {
       clearTimeout(timer)
     }
@@ -71,12 +79,12 @@ export function createTelegramGateway(
   return {
     async send(message: DeliverableMessage): Promise<void> {
       if (message.channel.type !== 'telegram') {
-        throw new DeliveryError('这个渠道不是 Telegram')
+        throw new DeliveryError('delivery.notTelegram')
       }
       const token = message.secret
-      if (!token) throw new DeliveryError('这个 Telegram 渠道还没填 bot token')
+      if (!token) throw new DeliveryError('delivery.telegramNoToken')
       const chatId = message.channel.config.chatId
-      if (!chatId) throw new DeliveryError('这个 Telegram 渠道还没选会话（chat id）')
+      if (!chatId) throw new DeliveryError('delivery.telegramNoChat')
       await call(token, 'sendMessage', {
         chat_id: chatId,
         text: message.text,
@@ -85,7 +93,7 @@ export function createTelegramGateway(
     },
 
     async listChats(token: string): Promise<TelegramChat[]> {
-      if (!token.trim()) throw new DeliveryError('先填 bot token 再读取会话')
+      if (!token.trim()) throw new DeliveryError('delivery.telegramTokenMissing')
       const updates = await call<TelegramUpdate[]>(token, 'getUpdates', {
         limit: 100,
         allowed_updates: ['message', 'channel_post'],

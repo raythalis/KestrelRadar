@@ -1,3 +1,4 @@
+import { failureCopy } from '@kestrel/contracts'
 import { Cron } from 'croner'
 
 import type { CollectOutcome, Collector } from './collector.ts'
@@ -91,8 +92,10 @@ export function createScheduler(deps: SchedulerDeps) {
         ok: false,
         routeOk: false,
         contentOk: false,
+        foundCount: 0,
         newItemCount: 0,
-        message: (error as Error).message || '采集失败',
+        code: 'collection.failed',
+        message: (error as Error).message || failureCopy('collection.failed'),
       })
     } finally {
       refreshNextRun(key)
@@ -110,7 +113,9 @@ export function createScheduler(deps: SchedulerDeps) {
         ok: false,
         routeOk: false,
         contentOk: false,
+        foundCount: 0,
         newItemCount: 0,
+        code: 'delivery.failed',
         message: (error as Error).message || '汇总投递失败',
       })
     } finally {

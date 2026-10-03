@@ -12,6 +12,8 @@ build/
 
 # 运行时数据
 /data/
+# 抓回来的网站图标缓存（跟着数据库目录走，属于本机数据）
+apps/api/data/icons/
 *.db
 *.db-*
 *.sqlite

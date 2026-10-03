@@ -4,7 +4,9 @@ import { createActionService } from './modules/actions/action.service.ts'
 import { createChannelRepo } from './modules/channels/channel.repo.ts'
 import { createChannelService } from './modules/channels/channel.service.ts'
 import { createCollector, type Collector } from './modules/collection/collector.ts'
+import { createRunRepo, type RunRepo } from './modules/collection/run.repo.ts'
 import { createScheduler, type Scheduler } from './modules/collection/scheduler.ts'
+import { createRsshubStatus } from './modules/config/rsshub-status.ts'
 import { createDiscoveryRepo } from './modules/discoveries/discovery.repo.ts'
 import { createDiscoveryService } from './modules/discoveries/discovery.service.ts'
 import { builtinTemplates } from './modules/templates/builtin.ts'
@@ -23,6 +25,12 @@ import { createEventRepo, type EventRepo } from './modules/events/event.repo.ts'
 import { createEventService } from './modules/events/event.service.ts'
 import { createGroupRepo } from './modules/groups/group.repo.ts'
 import { createGroupService } from './modules/groups/group.service.ts'
+import { createIncidentRepo } from './modules/incidents/incident.repo.ts'
+import {
+  createIncidentService,
+  type IncidentService,
+} from './modules/incidents/incident.service.ts'
+import { createIconService, type IconService } from './modules/icons/icon.service.ts'
 import { createItemRepo, type ItemRepo } from './modules/items/item.repo.ts'
 import { createJudgeService } from './modules/judgment/judge.service.ts'
 import { createJudgmentRepo, type JudgmentRepo } from './modules/judgment/judgment.repo.ts'
@@ -32,6 +40,8 @@ import { createModelProviderService } from './modules/model-providers/model-prov
 import { createModelRepo } from './modules/model-providers/model.repo.ts'
 import { createMonitorRepo } from './modules/monitors/monitor.repo.ts'
 import { createMonitorService } from './modules/monitors/monitor.service.ts'
+import { createHiddenSettings, type HiddenSettings } from './modules/settings/hidden.ts'
+import { createStatsService, type StatsService } from './modules/stats/stats.service.ts'
 import { createSettingsRepo } from './modules/settings/settings.repo.ts'
 import { createSettingsService } from './modules/settings/settings.service.ts'
 
@@ -43,6 +53,13 @@ export interface Container {
   channels: ReturnType<typeof createChannelService>
   modelProviders: ReturnType<typeof createModelProviderService>
   settings: ReturnType<typeof createSettingsService>
+  hidden: HiddenSettings
+  incidents: IncidentService
+  runs: RunRepo
+  /** 图标抓取；测试里没给目录就没有这个能力 */
+  icons?: IconService
+  iconDir?: string
+  stats: StatsService
   items: ItemRepo
   judgments: JudgmentRepo
   events: EventRepo
@@ -66,6 +83,10 @@ export interface ContainerOptions {
   telegram?: TelegramGateway
   /** 渠道合并窗口；测试里给一个很短的窗口 */
   batcher?: ChannelBatcher
+  /** 图标存哪；不传就不抓图标（与数据库同级目录下的 icons/） */
+  iconDir?: string
+  /** 测试用：替掉真网络（图标抓取、RSSHub 探测都走它） */
+  fetchImpl?: typeof fetch
 }
 
 /** 装配处：repo 与 service 的依赖关系只在这里写一次 */
@@ -85,6 +106,17 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
   const templateRepo = createTemplateRepo(db)
 
   const settings = createSettingsService(settingsRepo)
+  const hidden = createHiddenSettings(settingsRepo)
+  const runs = createRunRepo(db)
+
+  // 异常：三类共一张表；库里与前端同为 hidden.incidentLimit 条（默认 20）
+  const incidents = createIncidentService({
+    repo: createIncidentRepo(db),
+    limits: () => ({
+      limit: hidden.incidentLimit(),
+      dedupMinutes: hidden.incidentDedupMinutes(),
+    }),
+  })
 
   const judge = createJudgeService({
     monitors: monitorRepo,
@@ -93,6 +125,7 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     items: itemRepo,
     judgments: judgmentRepo,
     settings,
+    incidents,
     llm: options.llm,
     log: options.log,
   })
@@ -107,8 +140,20 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
 
   const templates = createTemplateService({ repo: templateRepo, builtin: builtinTemplates() })
 
+  const icons = options.iconDir
+    ? createIconService({
+        discoveries: discoveryRepo,
+        dir: options.iconDir,
+        fetchImpl: options.fetchImpl,
+      })
+    : undefined
+  const rsshub = createRsshubStatus({ settings, fetchImpl: options.fetchImpl })
+
   const telegram = options.telegram ?? createTelegramGateway()
-  const sender = options.sender ?? createDeliverySender()
+  // 推送超时跟着设置走：改了立刻生效，不用重启
+  const sender =
+    options.sender ??
+    createDeliverySender({ timeoutSeconds: () => settings.get().deliveryTimeoutSeconds })
   const batcher = options.batcher ?? createChannelBatcher(sender)
   const delivery = createDeliveryService({
     actions: actionRepo,
@@ -125,6 +170,7 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     telegram,
     sender,
     batcher,
+    incidents,
     log: options.log,
   })
 
@@ -132,6 +178,9 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     discoveries: discoveryRepo,
     items: itemRepo,
     settings,
+    incidents,
+    runs,
+    groups: groupRepo,
     // 采到新条目就顺手判一遍：判定失败不影响采集结果
     onCollected: async (discoveryId) => {
       try {
@@ -165,6 +214,20 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
         options.log?.('warn', `投递失败：${(error as Error).message}`)
       }
     },
+  })
+
+  const stats = createStatsService({
+    groups: groupRepo,
+    discoveries: discoveryRepo,
+    monitors: monitorRepo,
+    actions: actionRepo,
+    channels: channelRepo,
+    events: eventRepo,
+    deliveries: deliveryRepo,
+    runs,
+    settings,
+    hidden,
+    rsshub,
   })
 
   const scheduler = createScheduler({
@@ -209,6 +272,12 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     channels: createChannelService(channelRepo),
     modelProviders: createModelProviderService(providerRepo, modelRepo),
     settings,
+    hidden,
+    incidents,
+    runs,
+    icons,
+    iconDir: options.iconDir,
+    stats,
     items: itemRepo,
     judgments: judgmentRepo,
     events: eventRepo,

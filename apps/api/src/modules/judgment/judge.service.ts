@@ -1,14 +1,22 @@
-import type { Monitor, PreviewRequestInput, PreviewResult, PreviewSample } from '@kestrel/contracts'
+import {
+  failureCopy,
+  type FailureCode,
+  type Monitor,
+  type PreviewRequestInput,
+  type PreviewResult,
+  type PreviewSample,
+} from '@kestrel/contracts'
 
 import { AppError } from '../../plugins/errors.ts'
 import type { DiscoveryRepo } from '../discoveries/discovery.repo.ts'
 import type { GroupRepo } from '../groups/group.repo.ts'
+import type { IncidentService } from '../incidents/incident.service.ts'
 import type { Item, ItemRepo } from '../items/item.repo.ts'
 import type { MonitorRepo } from '../monitors/monitor.repo.ts'
 import type { SettingsService } from '../settings/settings.service.ts'
 import { evaluateContent, resolveBands, type EffectiveRule, type Verdict } from './judge.ts'
 import type { JudgmentRepo } from './judgment.repo.ts'
-import { createUnavailableLlm, type JudgeLlm } from './llm.ts'
+import { createUnavailableLlm, JudgeLlmUnavailableError, type JudgeLlm } from './llm.ts'
 
 export interface JudgeDeps {
   monitors: MonitorRepo
@@ -17,6 +25,8 @@ export interface JudgeDeps {
   items: ItemRepo
   judgments: JudgmentRepo
   settings: SettingsService
+  /** 异常记录：模型调用失败时记一条 */
+  incidents?: IncidentService
   llm?: JudgeLlm
   log?: (level: 'info' | 'warn', message: string) => void
 }
@@ -88,6 +98,19 @@ export function createJudgeService(deps: JudgeDeps) {
       }
     } catch (error) {
       const message = (error as Error).message || '未知错误'
+      // 模型这一轮没调通：记一条异常（文案走失败文案表，原始错误进 detail）
+      const code: FailureCode =
+        error instanceof JudgeLlmUnavailableError ? 'llm.unavailable' : 'llm.failed'
+      deps.incidents?.record({
+        kind: 'judgment',
+        targetId: monitor.id,
+        targetName: monitor.name,
+        groupId: monitor.groupId,
+        groupName: deps.groups.get(monitor.groupId)?.name ?? '',
+        code,
+        message: failureCopy(code),
+        detail: message,
+      })
       if (deps.settings.get().llmFallbackMode === 'error') {
         deps.log?.('warn', `模型判定失败，按设置不降级：${message}`)
         return null

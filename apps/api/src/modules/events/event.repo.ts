@@ -73,6 +73,7 @@ const COUNTS = `(select count(distinct ei.discovery_id) from event_items ei wher
      (select count(*) from event_items ei where ei.event_id = events.id) as item_count`
 
 export function createEventRepo(db: Db) {
+  const countCreatedSince = db.prepare('select count(*) as total from events where created_at >= ?')
   const insertEvent = db.prepare(
     `insert into events (id, group_id, title, url, url_key, first_item_at, last_item_at, status, delivered_at,
        created_at, updated_at)
@@ -149,6 +150,12 @@ export function createEventRepo(db: Db) {
     get(id: string): Event | undefined {
       const row = selectById.get(id) as unknown as EventRow | undefined
       return row ? toEvent(row) : undefined
+    },
+
+    /** 某个时间点之后新建了多少事件（仪表盘「今日事件」用它） */
+    countCreatedSince(iso: string): number {
+      const row = countCreatedSince.get(iso) as unknown as { total: number }
+      return row.total
     },
 
     listByGroup(groupId: string): Event[] {

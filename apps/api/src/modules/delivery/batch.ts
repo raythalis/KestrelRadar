@@ -30,7 +30,9 @@ export function createChannelBatcher(sender: DeliverySender, windowMs = CHANNEL_
       for (const waiter of bucket.waiters) waiter.resolve()
     } catch (error) {
       const failure =
-        error instanceof DeliveryError ? error : new DeliveryError((error as Error).message)
+        error instanceof DeliveryError
+          ? error
+          : new DeliveryError('delivery.failed', (error as Error).message || undefined)
       for (const waiter of bucket.waiters) waiter.reject(failure)
     }
   }

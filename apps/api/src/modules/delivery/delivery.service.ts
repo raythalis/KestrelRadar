@@ -1,4 +1,9 @@
-import type { Action, ChannelTestResult } from '@kestrel/contracts'
+import {
+  failureCopy,
+  type Action,
+  type ChannelTestResult,
+  type FailureCode,
+} from '@kestrel/contracts'
 
 import { DeliveryError } from './sender.ts'
 
@@ -7,6 +12,7 @@ import type { ChannelRepo } from '../channels/channel.repo.ts'
 import type { DiscoveryRepo } from '../discoveries/discovery.repo.ts'
 import type { Event, EventRepo } from '../events/event.repo.ts'
 import type { GroupRepo } from '../groups/group.repo.ts'
+import type { IncidentService } from '../incidents/incident.service.ts'
 import type { Item, ItemRepo } from '../items/item.repo.ts'
 import type { JudgmentRepo } from '../judgment/judgment.repo.ts'
 import type { MonitorRepo } from '../monitors/monitor.repo.ts'
@@ -46,6 +52,8 @@ export interface DeliveryDeps {
   telegram: TelegramGateway
   sender: DeliverySender
   batcher: ChannelBatcher
+  /** 异常记录：投递失败时记一条（渠道连通性测试这类手动动作不算） */
+  incidents?: IncidentService
   log?: (level: 'info' | 'warn', message: string) => void
 }
 
@@ -185,6 +193,7 @@ export function createDeliveryService(deps: DeliveryDeps) {
       if (!first || budget <= 0) break
       const text = batch.map((message) => message.text).join('\n\n---\n\n')
       let error: string | null = null
+      let failureCode: FailureCode = 'delivery.failed'
       try {
         await deps.batcher.enqueue({
           channel,
@@ -197,7 +206,9 @@ export function createDeliveryService(deps: DeliveryDeps) {
           hitAt: first.event.firstItemAt,
         })
       } catch (failure) {
-        error = (failure as Error).message || '发送失败'
+        // 推送不重试：一次投递失败就是一条异常（重试有重复发消息的风险）
+        failureCode = failure instanceof DeliveryError ? failure.code : 'delivery.failed'
+        error = (failure as Error).message || failureCopy(failureCode)
       }
 
       const delivery = deps.deliveries.create({
@@ -211,6 +222,15 @@ export function createDeliveryService(deps: DeliveryDeps) {
       })
       if (error) {
         deps.log?.('warn', `投递失败：${action.name} — ${error}`)
+        deps.incidents?.record({
+          kind: 'delivery',
+          targetId: action.id,
+          targetName: action.name,
+          groupId: action.groupId,
+          groupName: group.name,
+          code: failureCode,
+          message: error,
+        })
         continue
       }
 
@@ -257,6 +277,7 @@ export function createDeliveryService(deps: DeliveryDeps) {
       if (!token && input.channelId) token = deps.channels.getSecret(input.channelId)
       if (!token)
         throw new DeliveryError(
+          'delivery.telegramTokenMissing',
           '没有可用的 bot token：填一个，或选一个已经存过 token 的 Telegram 渠道',
         )
       return deps.telegram.listChats(token)

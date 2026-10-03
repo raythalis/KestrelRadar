@@ -7,10 +7,19 @@ export interface ParsedEntry {
   publishedAt: string | null
 }
 
+/**
+ * 解析失败分两种：空源（拿到了 feed，但里面一条都没有）与不是订阅源。
+ * 前者不算失败（只记流水），后者要开异常，所以要用码区分，别靠文案猜。
+ */
+export type FeedParseFailureKind = 'empty' | 'not_feed'
+
 export class FeedParseError extends Error {
-  constructor(message: string) {
+  readonly kind: FeedParseFailureKind
+
+  constructor(kind: FeedParseFailureKind, message: string) {
     super(message)
     this.name = 'FeedParseError'
+    this.kind = kind
   }
 }
 
@@ -78,18 +87,19 @@ function atomLink(entry: Record<string, unknown>): string | null {
  * 拿不到发布时间就留空——绝不把抓取时间当发布时间，否则榜单类源每次刷新都会像刚发生。
  */
 export function parseFeed(xml: string): ParsedEntry[] {
-  if (!xml.includes('<')) throw new FeedParseError('返回的内容不是 feed 格式')
+  if (!xml.includes('<')) throw new FeedParseError('not_feed', '返回的内容不是 feed 格式')
 
   let document: Record<string, unknown>
   try {
     document = parser.parse(xml) as Record<string, unknown>
   } catch {
-    throw new FeedParseError('返回的内容解析不了，可能不是订阅源')
+    throw new FeedParseError('not_feed', '返回的内容解析不了，可能不是订阅源')
   }
 
   const rssChannel = (document['rss'] as Record<string, unknown> | undefined)?.['channel'] as
     Record<string, unknown> | undefined
   const feed = document['feed'] as Record<string, unknown> | undefined
+  const rdf = (document['rdf'] ?? document['RDF']) as Record<string, unknown> | undefined
 
   const rawEntries: unknown[] = []
   if (rssChannel?.['item']) {
@@ -98,13 +108,18 @@ export function parseFeed(xml: string): ParsedEntry[] {
     )
   } else if (feed?.['entry']) {
     rawEntries.push(...(Array.isArray(feed['entry']) ? feed['entry'] : [feed['entry']]))
-  } else if (document['rdf'] || document['RDF']) {
-    const rdf = (document['rdf'] ?? document['RDF']) as Record<string, unknown>
+  } else if (rdf?.['item']) {
     const items = rdf['item']
-    if (items) rawEntries.push(...(Array.isArray(items) ? items : [items]))
+    rawEntries.push(...(Array.isArray(items) ? items : [items]))
   }
 
-  if (rawEntries.length === 0) throw new FeedParseError('返回的内容里没有订阅源条目')
+  if (rawEntries.length === 0) {
+    // 长得像订阅源（有 rss / feed / rdf 根）但一条都没有 → 空源；否则根本不是订阅源
+    const looksLikeFeed = Boolean(rssChannel || feed || rdf)
+    throw looksLikeFeed
+      ? new FeedParseError('empty', '返回的内容里没有订阅源条目')
+      : new FeedParseError('not_feed', '返回的内容不是订阅源')
+  }
 
   return rawEntries
     .filter(

@@ -11,6 +11,7 @@ export function createSettingsRepo(db: Db) {
      on conflict (key) do update set value = excluded.value, updated_at = excluded.updated_at`,
   )
   const deleteOne = db.prepare('delete from settings where key = ?')
+  const selectOne = db.prepare('select value from settings where key = ?')
 
   return {
     readOverrides(): Partial<Settings> {
@@ -29,6 +30,19 @@ export function createSettingsRepo(db: Db) {
 
     remove(key: SettingKey): boolean {
       return deleteOne.run(key).changes > 0
+    },
+
+    /**
+     * 隐藏配置项：跟可见设置同一张表，但键名带 hidden. 前缀，不进设置接口、界面上不出现。
+     * 默认值固化在 contracts 的 HIDDEN_LIMITS 里。
+     */
+    readHidden<T>(key: string, fallback: T): T {
+      const row = selectOne.get(key) as unknown as { value: string } | undefined
+      return row ? parseJsonValue<T>(row.value, fallback) : fallback
+    },
+
+    writeHidden(key: string, value: unknown): void {
+      upsertOne.run(key, JSON.stringify(value), nowIso())
     },
   }
 }

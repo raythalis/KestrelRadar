@@ -1,3 +1,5 @@
+import { failureCopy, type FailureCode } from '@kestrel/contracts'
+
 export type FetchFailureKind = 'network' | 'timeout' | 'http_status'
 
 export class FetchError extends Error {
@@ -11,16 +13,20 @@ export class FetchError extends Error {
     this.status = status
   }
 
-  /** 说人话，直接能显示给用户 */
-  describe(timeoutSeconds: number): string {
-    if (this.kind === 'timeout') return `连接超时（超过 ${timeoutSeconds} 秒没有回应）`
+  /** 错误码：写采集流水与异常记录时用它分类 */
+  code(): FailureCode {
+    if (this.kind === 'timeout') return 'fetch.timeout'
     if (this.kind === 'http_status') {
-      if (this.status === 404) return '地址返回 404，路由或地址可能写错了'
-      if (this.status === 401 || this.status === 403)
-        return `地址返回 ${this.status}，可能需要访问密钥`
-      return `对方服务器返回 ${this.status}`
+      if (this.status === 404) return 'fetch.http404'
+      if (this.status === 401 || this.status === 403) return 'fetch.http401or403'
+      return 'fetch.httpStatus'
     }
-    return '连不上（域名解析失败或网络不通）'
+    return 'fetch.network'
+  }
+
+  /** 说人话，直接能显示给用户（文案在 contracts 的失败文案表里，这里只负责给参数） */
+  describe(timeoutSeconds: number): string {
+    return failureCopy(this.code(), { seconds: timeoutSeconds, status: this.status })
   }
 }
 

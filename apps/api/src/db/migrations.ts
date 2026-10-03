@@ -250,6 +250,55 @@ export const MIGRATIONS: readonly Migration[] = [
       alter table actions drop column template;
     `,
   },
+  {
+    name: '008-incidents-and-runs',
+    sql: `
+      -- 异常：一轮运行里的一个错误就是一条记录（日志语义）。
+      -- 库里只留最近若干条（默认 20，隐藏配置项），用户忽视只改 status，不删。
+      create table incidents (
+        id text primary key,
+        kind text not null check (kind in ('collection', 'judgment', 'delivery')),
+        target_id text not null,
+        target_name text not null default '',
+        group_id text,
+        group_name text not null default '',
+        code text not null,
+        message text not null,
+        detail text,
+        status text not null default 'open' check (status in ('open', 'dismissed')),
+        dismissed_at text,
+        first_seen_at text not null,
+        created_at text not null
+      );
+      create index idx_incidents_created on incidents (created_at);
+      create index idx_incidents_status on incidents (status, created_at);
+      create index idx_incidents_lookup on incidents (kind, target_id, code, created_at);
+
+      -- 采集轮次流水：只服务统计（成功率、偶发失败的源数），界面上不直接展示。
+      -- 故意不挂外键：源被删掉之后，历史轮次仍然算得出来。
+      create table collection_runs (
+        id text primary key,
+        discovery_id text not null,
+        route_ok integer not null,
+        content_ok integer not null,
+        found_count integer not null default 0,
+        new_count integer not null default 0,
+        duration_ms integer not null default 0,
+        code text,
+        message text not null default '',
+        created_at text not null
+      );
+      create index idx_collection_runs_created on collection_runs (created_at);
+      create index idx_collection_runs_discovery on collection_runs (discovery_id, created_at);
+    `,
+  },
+  {
+    name: '009-discovery-icon',
+    sql: `
+      -- 网站图标：后端拉回来存本地，库里只记文件名（界面用自有读图接口取）
+      alter table discoveries add column icon_file text;
+    `,
+  },
 ]
 
 export function runMigrations(conn: DatabaseSync): void {

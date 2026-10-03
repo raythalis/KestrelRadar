@@ -1,18 +1,26 @@
-import type { DiscoveryTestResult } from '@kestrel/contracts'
+import { failureCopy, type DiscoveryTestResult, type FailureCode } from '@kestrel/contracts'
 
+import type { IncidentService } from '../incidents/incident.service.ts'
 import type { SettingsService } from '../settings/settings.service.ts'
 import type { DiscoveryRepo } from '../discoveries/discovery.repo.ts'
+import type { GroupRepo } from '../groups/group.repo.ts'
 import type { ItemRepo } from '../items/item.repo.ts'
 import { buildFingerprint } from './fingerprint.ts'
 import { FeedParseError, parseFeed, type ParsedEntry } from './feed-parser.ts'
 import { FetchError, fetchText } from './fetcher.ts'
+import type { RunRepo } from './run.repo.ts'
 
 export interface CollectOutcome {
   discoveryId: string
   ok: boolean
   routeOk: boolean
   contentOk: boolean
+  /** 这一轮抓回多少条（含重复） */
+  foundCount: number
+  /** 真正新增多少条 */
   newItemCount: number
+  /** 失败时的错误码；成功与「成功但没条目」见下 */
+  code: FailureCode | null
   message: string
 }
 
@@ -20,6 +28,12 @@ export interface CollectorDeps {
   discoveries: DiscoveryRepo
   items: ItemRepo
   settings: SettingsService
+  /** 异常记录：采集这一轮失败了就记一条（手动测试不记） */
+  incidents?: IncidentService
+  /** 采集轮次流水：一轮一条，只服务统计 */
+  runs?: RunRepo
+  /** 取分组名字，做异常记录里的分组快照 */
+  groups?: GroupRepo
   fetchImpl?: typeof fetch
   /** 采集完的通知口子（判定层用它补判新条目），失败不影响采集 */
   onCollected?: (discoveryId: string, newItemCount: number) => void | Promise<void>
@@ -28,9 +42,16 @@ export interface CollectorDeps {
 interface LoadResult {
   routeOk: boolean
   contentOk: boolean
+  code: FailureCode | null
   message: string
   entries: ParsedEntry[]
 }
+
+/**
+ * 这些码不算「失败」：只记流水，不开异常。
+ * 空源是「通是通了，但没内容」，每天给你刷一条异常没有意义。
+ */
+const SILENT_CODES: ReadonlySet<FailureCode> = new Set<FailureCode>(['feed.noEntry'])
 
 const FEED_LINK_PATTERN = /<link\b[^>]*>/gi
 
@@ -46,13 +67,17 @@ function findFeedHref(html: string): string | null {
 }
 
 export function createCollector(deps: CollectorDeps) {
-  function resolveUrl(discoveryId: string): { url: string; kind: string } | { error: string } {
+  function resolveUrl(
+    discoveryId: string,
+  ): { url: string; kind: string } | { error: string; code: FailureCode } {
     const discovery = deps.discoveries.get(discoveryId)
-    if (!discovery) return { error: '发现不存在' }
+    if (!discovery) return { error: failureCopy('discovery.missing'), code: 'discovery.missing' }
     const settings = deps.settings.get()
 
     if (discovery.kind === 'rsshub' && !/^https?:\/\//i.test(discovery.target)) {
-      if (!settings.rsshubBaseUrl) return { error: '还没有配置 RSSHub 实例地址（见全局设置）' }
+      if (!settings.rsshubBaseUrl) {
+        return { error: failureCopy('rsshub.baseMissing'), code: 'rsshub.baseMissing' }
+      }
       const base = settings.rsshubBaseUrl.replace(/\/+$/, '')
       const path = discovery.target.startsWith('/') ? discovery.target : `/${discovery.target}`
       // 单实例：密钥跟着实例地址一起配在全局设置里
@@ -65,12 +90,30 @@ export function createCollector(deps: CollectorDeps) {
     return { url: discovery.target, kind: discovery.kind === 'web' ? 'web' : 'feed' }
   }
 
+  /** 把异常翻译成「错误码 + 人话」：码用来记流水与异常，话用来展示 */
+  function failureOf(
+    error: unknown,
+    timeoutSeconds: number,
+  ): { code: FailureCode; message: string } {
+    if (error instanceof FetchError) {
+      return { code: error.code(), message: error.describe(timeoutSeconds) }
+    }
+    const message = (error as Error).message
+    return { code: 'collection.failed', message: message || failureCopy('collection.failed') }
+  }
+
   /** 取一次内容并解析：试抓与正式采集共用这一段 */
   async function loadEntries(discoveryId: string): Promise<LoadResult> {
     const settings = deps.settings.get()
     const target = resolveUrl(discoveryId)
     if ('error' in target) {
-      return { routeOk: false, contentOk: false, message: target.error, entries: [] }
+      return {
+        routeOk: false,
+        contentOk: false,
+        code: target.code,
+        message: target.error,
+        entries: [],
+      }
     }
 
     const fetchOptions = {
@@ -88,7 +131,8 @@ export function createCollector(deps: CollectorDeps) {
           return {
             routeOk: true,
             contentOk: false,
-            message: '页面能打开，但里面没有 RSS/Atom 订阅源，建议改用 RSSHub 路由',
+            code: 'web.noFeedLink',
+            message: failureCopy('web.noFeedLink'),
             entries: [],
           }
         }
@@ -98,7 +142,7 @@ export function createCollector(deps: CollectorDeps) {
       return {
         routeOk: false,
         contentOk: false,
-        message: describeError(error, settings.requestTimeoutSeconds),
+        ...failureOf(error, settings.requestTimeoutSeconds),
         entries: [],
       }
     }
@@ -107,30 +151,40 @@ export function createCollector(deps: CollectorDeps) {
       const response = await fetchText(feedUrl, fetchOptions)
       const entries = parseFeed(response.body)
       if (entries.length === 0) {
-        return { routeOk: true, contentOk: false, message: '订阅源里当前没有条目', entries: [] }
-      }
-      return { routeOk: true, contentOk: true, message: `取到 ${entries.length} 条`, entries }
-    } catch (error) {
-      if (error instanceof FeedParseError) {
         return {
           routeOk: true,
           contentOk: false,
-          message: `${error.message}，建议改用 RSSHub 路由`,
+          code: 'feed.noEntry',
+          message: failureCopy('feed.noEntry'),
+          entries: [],
+        }
+      }
+      return {
+        routeOk: true,
+        contentOk: true,
+        code: null,
+        message: `取到 ${entries.length} 条`,
+        entries,
+      }
+    } catch (error) {
+      if (error instanceof FeedParseError) {
+        // 空源与「不是订阅源」分开：前者只记流水，后者要开异常
+        const empty = error.kind === 'empty'
+        return {
+          routeOk: true,
+          contentOk: false,
+          code: empty ? 'feed.noEntry' : 'feed.parseFailed',
+          message: failureCopy(empty ? 'feed.noEntry' : 'feed.parseFailed'),
           entries: [],
         }
       }
       return {
         routeOk: false,
         contentOk: false,
-        message: describeError(error, settings.requestTimeoutSeconds),
+        ...failureOf(error, settings.requestTimeoutSeconds),
         entries: [],
       }
     }
-  }
-
-  function describeError(error: unknown, timeoutSeconds: number): string {
-    if (error instanceof FetchError) return error.describe(timeoutSeconds)
-    return (error as Error).message || '未知错误'
   }
 
   function latestPublishedAt(entries: ParsedEntry[]): string | null {
@@ -141,7 +195,7 @@ export function createCollector(deps: CollectorDeps) {
     return published.at(-1) ?? null
   }
 
-  /** 只探测、不写条目：给卡片上的「测试」按钮用 */
+  /** 只探测、不写条目：给卡片上的「测试」按钮用。手动测试不计入统计，也不记异常。 */
   async function probeDiscovery(discoveryId: string): Promise<DiscoveryTestResult> {
     const existing = deps.discoveries.get(discoveryId)
     if (!existing) {
@@ -150,7 +204,7 @@ export function createCollector(deps: CollectorDeps) {
         contentOk: false,
         foundItemCount: 0,
         latestItemAt: null,
-        message: '发现不存在',
+        message: failureCopy('discovery.missing'),
       }
     }
     const result = await loadEntries(discoveryId)
@@ -172,8 +226,9 @@ export function createCollector(deps: CollectorDeps) {
     }
   }
 
-  /** 正式采集：新条目入库，第一次只建基线。定时任务与手动测试都走这里。 */
+  /** 正式采集：新条目入库，第一次只建基线。定时任务走这里。 */
   async function collectDiscovery(discoveryId: string): Promise<CollectOutcome> {
+    const startedAt = Date.now()
     const discovery = deps.discoveries.get(discoveryId)
     if (!discovery) {
       return {
@@ -181,8 +236,10 @@ export function createCollector(deps: CollectorDeps) {
         ok: false,
         routeOk: false,
         contentOk: false,
+        foundCount: 0,
         newItemCount: 0,
-        message: '发现不存在',
+        code: 'discovery.missing',
+        message: failureCopy('discovery.missing'),
       }
     }
 
@@ -221,6 +278,34 @@ export function createCollector(deps: CollectorDeps) {
       deps.discoveries.markBaseline(discoveryId, { establishedAt: now, itemCount: newItemCount })
     }
 
+    // 轮次流水：一轮一条，只服务统计（成功率、偶发失败的源数）
+    deps.runs?.record(
+      {
+        discoveryId,
+        routeOk: result.routeOk,
+        contentOk: result.contentOk,
+        foundCount: result.entries.length,
+        newCount: newItemCount,
+        durationMs: Date.now() - startedAt,
+        code: result.code,
+        message: result.message,
+      },
+      now,
+    )
+
+    // 异常：这一轮真的失败才记一条（空源不算失败，只算「通是通了但没内容」）
+    if (result.code && !SILENT_CODES.has(result.code)) {
+      deps.incidents?.record({
+        kind: 'collection',
+        targetId: discoveryId,
+        targetName: discovery.name,
+        groupId: discovery.groupId,
+        groupName: deps.groups?.get(discovery.groupId)?.name ?? '',
+        code: result.code,
+        message: result.message,
+      })
+    }
+
     if (newItemCount > 0 && deps.onCollected) await deps.onCollected(discoveryId, newItemCount)
 
     return {
@@ -228,7 +313,9 @@ export function createCollector(deps: CollectorDeps) {
       ok: result.routeOk && result.contentOk,
       routeOk: result.routeOk,
       contentOk: result.contentOk,
+      foundCount: result.entries.length,
       newItemCount,
+      code: result.code,
       message: result.message,
     }
   }

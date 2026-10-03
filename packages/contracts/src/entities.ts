@@ -49,6 +49,8 @@ export const discoverySchema = z.object({
   enabled: z.boolean(),
   /** 下一次采集时间，由调度器算出来回给界面，不入库 */
   nextRunAt: z.string().nullable(),
+  /** 网站图标（后端拉回来存本地，前端只读自有接口）；没抓到就是 null，界面回落类型图标 */
+  iconUrl: z.string().nullable(),
   /** 下面这些是采集状态，跟着卡片一起回给界面 */
   lastCheckedAt: z.string().nullable(),
   routeOk: z.boolean().nullable(),

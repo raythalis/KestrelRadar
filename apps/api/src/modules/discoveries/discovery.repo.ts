@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto'
 
 import type { CreateDiscoveryInput, Discovery, UpdateDiscoveryInput } from '@kestrel/contracts'
 
+import { API_PREFIX } from '@kestrel/contracts'
+
 import type { Db } from '../../db/index.ts'
 import { fromBool, nowIso, toBool } from '../../db/sql.ts'
 
@@ -23,6 +25,7 @@ interface DiscoveryRow {
   baseline_established_at: string | null
   baseline_item_count: number | null
   item_count: number
+  icon_file: string | null
 }
 
 export interface DiscoveryState {
@@ -59,6 +62,8 @@ function toDiscovery(row: DiscoveryRow): Discovery {
     itemCount: row.item_count ?? 0,
     baselineEstablishedAt: row.baseline_established_at,
     baselineItemCount: row.baseline_item_count,
+    // 库里只存文件名，对外的地址在这里拼；没抓到就是 null（界面回落类型图标）
+    iconUrl: row.icon_file ? `${API_PREFIX}/icons/${row.icon_file}` : null,
   }
 }
 
@@ -130,6 +135,19 @@ export function createDiscoveryRepo(db: Db) {
 
     remove(id: string): boolean {
       return deleteOne.run(id).changes > 0
+    },
+
+    /** 图标抓取结果回写：只存文件名，null 表示这次没抓到 */
+    setIcon(id: string, iconFile: string | null): void {
+      db.prepare('update discoveries set icon_file = ? where id = ?').run(iconFile, id)
+    },
+
+    /** 这个域名已经抓过哪张图（按域名去重，不重复拉） */
+    findIconForPrefix(prefix: string): string | null {
+      const row = db
+        .prepare('select icon_file from discoveries where icon_file like ? limit 1')
+        .get(`${prefix}-%`) as unknown as { icon_file: string } | undefined
+      return row?.icon_file ?? null
     },
 
     updateState(id: string, state: DiscoveryState): void {
