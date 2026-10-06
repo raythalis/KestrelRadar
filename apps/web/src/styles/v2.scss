@@ -2744,18 +2744,26 @@ a.k2-row--link {
   background: var(--c-ink, var(--k2-c-primary));
 }
 
-/* 头部：第一行（标记 + 标题 + 计数 + 右侧动作），第二行口径说明，贴近参考的 77px */
+/* 头部：左侧一组（标题行 + 口径说明行），右侧动作整体垂直居中，高 77px（同参考） */
 .k2-panel__head {
-  flex-wrap: wrap;
-  gap: var(--k2-s-1) var(--k2-s-2);
-  min-block-size: 66px;
-  align-content: center;
   align-items: center;
-  padding: var(--k2-s-3) var(--k2-s-4);
+  gap: var(--k2-s-4);
+  min-block-size: 77px;
+  padding: var(--k2-s-4) var(--k2-s-4) var(--k2-s-3);
+}
+
+.k2-panel__heading {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--k2-s-1) var(--k2-s-2);
+  min-inline-size: 0;
 }
 
 .k2-panel__head .k2-sec__title {
   font-size: var(--k2-fs-body);
+  font-weight: var(--k2-fw-regular);
   line-height: var(--k2-lh-tight);
   letter-spacing: -0.015em;
 }
@@ -2794,6 +2802,7 @@ a.k2-row--link {
 
 .k2-panel__actions {
   display: flex;
+  flex: none;
   align-items: center;
   gap: var(--k2-s-2);
   margin-inline-start: auto;
@@ -2850,13 +2859,18 @@ a.k2-row--link {
 }
 
 /* ---------- 事件行 ---------- */
-/* 标题 11 + 副行 10：先看到「发生了什么」，再看「谁报的、什么时候」
-   行自带的左右 -8px 负边距在这里抵消掉，否则文字几乎贴住面板边缘 */
+/* 行比参考（67px）再松一点；行自带的左右 -8px 负边距在这里抵消掉，
+   留白由面板内容区的内边距 + 行自己的内边距一起给 */
 .k2-panel__body .k2-list__row {
   gap: var(--k2-s-3);
-  min-block-size: 64px;
+  min-block-size: 72px;
   margin-inline: 0;
-  padding: var(--k2-s-2) var(--k2-s-4);
+  padding: var(--k2-s-3) var(--k2-s-2);
+}
+
+/* 内容区左右留白：条目与面板边缘有间距，悬停底色与分线也随之收进来 */
+.k2-panel__body {
+  padding-inline: var(--k2-s-3);
 }
 
 /* 面板里的卡片之间留出间距（参考的异常列表是 8px） */

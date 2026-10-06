@@ -18,6 +18,7 @@ import AppTextarea from '@/components/app/AppTextarea.vue'
 import { formatDateTime, timeAgo } from '@/utils/format'
 
 import { ACTIVITY_EVENTS, ACTIVITY_INCIDENTS, FORM_TEXT, SELECT_ITEMS, TAB_ITEMS } from './fixtures'
+import { SEMANTIC_ICONS } from '@/components/biz/icons'
 
 /**
  * App 组件样例 = 真组件。
@@ -132,9 +133,12 @@ function eventTime(value: string): string {
     <div class="lab__cols lab__cols--activity">
       <AppPanel class="k2-t-primary">
         <template #head>
-          <span class="k2-panel__mark" aria-hidden="true" />
-          <span class="k2-sec__title">最近事件</span>
-          <span class="k2-panel__badge">{{ ACTIVITY_EVENTS.length }}</span>
+          <span class="k2-panel__heading">
+            <span class="k2-panel__mark" aria-hidden="true" />
+            <span class="k2-sec__title">最近事件</span>
+            <span class="k2-panel__badge">{{ ACTIVITY_EVENTS.length }}</span>
+            <span class="k2-panel__sub">24h内关注的事件动态</span>
+          </span>
           <span class="k2-panel__actions">
             <span class="k2-chip k2-chip--soft">
               <v-icon size="13">mdi-filter-variant</v-icon>
@@ -145,7 +149,6 @@ function eventTime(value: string): string {
               <v-icon size="14">mdi-chevron-right</v-icon>
             </button>
           </span>
-          <span class="k2-panel__sub">24h内关注的事件动态</span>
         </template>
         <EventRow
           v-for="event in ACTIVITY_EVENTS"
@@ -164,10 +167,12 @@ function eventTime(value: string): string {
       </AppPanel>
       <AppPanel class="k2-t-danger">
         <template #head>
-          <span class="k2-panel__mark" aria-hidden="true" />
-          <span class="k2-sec__title">异常记录</span>
-          <span class="k2-panel__badge">{{ ACTIVITY_INCIDENTS.length }}</span>
-          <span class="k2-panel__sub">同一处异常60分钟内重复只更新时间，最多展示20条</span>
+          <span class="k2-panel__heading">
+            <span class="k2-panel__mark" aria-hidden="true" />
+            <span class="k2-sec__title">异常记录</span>
+            <span class="k2-panel__badge">{{ ACTIVITY_INCIDENTS.length }}</span>
+            <span class="k2-panel__sub">同一处异常60分钟内重复只更新时间，最多展示20条</span>
+          </span>
         </template>
         <div class="k2-rows">
           <IncidentCard
@@ -186,6 +191,43 @@ function eventTime(value: string): string {
             <span class="k2-panel__hint">还有 {{ ACTIVITY_INCIDENTS.length }} 条</span>
           </button>
         </template>
+      </AppPanel>
+    </div>
+
+    <div class="lab__h3">活跃区 · 空状态（没有数据时的样子）</div>
+    <p class="lab__meta">
+      两个面板都没有数据时：内容区居中放空状态（真组件 AppEmptyState），头部与底部的入口照常保留。
+    </p>
+    <div class="lab__cols lab__cols--activity">
+      <AppPanel class="k2-t-primary">
+        <template #head>
+          <span class="k2-panel__heading">
+            <span class="k2-panel__mark" aria-hidden="true" />
+            <span class="k2-sec__title">最近事件</span>
+            <span class="k2-panel__badge">0</span>
+            <span class="k2-panel__sub">24h内关注的事件动态</span>
+          </span>
+        </template>
+        <AppEmptyState
+          :icon="SEMANTIC_ICONS.event"
+          title="还没有事件"
+          note="采集到条目并归并成事件后，最近 24 小时的会出现在这里"
+        />
+      </AppPanel>
+      <AppPanel class="k2-t-danger">
+        <template #head>
+          <span class="k2-panel__heading">
+            <span class="k2-panel__mark" aria-hidden="true" />
+            <span class="k2-sec__title">异常记录</span>
+            <span class="k2-panel__badge">0</span>
+            <span class="k2-panel__sub">同一处异常60分钟内重复只更新时间，最多展示20条</span>
+          </span>
+        </template>
+        <AppEmptyState
+          :icon="SEMANTIC_ICONS.incident"
+          title="没有异常"
+          note="采集、判定、推送出错时会记在这里"
+        />
       </AppPanel>
     </div>
 
