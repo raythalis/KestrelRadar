@@ -42,12 +42,13 @@ describe('AppPanel', () => {
     )
   })
 
-  it('高度默认按「有没有底栏」换算：没底栏就把底栏那一条减掉', () => {
+  it('没有底栏的面板挂上 k2-panel--no-foot（内容窗口由样式封在「有底栏时」的高度）', () => {
     const withFoot = mount(AppPanel, { slots: { foot: '<button>查看全部</button>' } })
     const noFoot = mount(AppPanel)
-    expect(withFoot.find('[data-test="app-panel"]').attributes('style')).not.toContain('- 44px')
-    expect(noFoot.find('[data-test="app-panel"]').attributes('style')).toContain('- 44px')
-    // 显式传高度时，以调用方给的值为准
+    expect(withFoot.find('[data-test="app-panel"]').classes()).not.toContain('k2-panel--no-foot')
+    expect(noFoot.find('[data-test="app-panel"]').classes()).toContain('k2-panel--no-foot')
+    // 两栏高度不受底栏有无影响
+    expect(noFoot.find('[data-test="app-panel"]').attributes('style')).toContain('min(62vh, 620px)')
     expect(
       mount(AppPanel, { props: { height: '320px' } })
         .find('[data-test="app-panel"]')

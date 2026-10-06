@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { EventSourceRef, RecentEvent } from '@kestrel/contracts'
+import type { EventSourceRef, Incident, RecentEvent } from '@kestrel/contracts'
 import { computed, reactive, ref } from 'vue'
 
 import AppButton from '@/components/app/AppButton.vue'
@@ -26,6 +26,8 @@ import {
   ACTIVITY_REST_SOURCES,
   ACTIVITY_SOURCE_NAMES,
   FORM_TEXT,
+  MANY_ACTIVITY_EVENTS,
+  MANY_ACTIVITY_INCIDENTS,
   MANY_SOURCES,
   SELECT_ITEMS,
   TAB_ITEMS,
@@ -77,10 +79,23 @@ const filterOptions = computed(() => [
   })),
 ])
 
+/** 10 条那一档：外部列表仍然最多 6 条（底栏出「还有 4 条」），「查看全部」里列全 10 条 */
+const manyEvents = reactive<RecentEvent[]>(MANY_ACTIVITY_EVENTS.map((event) => ({ ...event })))
+const manyIncidents = reactive<Incident[]>(
+  MANY_ACTIVITY_INCIDENTS.map((incident) => ({ ...incident })),
+)
+const manyDialogOpen = ref(false)
+const visibleManyEvents = computed(() => manyEvents.slice(0, DASHBOARD_EVENT_LIMIT))
+const manyRestCount = computed(() => Math.max(manyEvents.length - DASHBOARD_EVENT_LIMIT, 0))
+
 /** 样例里的动作只提示，不跳转、不写库：这里展示的是组件长什么样 */
 function openEvent(event: RecentEvent): void {
   event.readAt = new Date().toISOString()
   window.console.info('[style-lab] 点开事件：', event.title)
+}
+
+function openManyEvent(event: RecentEvent): void {
+  event.readAt = new Date().toISOString()
 }
 
 function resetFilter(): void {
@@ -308,6 +323,75 @@ function eventTime(value: string): string {
         <AppEmptyState art="incidents" title="没有异常" note="采集、判定、推送出错时会记在这里" />
       </AppPanel>
     </div>
+
+    <!-- 条数变多：外部列表最多 6 条（超出的进底栏），异常列表不截断、超过窗口就在卡片内滚 -->
+    <div class="lab__h3">活跃区 · 条数变多（10 条事件 / 10 条异常）</div>
+    <p class="lab__meta">
+      外部列表最多 6 条，第 7 条起收进底栏（「还有 4 条」），点它或头部的「查看全部」都能打开列全 10
+      条的弹窗； 异常列表不截断（上限 20 条），10
+      条超过卡片窗口就在卡片内滚，页面高度不变、两栏仍然同高。
+    </p>
+    <div class="lab__cols lab__cols--activity">
+      <AppPanel class="k2-t-primary">
+        <template #head>
+          <span class="k2-panel__heading">
+            <span class="k2-panel__mark" aria-hidden="true" />
+            <span class="k2-sec__title">最近事件</span>
+            <span class="k2-panel__badge">{{ manyEvents.length }}</span>
+            <span class="k2-panel__sub">24h内关注的事件动态</span>
+          </span>
+          <span class="k2-panel__actions">
+            <button type="button" class="k2-panel__link" @click="manyDialogOpen = true">
+              查看全部
+              <v-icon size="14">mdi-chevron-right</v-icon>
+            </button>
+          </span>
+        </template>
+        <EventRow
+          v-for="event in visibleManyEvents"
+          :key="event.id"
+          :event="event"
+          :time="eventTime(event.lastItemAt)"
+          :rest-sources="restOf(event)"
+          @open="openManyEvent"
+        />
+        <template #foot>
+          <button type="button" class="k2-panel__more" @click="manyDialogOpen = true">
+            查看全部事件
+            <span class="k2-panel__hint">还有 {{ manyRestCount }} 条</span>
+            <v-icon size="14">mdi-chevron-right</v-icon>
+          </button>
+        </template>
+      </AppPanel>
+      <AppPanel class="k2-t-danger">
+        <template #head>
+          <span class="k2-panel__heading">
+            <span class="k2-panel__mark" aria-hidden="true" />
+            <span class="k2-sec__title">异常记录</span>
+            <span class="k2-panel__badge">{{ manyIncidents.length }}</span>
+            <span class="k2-panel__sub">同一处异常60分钟内重复只更新时间，最多展示20条</span>
+          </span>
+        </template>
+        <div class="k2-rows">
+          <IncidentCard
+            v-for="incident in manyIncidents"
+            :key="incident.id"
+            :incident="incident"
+            :first-seen="`首次出现 ${formatDateTime(incident.firstSeenAt)}`"
+            :last-seen="`最近发生 ${formatDateTime(incident.createdAt)}`"
+            dismiss-label="忽视"
+            @dismiss="noop"
+          />
+        </div>
+      </AppPanel>
+    </div>
+    <AppEventDialog
+      v-model="manyDialogOpen"
+      :events="manyEvents"
+      :time-of="timeOfEvent"
+      :rest-of="restOf"
+      @open="openManyEvent"
+    />
 
     <div class="lab__h3">来源标签组 · AppSourceTags</div>
     <div class="lab-form">
