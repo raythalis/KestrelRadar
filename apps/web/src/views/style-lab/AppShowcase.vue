@@ -132,8 +132,16 @@ function eventTime(value: string): string {
     <div class="lab__cols">
       <AppPanel>
         <template #head>
+          <span class="k2-panel__mark" aria-hidden="true" />
           <span class="k2-sec__title">最近事件</span>
-          <span class="k2-chip k2-chip--soft">{{ ACTIVITY_EVENTS.length }}</span>
+          <span class="k2-panel__badge">{{ ACTIVITY_EVENTS.length }}</span>
+          <span class="k2-panel__actions">
+            <span class="k2-chip k2-chip--soft">
+              <v-icon size="13">mdi-filter-variant</v-icon>
+              筛选
+            </span>
+          </span>
+          <span class="k2-panel__sub">24h内关注的事件动态</span>
         </template>
         <EventRow
           v-for="event in ACTIVITY_EVENTS"
@@ -144,13 +152,24 @@ function eventTime(value: string): string {
           @more="openSources"
         />
         <template #foot>
-          <button type="button" class="k2-chip k2-chip--soft">查看全部事件</button>
+          <button type="button" class="k2-panel__more">
+            查看全部事件
+            <v-icon size="14">mdi-chevron-right</v-icon>
+          </button>
         </template>
       </AppPanel>
-      <AppPanel>
+      <AppPanel class="k2-t-danger">
         <template #head>
+          <span class="k2-panel__mark" aria-hidden="true" />
           <span class="k2-sec__title">异常记录</span>
-          <span class="k2-chip k2-chip--soft">{{ ACTIVITY_INCIDENTS.length }}</span>
+          <span class="k2-panel__badge">{{ ACTIVITY_INCIDENTS.length }}</span>
+          <span class="k2-panel__actions">
+            <span class="k2-chip k2-chip--soft">
+              <v-icon size="13">mdi-filter-variant</v-icon>
+              筛选
+            </span>
+          </span>
+          <span class="k2-panel__sub">同一处异常60分钟内重复只更新时间，最多展示20条</span>
         </template>
         <div class="k2-rows">
           <IncidentCard

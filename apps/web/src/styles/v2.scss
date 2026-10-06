@@ -2728,30 +2728,114 @@ a.k2-row--link {
   padding: var(--k2-s-2) var(--k2-s-4) var(--k2-s-3);
 }
 
-/* ---------- 来源标签组（事件行里的来源）---------- */
-/* 类名不用 k2-tags：那是排除词输入框（TagsField）的类，撞上会被套成带边框的输入框 */
-.k2-source-tags {
+/* ================================================================
+   活跃区（仪表盘右栏）：面板 / 事件行 / 异常卡 / 来源标签
+   只为还原参考稿的观感调整组件内部样式：
+   颜色一律取既有 token（或色调变量 --c / --c-soft / --c-ink），不新造颜色；
+   面板带 k2-t-* 时，标记条、徽章自动跟着变色调。
+   ================================================================ */
+
+/* ---------- 面板 ---------- */
+.k2-panel__mark {
+  flex: none;
+  inline-size: 3px;
+  block-size: 15px;
+  border-radius: var(--k2-r-full);
+  background: var(--c-ink, var(--k2-c-primary));
+}
+
+/* 头比默认高一档：一行标题 + 一行口径说明 */
+.k2-panel__head {
+  gap: var(--k2-s-2);
+  min-block-size: 62px;
+  padding: var(--k2-s-3) var(--k2-s-4);
+}
+
+.k2-panel__badge {
+  flex: none;
+  padding: 1px var(--k2-s-2);
+  border-radius: var(--k2-r-full);
+  background: var(--c-soft, var(--k2-c-primary-soft));
+  color: var(--c-ink, var(--k2-c-primary));
+  font-size: var(--k2-fs-caption);
+  font-weight: var(--k2-fw-semibold);
+  line-height: var(--k2-lh-snug);
+}
+
+.k2-panel__actions {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--k2-s-2);
-  min-inline-size: 0;
+  margin-inline-start: auto;
 }
 
-.k2-source-tags .k2-chip--tag {
-  text-decoration: none;
+.k2-panel__actions .k2-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k2-s-1);
 }
 
-.k2-source-tags .k2-chip--tag:hover {
-  color: var(--k2-c-text);
+/* 说明这一栏的口径，另起一行、不抢标题 */
+.k2-panel__sub {
+  flex-basis: 100%;
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-faint);
 }
 
-.k2-source-tags__more {
+/* 底部是一条整宽入口（不是浮在中间的胶囊） */
+.k2-panel__foot {
+  display: block;
+  padding: 0;
+  border-block-start: 1px solid var(--k2-c-border-soft);
+  background: var(--k2-c-surface2);
+}
+
+.k2-panel__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--k2-s-1);
+  inline-size: 100%;
+  padding: var(--k2-s-2) var(--k2-s-4);
+  border: 0;
+  background: none;
+  color: var(--k2-c-primary);
+  font: inherit;
+  font-size: var(--k2-fs-caption);
+  font-weight: var(--k2-fw-semibold);
   cursor: pointer;
 }
 
-/* ---------- 未读圆点（事件行右上角）---------- */
-/* 实心＝从没看过这件事；看过之后不会再因为转载、来源增加、时间刷新亮起来 */
+.k2-panel__more:hover {
+  background: var(--k2-c-surface3);
+}
+
+/* ---------- 事件行 ---------- */
+/* 面板里的行比独立列表紧一档；标题加重，和副行（标签、时间）拉开层级 */
+.k2-panel__body .k2-list__row {
+  gap: var(--k2-s-3);
+  padding: var(--k2-s-2) var(--k2-s-3);
+}
+
+.k2-panel__body .k2-row__title,
+.k2-incident .k2-row__title {
+  font-weight: var(--k2-fw-semibold);
+}
+
+.k2-panel__body .k2-list__chevron {
+  inline-size: var(--k2-icon-md);
+  block-size: var(--k2-icon-md);
+}
+
+/* 时间：时钟图标 + 相对时间 */
+.k2-row__time {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k2-s-1);
+}
+
+/* 未读圆点：行右上角，实心 + 一圈品牌浅底光晕（浅底用现成软色，不新增颜色）
+   实心＝从没看过这件事；看过之后不会再因为转载、来源增加、时间刷新亮起来 */
 .k2-row--link {
   position: relative;
 }
@@ -2764,21 +2848,38 @@ a.k2-row--link {
   block-size: 6px;
   border-radius: var(--k2-r-full);
   background: var(--k2-c-primary);
+  box-shadow: 0 0 0 3px var(--k2-c-primary-soft);
 }
 
-/* 时间：时钟图标 + 相对时间，跟着行尾走 */
-.k2-row__time {
-  display: inline-flex;
+/* ---------- 来源标签组 ---------- */
+/* 类名不用 k2-tags：那是排除词输入框（TagsField）的类，撞上会被套成带边框的输入框 */
+.k2-source-tags {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--k2-s-1);
+  min-inline-size: 0;
 }
 
-/* 面板里的列表行比独立列表紧一档（面板已经有头部与底部的呼吸） */
-.k2-panel__body .k2-list__row {
-  padding: var(--k2-s-3);
+.k2-source-tags .k2-chip--tag {
+  padding: 0 var(--k2-s-2);
+  text-decoration: none;
 }
 
-/* ---------- 异常卡：左侧状态线 + 底部三格 ---------- */
+.k2-source-tags .k2-chip--tag:hover {
+  color: var(--k2-c-text);
+}
+
+.k2-source-tags__more {
+  cursor: pointer;
+}
+
+/* ---------- 异常卡 ---------- */
+/* 左侧状态线跟着色调走；底部三格之间用细线分开 */
+.k2-incident {
+  padding: var(--k2-s-4);
+}
+
 .k2-incident::before {
   content: '';
   position: absolute;
@@ -2798,18 +2899,12 @@ a.k2-row--link {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--k2-s-3);
+  gap: var(--k2-s-2);
   font-size: var(--k2-fs-caption);
   color: var(--k2-c-text-muted);
 }
 
-/* 底部三格之间用细线分开（和 Figma 里「时间 · 持续」的分隔一致）
-   最后一个若是指示 chip，就不再补线 */
 .k2-incident__foot > span + span {
-  padding-inline-start: var(--k2-s-3);
+  padding-inline-start: var(--k2-s-2);
   box-shadow: inset 1px 0 0 var(--k2-c-border-soft);
-}
-
-.k2-incident__foot > .k2-chip {
-  box-shadow: none;
 }
