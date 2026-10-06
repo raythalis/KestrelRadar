@@ -1293,6 +1293,11 @@ a.k2-row--link {
   .k2-cols {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  /* 上下排之后两个面板要拉开一点：16px 挤成一块，20px 才有「两张卡」的分界 */
+  .k2-cols--activity {
+    gap: var(--k2-s-5);
+  }
 }
 
 .k2-shell__body {
@@ -3278,6 +3283,22 @@ a.k2-row--link {
 /* 面板里的卡片之间留出间距（参考的异常列表是 8px） */
 .k2-panel__body .k2-rows {
   gap: var(--k2-s-2);
+}
+
+/* 面板里的加载骨架：行高 / 留白 / 分隔线都跟真实条目对齐。
+   不这么写的话骨架会挤在窗口顶部（行高只有内容高、组里还有 12px 行距），
+   看着像半个空面板 —— 他的原话是「间隙太小、应该改成全高度」 */
+.k2-panel__body .k2-skeleton-group {
+  gap: 0;
+}
+
+.k2-panel__body .k2-skeleton-row {
+  min-block-size: 72px;
+  padding: var(--k2-s-3) var(--k2-s-2);
+}
+
+.k2-panel__body .k2-skeleton-row + .k2-skeleton-row {
+  box-shadow: inset 0 1px 0 var(--k2-c-border-soft);
 }
 
 .k2-panel__body .k2-row__title,

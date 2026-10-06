@@ -26,6 +26,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const events = ref<RecentEvent[]>([])
   /** 下一页的游标；空表示 24h 窗口里就这些了 */
   const nextCursor = ref<string | null>(null)
+  /** 窗口内一共多少条（后端给，跟来源筛选走）；徽章显示它，不是已取回来的页数 */
+  const total = ref(0)
   /** 正在取下一页（弹窗底部显示加载态） */
   const loadingMore = ref(false)
   /** 筛选浮层的来源清单（后端按窗口内计数给，多的排前面） */
@@ -53,6 +55,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     const page = await fetchRecentEvents(listQuery())
     events.value = page.events
     nextCursor.value = page.nextCursor
+    total.value = page.total
   }
 
   /** 滚到底再要一页：按 id 去重（翻页途中来了新事件也不会重复） */
@@ -97,6 +100,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     if (eventsResult.status === 'fulfilled') {
       events.value = eventsResult.value.events
       nextCursor.value = eventsResult.value.nextCursor
+      total.value = eventsResult.value.total
     }
     if (incidentsResult.status === 'fulfilled') incidents.value = incidentsResult.value.incidents
     if (sourcesResult.status === 'fulfilled') sources.value = sourcesResult.value
@@ -110,6 +114,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   return {
     stats,
     events,
+    total,
     incidents,
     sources,
     loading,

@@ -97,11 +97,33 @@ const countCards = computed<MetricCard[]>(() => {
   return cards.map((card) => {
     const item = counts?.[card.key]
     // 统计接口没拿到就别编 0：数值位留一条横线，整页顶部会挂错误提示
+    if (!item) {
+      return {
+        label: card.label,
+        value: '—',
+        unit: '',
+        sub: '',
+        icon: card.icon,
+        tone: card.tone,
+      }
+    }
+    // 一条都没配过（0 / 0）时「0」没有意义，直接写「未配置」
+    if (item.total === 0) {
+      return {
+        label: card.label,
+        value: t('dashboard.value.notConfigured'),
+        text: true,
+        unit: '',
+        sub: '',
+        icon: card.icon,
+        tone: card.tone,
+      }
+    }
     return {
       label: card.label,
-      value: item ? String(item.enabled) : '—',
-      unit: item ? `/ ${item.total}` : '',
-      sub: item ? countSub(item.enabled, item.total) : '',
+      value: String(item.enabled),
+      unit: `/ ${item.total}`,
+      sub: countSub(item.enabled, item.total),
       icon: card.icon,
       tone: card.tone,
     }
@@ -211,13 +233,10 @@ const allSources = computed(() => t('dashboard.events.allSources'))
 const filterId = ref(ALL_SOURCE_ID)
 const dialogOpen = ref(false)
 
+/** 加载骨架铺满内容窗口：行高与真实条目一致（面板里 72px），6 行正好一屏 */
+const SKELETON_ROWS = 6
+
 const visibleEvents = computed(() => store.events.slice(0, DASHBOARD_EVENT_LIMIT))
-/** 徽章上的条数：筛了来源就用那一项的真实条数，没筛就是已取回来的这一页 */
-const eventsCount = computed(
-  () =>
-    store.sources.find((source) => source.discoveryId === filterId.value)?.count ??
-    store.events.length,
-)
 const filterOptions = computed(() => [
   { id: ALL_SOURCE_ID, name: allSources.value, count: store.events.length },
   ...store.sources.map((source) => ({
@@ -325,7 +344,7 @@ const loading = computed(() => store.loading && !store.stats)
         </div>
         <div class="k2-metric">
           <div class="k2-metric__line">
-            <span class="k2-num"
+            <span class="k2-num" :class="{ 'k2-num--text': card.text }"
               >{{ card.value }}<span class="k2-unit">{{ card.unit }}</span></span
             >
           </div>
@@ -367,7 +386,7 @@ const loading = computed(() => store.loading && !store.stats)
           <span class="k2-panel__heading">
             <span class="k2-panel__mark" aria-hidden="true" />
             <span class="k2-sec__title">{{ t('dashboard.events.title') }}</span>
-            <span class="k2-panel__badge">{{ eventsCount }}</span>
+            <span class="k2-panel__badge">{{ store.total }}</span>
             <span class="k2-panel__sub">{{ t('dashboard.events.sub') }}</span>
           </span>
           <span class="k2-panel__actions">
@@ -394,10 +413,9 @@ const loading = computed(() => store.loading && !store.stats)
         <AppSkeleton
           v-if="loading"
           variant="list"
-          :rows="3"
+          :rows="SKELETON_ROWS"
           leading="tile"
           density="compact"
-          data-test="dashboard-skeleton"
         />
         <AppEmptyState
           v-else-if="store.events.length === 0"
@@ -440,7 +458,13 @@ const loading = computed(() => store.loading && !store.stats)
           </span>
         </template>
 
-        <AppSkeleton v-if="loading" variant="list" :rows="2" leading="tile" density="compact" />
+        <AppSkeleton
+          v-if="loading"
+          variant="list"
+          :rows="SKELETON_ROWS"
+          leading="tile"
+          density="compact"
+        />
         <AppEmptyState
           v-else-if="store.incidents.length === 0"
           data-test="incidents-empty"

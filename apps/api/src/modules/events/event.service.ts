@@ -158,8 +158,9 @@ export function createEventService(deps: EventServiceDeps) {
     list(query: EventListQuery = {}, now: Date = new Date()): EventPage {
       const limit = resolveLimit(query.limit)
       const cursor = parseCursor(query.cursor)
+      const sinceIso = windowStart(now)
       const rows = deps.events.listPage({
-        sinceIso: windowStart(now),
+        sinceIso,
         // 多要一条：能取到就说明还有下一页
         limit: limit + 1,
         cursor,
@@ -186,6 +187,8 @@ export function createEventService(deps: EventServiceDeps) {
         events,
         nextCursor:
           hasMore && last ? encodeCursor({ lastItemAt: last.lastItemAt, id: last.id }) : null,
+        // 窗口内总数：分页只影响 events，徽章要的是总数
+        total: deps.events.countPage({ sinceIso, discoveryId: query.discoveryId }),
       }
     },
 

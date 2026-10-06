@@ -160,6 +160,15 @@ export function createEventRepo(db: Db) {
       order by events.last_item_at desc, events.id desc
       limit ?`,
   )
+  /** 窗口内一共多少个事件（跟 selectPage 同条件，只是不要分页） */
+  const countPage = db.prepare(
+    `select count(*) as total from events
+      where events.status <> 'archived'
+        and events.last_item_at >= ?
+        and (? is null or exists (
+          select 1 from event_items f where f.event_id = events.id and f.discovery_id = ?
+        ))`,
+  )
   /** 这批事件各自的来源（同一来源取最早那条条目），标签与「点标签开哪家」都靠它 */
   const selectEventSources = db.prepare(
     `select ei.event_id, ei.discovery_id, ei.added_at, i.url, d.name as discovery_name
@@ -257,6 +266,15 @@ export function createEventRepo(db: Db) {
         query.limit,
       ) as unknown as EventRow[]
       return rows.map(toEvent)
+    },
+
+    /** 窗口内共多少个事件：与 listPage 同一个 where，用它给徽章一个不受分页影响的数 */
+    countPage(query: Omit<EventPageQuery, 'limit' | 'cursor'>): number {
+      const discoveryId = query.discoveryId ?? null
+      const row = countPage.get(query.sinceIso, discoveryId, discoveryId) as unknown as {
+        total: number
+      }
+      return row.total
     },
 
     /** 这批事件各自的来源，按最早提到这件事的先后排 */

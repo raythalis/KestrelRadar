@@ -162,6 +162,31 @@ describe('最近事件窗口与分页', () => {
       older.id,
     ])
   })
+
+  it('total 给窗口内总数：翻页到哪一页都是同一个数，并且跟着来源筛选走', () => {
+    const { groupId, sources } = seedGroup()
+    ;[1, 2, 3, 4, 5].forEach((index) =>
+      seedEvent({
+        groupId,
+        discoveryIds: [sources.A],
+        title: `事件 ${index}`,
+        at: hoursAgo(index),
+      }),
+    )
+    seedEvent({ groupId, discoveryIds: [sources.B], title: 'B 的事', at: hoursAgo(1) })
+    // 30 小时前那条已经出窗口，不算在内
+    seedEvent({ groupId, discoveryIds: [sources.A], title: '出窗口的', at: hoursAgo(30) })
+
+    const first = container.merger.list({ limit: 2 }, NOW)
+    expect(first.events).toHaveLength(2)
+    expect(first.total).toBe(6)
+
+    const second = container.merger.list({ cursor: first.nextCursor ?? undefined, limit: 2 }, NOW)
+    expect(second.total).toBe(6)
+
+    expect(container.merger.list({ discoveryId: sources.A }, NOW).total).toBe(5)
+    expect(container.merger.list({ discoveryId: sources.B }, NOW).total).toBe(1)
+  })
 })
 
 describe('来源筛选与来源标签', () => {

@@ -404,12 +404,12 @@ export default {
   },
   dashboard: {
     loadFailed: 'Could not load the dashboard',
-    greeting: '{hello} Here is how the system is doing today.',
+    greeting: '{hello} here is how the system is doing today',
     hello: {
-      morning: 'Good morning.',
-      noon: 'Good afternoon.',
-      afternoon: 'Good afternoon.',
-      evening: 'Good evening.',
+      morning: 'Good morning',
+      noon: 'Good afternoon',
+      afternoon: 'Good afternoon',
+      evening: 'Good evening',
     },
     metrics: {
       discoveries: 'Discoveries',

@@ -393,7 +393,7 @@ export default {
   },
   dashboard: {
     loadFailed: '拉取仪表盘数据失败',
-    greeting: '{hello}，以下是系统今天的运行概况。',
+    greeting: '{hello}，以下是系统今天的运行概况',
     hello: {
       morning: '早上好',
       noon: '中午好',

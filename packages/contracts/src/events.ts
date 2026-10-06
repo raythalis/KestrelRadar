@@ -65,6 +65,8 @@ export interface RecentEvent {
 export interface EventPage {
   events: RecentEvent[]
   nextCursor: string | null
+  /** 窗口内一共有多少条（跟着来源筛选走）；徽章上的数字用它，不受分页影响 */
+  total: number
 }
 
 /** 来源筛选弹层的一项：窗口内这个来源有几个事件 */

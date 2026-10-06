@@ -96,7 +96,7 @@ describe('仪表盘页', () => {
   beforeEach(() => {
     i18n.global.locale.value = 'zh-CN'
     vi.mocked(fetchStatsOverview).mockResolvedValue(stats())
-    vi.mocked(fetchRecentEvents).mockResolvedValue({ events: [event], nextCursor: null })
+    vi.mocked(fetchRecentEvents).mockResolvedValue({ events: [event], nextCursor: null, total: 1 })
     vi.mocked(fetchIncidents).mockResolvedValue({ incidents: [incident], limit: 20 })
     vi.mocked(fetchEventSources).mockResolvedValue([
       { discoveryId: 'd1', name: 'Hacker News 榜单', count: 1 },
@@ -143,7 +143,7 @@ describe('仪表盘页', () => {
     const wrapper = await ready('Qwen 发布原生全模态模型')
     const greeting = wrapper.get('[data-test="dashboard-greeting"]').text()
 
-    expect(greeting).toMatch(/^(早上好|中午好|下午好|晚上好)，以下是系统今天的运行概况。$/)
+    expect(greeting).toMatch(/^(早上好|中午好|下午好|晚上好)，以下是系统今天的运行概况$/)
   })
 
   it('事件行点开新标签页并记已读；来源标签是真链接', async () => {
@@ -171,11 +171,36 @@ describe('仪表盘页', () => {
       id: `e${index + 1}`,
       title: `事件 ${index + 1}`,
     }))
-    vi.mocked(fetchRecentEvents).mockResolvedValue({ events: many, nextCursor: null })
+    vi.mocked(fetchRecentEvents).mockResolvedValue({ events: many, nextCursor: null, total: 8 })
 
     const wrapper = await ready('事件 1')
     expect(wrapper.findAll('[data-test="event-row"]')).toHaveLength(6)
     expect(wrapper.get('[data-test="events-view-all-foot"]').text()).toContain('查看全部事件')
+    // 徽章给的是后端的总数，不是这一屏渲染了几条
+    expect(wrapper.get('.k2-panel__badge').text()).toBe('8')
+  })
+
+  it('数量卡里 0 / 0 的那张写「未配置」，配了但全停用还是照旧写 0', async () => {
+    vi.mocked(fetchStatsOverview).mockResolvedValue(
+      stats({
+        counts: {
+          discoveries: { enabled: 0, total: 0 },
+          monitors: { enabled: 6, total: 6 },
+          actions: { enabled: 4, total: 5 },
+          channels: { enabled: 0, total: 4 },
+        },
+      }),
+    )
+
+    const wrapper = await ready('Qwen 发布原生全模态模型')
+    const cards = wrapper.findAll('[data-test="metric-card"]')
+    // 第一排四张是数量卡：发现 / 监控 / 动作 / 渠道
+    expect(cards[0]!.text()).toContain('未配置')
+    expect(cards[0]!.text()).not.toContain('/ 0')
+    expect(cards[1]!.text()).toContain('6')
+    expect(cards[1]!.text()).toContain('/ 6')
+    expect(cards[3]!.text()).toContain('0')
+    expect(cards[3]!.text()).toContain('/ 4')
   })
 
   it('「查看全部」打开弹窗，弹窗里列的是后端给的那一页', async () => {
@@ -189,7 +214,7 @@ describe('仪表盘页', () => {
   })
 
   it('没有事件时给空状态，不摆空列表', async () => {
-    vi.mocked(fetchRecentEvents).mockResolvedValue({ events: [], nextCursor: null })
+    vi.mocked(fetchRecentEvents).mockResolvedValue({ events: [], nextCursor: null, total: 0 })
     // 三块一起回来的：等异常那块落地，再断言事件那块是空状态
     const wrapper = await ready('GitHub Trending')
 
