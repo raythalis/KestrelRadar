@@ -278,8 +278,7 @@ function eventTime(value: string): string {
             v-for="incident in incidents"
             :key="incident.id"
             :incident="incident"
-            :first-seen="`首次出现 ${formatDateTime(incident.firstSeenAt)}`"
-            :last-seen="`最近发生 ${formatDateTime(incident.createdAt)}`"
+            :last-seen="formatDateTime(incident.createdAt)"
             dismiss-label="忽视"
             @dismiss="noop"
           />
@@ -402,8 +401,7 @@ function eventTime(value: string): string {
             v-for="incident in manyIncidents"
             :key="incident.id"
             :incident="incident"
-            :first-seen="`首次出现 ${formatDateTime(incident.firstSeenAt)}`"
-            :last-seen="`最近发生 ${formatDateTime(incident.createdAt)}`"
+            :last-seen="formatDateTime(incident.createdAt)"
             dismiss-label="忽视"
             @dismiss="noop"
           />

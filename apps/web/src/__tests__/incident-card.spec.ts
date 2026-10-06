@@ -25,8 +25,7 @@ function render(overrides: Partial<InstanceType<typeof IncidentCard>['$props']> 
   return mount(IncidentCard, {
     props: {
       incident,
-      firstSeen: '首次出现 10-07 17:00',
-      lastSeen: '最近发生 10-07 19:00',
+      lastSeen: '10-07 19:00',
       dismissLabel: '忽视',
       ...overrides,
     },
@@ -35,12 +34,20 @@ function render(overrides: Partial<InstanceType<typeof IncidentCard>['$props']> 
 }
 
 describe('IncidentCard', () => {
-  it('只放已有可信字段：对象名、原文、首次出现、最近发生', () => {
+  it('只放已有可信字段：对象名、原文、最近发生时间', () => {
     const wrapper = render()
     expect(wrapper.text()).toContain('IT之家')
     expect(wrapper.text()).toContain('地址返回 404，检查订阅地址是不是变了')
-    expect(wrapper.find('[data-test="incident-first-seen"]').text()).toContain('首次出现')
-    expect(wrapper.find('[data-test="incident-last-seen"]').text()).toContain('最近发生')
+    // 结构保持原样：时间仍在卡底那一行，只把那一行的内容换成「时钟图标 + 时间本身」
+    expect(
+      wrapper.find('[data-test="incident-foot"]').find('[data-test="incident-last-seen"]').exists(),
+    ).toBe(true)
+    const time = wrapper.find('[data-test="incident-last-seen"]')
+    expect(time.text()).toContain('10-07 19:00')
+    expect(time.find('.v-icon').exists()).toBe(true)
+    expect(wrapper.find('[data-test="incident-first-seen"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('首次出现')
+    expect(wrapper.text()).not.toContain('最近发生')
     // 前后端都没有「当前状态」这个功能，卡片不放状态胶囊
     expect(wrapper.find('[data-test="incident-status"]').exists()).toBe(false)
     expect(wrapper.text()).not.toContain('待处理')
@@ -69,11 +76,11 @@ describe('IncidentCard', () => {
     expect(wrapper.props('incident').status).toBe('open')
   })
 
-  it('文本没给就不占位', () => {
+  it('时间没给就不占位', () => {
     const wrapper = mount(IncidentCard, {
       props: { incident },
       global: { plugins: [vuetify] },
     })
-    expect(wrapper.find('[data-test="incident-foot"]').text()).toBe('')
+    expect(wrapper.find('[data-test="incident-last-seen"]').exists()).toBe(false)
   })
 })

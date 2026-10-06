@@ -3387,11 +3387,6 @@ a.k2-row--link {
   color: var(--k2-c-text-muted);
 }
 
-.k2-incident__foot > span + span {
-  padding-inline-start: var(--k2-s-2);
-  box-shadow: inset 1px 0 0 var(--k2-c-border-soft);
-}
-
 /* 状态胶囊跟着这一段的字号收一档 */
 .k2-incident .k2-chip {
   padding-block: 0;
