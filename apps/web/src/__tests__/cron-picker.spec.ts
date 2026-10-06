@@ -23,7 +23,7 @@ function mountPicker(props: Record<string, unknown> = {}, attach = false) {
 }
 
 function openBuilder(wrapper: ReturnType<typeof mountPicker>) {
-  return wrapper.find('[data-test="cron-input"] input').trigger('click')
+  return wrapper.find('[data-test="cron-input"]').trigger('click')
 }
 
 afterEach(() => {
@@ -34,7 +34,7 @@ afterEach(() => {
 describe('CronPicker', () => {
   it('表达式进输入框；合规时字段下面不写任何解释', () => {
     const wrapper = mountPicker()
-    const input = wrapper.find('[data-test="cron-input"] input')
+    const input = wrapper.find('[data-test="cron-input"]')
     expect((input.element as HTMLInputElement).value).toBe('0 8 * * *')
     expect(wrapper.find('[data-test="cron-error"]').exists()).toBe(false)
     expect(wrapper.text()).not.toContain('按原样运行')

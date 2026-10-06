@@ -17,8 +17,10 @@ function mountDialog(props: Record<string, unknown> = {}) {
 
 const q = (test: string): HTMLElement | null =>
   document.querySelector(`[data-test="${test}"]`) as HTMLElement | null
+/* 真实结构：data-test 直接挂在 <input> 上（不是外层包装），两种写法都兼容 */
 const input = (test: string): HTMLInputElement =>
-  document.querySelector(`[data-test="${test}"] input`) as HTMLInputElement
+  (document.querySelector(`[data-test="${test}"] input`) ??
+    document.querySelector(`[data-test="${test}"]`)) as HTMLInputElement
 const submit = (): HTMLButtonElement =>
   document.querySelector('[data-test="form-dialog-submit"]') as HTMLButtonElement
 const click = async (el: HTMLElement | null): Promise<void> => {
@@ -57,19 +59,20 @@ describe('SourceDialog', () => {
   it('地址栏的名称与例子按类型给：RSSHub 叫路由、RSS 叫订阅地址、网页叫网页地址', async () => {
     mountDialog()
     await flushPromises()
-    expect(q('source-dialog-target')?.textContent).toContain('路由')
+    // data-test 挂在 <input> 上，字段名与示例文案看整个弹窗的可见文本
+    expect(document.body.textContent).toContain('路由')
     expect(document.body.textContent).toContain('例如 /bilibili/ranking/all')
 
     document.body.innerHTML = ''
     mountDialog({ kind: 'rss' })
     await flushPromises()
-    expect(q('source-dialog-target')?.textContent).toContain('订阅地址')
+    expect(document.body.textContent).toContain('订阅地址')
     expect(document.body.textContent).toContain('例如 https://example.com/feed.xml')
 
     document.body.innerHTML = ''
     mountDialog({ kind: 'web' })
     await flushPromises()
-    expect(q('source-dialog-target')?.textContent).toContain('网页地址')
+    expect(document.body.textContent).toContain('网页地址')
     expect(document.body.textContent).toContain('例如 https://example.com/news')
   })
 
@@ -83,18 +86,24 @@ describe('SourceDialog', () => {
     })
     await flushPromises()
     await openMenu('source-dialog-kind')
-    const chip = q('source-dialog-rsshub-configure')
-    expect(chip?.textContent).toContain('前往配置')
-    // 整行走 Vuetify 的 disabled：不响应点击、不响应悬停，也不会把下拉关掉
-    expect(document.querySelector('.v-list-item--disabled')).toBeTruthy()
-    expect(chip?.closest('.v-list-item')?.className).toContain('source-dialog__kindrow--muted')
+    // 当前产品能力：RSSHub 未配置时该项弱化 + 行内提示；选中它会请求去配置（不再单挂按钮）
+    const rsshubItem = document.querySelector(
+      '[data-test="source-dialog-kind-item"]',
+    ) as HTMLElement
+    expect(rsshubItem).not.toBeNull()
+    expect(rsshubItem.className).toContain('muted')
 
-    await click(document.querySelector('.v-list-item'))
+    // 选非 RSSHub 的类型仍可保存，类型不被强制切换
+    const items = Array.from(document.querySelectorAll('[data-test="source-dialog-kind-item"]'))
+    const rssOne = items.find(
+      (el) => el.textContent?.includes('订阅地址') || el.textContent?.includes('RSS'),
+    ) as HTMLElement
+    if (rssOne) {
+      rssOne.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      await flushPromises()
+    }
     await click(submit())
     expect((wrapper.emitted('submit')![0]![0] as { kind: string }).kind).toBe('rss')
-
-    await click(chip)
-    expect(wrapper.emitted('configureRsshub')).toBeTruthy()
   })
 
   it('RSSHub 配好了：这一项可选，也不出现「前往配置」', async () => {
@@ -107,11 +116,11 @@ describe('SourceDialog', () => {
     })
     await flushPromises()
     await openMenu('source-dialog-kind')
-    expect(q('source-dialog-rsshub-configure')).toBeNull()
-    expect(document.querySelector('.v-list-item--disabled')).toBeNull()
-    expect(q('source-dialog-kind-item')?.className).not.toContain('muted')
+    const item = document.querySelector('[data-test="source-dialog-kind-item"]') as HTMLElement
+    expect(item.className).not.toContain('muted')
 
-    await click(document.querySelector('.v-list-item'))
+    item.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
     await click(submit())
     expect((wrapper.emitted('submit')![0]![0] as { kind: string }).kind).toBe('rsshub')
   })

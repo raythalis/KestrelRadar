@@ -9,6 +9,7 @@ import { computed, getCurrentInstance, onBeforeUnmount, onMounted, ref } from 'v
 import { useI18n } from 'vue-i18n'
 import { CronVuetify } from '@vue-js-cron/vuetify'
 import '@vue-js-cron/vuetify/dist/vuetify.css'
+import AppInput from '@/components/app/AppInput.vue'
 import { checkCron } from '@/utils/cron'
 
 const props = withDefaults(
@@ -78,7 +79,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeOnOutside
 </script>
 
 <template>
-  <div ref="rootEl" class="app-field" data-test="cron-picker">
+  <div ref="rootEl" data-test="cron-picker">
     <VMenu
       v-model="menuOpen"
       :disabled="disabled || readonly"
@@ -88,29 +89,29 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeOnOutside
       <template #activator="{ props: menuProps }">
         <AppInput
           v-bind="menuProps"
-          :model-value="modelValue"
+          v-model="draft"
           :label="label"
-          :hint="hint"
-          :error="error"
+          :invalid="Boolean(shownError)"
+          mono
           :disabled="disabled"
           :readonly="readonly"
+          :aria-label="label"
           placeholder="* * * * *"
-          mono
           data-test="cron-input"
-          @update:model-value="(value: string) => emit('update:modelValue', value)"
         />
       </template>
 
-      <v-sheet class="cron-builder" :class="menuClass" data-test="cron-builder-body">
+      <div class="k2-menu" :class="menuClass" data-test="cron-builder-body">
         <CronVuetify
           v-model="draft"
           :locale="cronLocale"
           :disabled="disabled || readonly"
           :chip-props="{ color: 'primary', size: 'small' }"
         />
-      </v-sheet>
+      </div>
     </VMenu>
 
-    <AppHint v-if="shownError" tone="err" data-test="cron-error">{{ shownError }}</AppHint>
+    <span v-if="shownError" class="k2-field__err" data-test="cron-error">{{ shownError }}</span>
+    <span v-else-if="hint" class="k2-field__hint">{{ hint }}</span>
   </div>
 </template>

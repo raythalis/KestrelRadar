@@ -1,4 +1,6 @@
-<!-- AppTextarea：多行文本（跟 AppInput 同一套状态与留白，只是变成几行）。 -->
+<!-- AppTextarea：多行文本。与 AppInput 同一套 V2 字段体系（k2-field 家族），
+     控件是原生 textarea + .k2-textarea（保留多行语义：rows、最小高度、纵向 resize、多行行高）。
+     error 时描边走危险色，说明文字让位给错误。 -->
 <script setup lang="ts">
 withDefaults(
   defineProps<{
@@ -22,24 +24,25 @@ const model = defineModel<string>({ default: '' })
 </script>
 
 <template>
-  <div class="app-field" data-test="app-textarea">
-    <label v-if="label" class="app-field__label">
-      {{ label }}<span v-if="required" class="app-field__req">*</span>
-    </label>
-    <v-textarea
-      v-model="model"
-      :rows="rows"
-      :placeholder="placeholder"
-      :disabled="disabled"
-      :readonly="readonly"
-      :error="Boolean(error)"
-      :maxlength="maxlength"
-      :class="{ 'is-readonly': readonly && !disabled }"
-      variant="outlined"
-      density="compact"
-      hide-details
-    />
-    <span v-if="error" class="app-field__error">{{ error }}</span>
-    <span v-else-if="hint" class="app-field__hint">{{ hint }}</span>
-  </div>
+  <label class="k2-field" data-test="app-textarea">
+    <span v-if="label" class="k2-field__label">
+      {{ label }}<span v-if="required" class="k2-field__req">*</span>
+    </span>
+
+    <span class="k2-field__row">
+      <textarea
+        v-model="model"
+        class="k2-textarea"
+        :class="{ 'k2-textarea--err': Boolean(error) }"
+        :rows="rows"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        :readonly="readonly"
+        :maxlength="maxlength"
+      />
+    </span>
+
+    <span v-if="error" class="k2-field__err">{{ error }}</span>
+    <span v-else-if="hint" class="k2-field__hint">{{ hint }}</span>
+  </label>
 </template>

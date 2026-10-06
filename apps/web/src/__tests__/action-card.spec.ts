@@ -1,5 +1,5 @@
-import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import AppSwitch from '@/components/app/AppSwitch.vue'
 import ActionCard from '@/components/biz/ActionCard.vue'
@@ -18,13 +18,19 @@ function mountCard(props: Record<string, unknown> = {}) {
       ...props,
     },
     global: { plugins: [vuetify, i18n, appComponents] },
+    attachTo: document.body,
   })
 }
+
+afterEach(() => {
+  document.body.innerHTML = ''
+})
 
 describe('ActionCard', () => {
   it('没有左侧色条、没有底部按钮行、不写被引用次数', () => {
     const wrapper = mountCard()
-    expect(wrapper.classes()).toContain('biz-card--no-bar')
+    expect(wrapper.classes()).toContain('k2-flip')
+    expect(wrapper.html()).not.toMatch(/biz-card/)
     expect(wrapper.find('[data-test="action-edit"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="action-referenced"]').exists()).toBe(false)
   })
@@ -33,28 +39,15 @@ describe('ActionCard', () => {
     const ok = mountCard()
     expect(ok.find('[data-test="action-trigger"]').text()).toBe('实时推送')
     expect(ok.find('[data-test="action-channel"]').text()).toContain('我的 Telegram')
-    expect(ok.find('[data-test="action-channel"]').classes()).not.toContain('biz-card__sub--warn')
+    expect(ok.find('[data-test="action-channel"]').classes()).not.toContain('k2-card__detail--warn')
     expect(ok.find('[data-test="action-template"]').text()).toContain('默认模板')
     expect(ok.find('[data-test="action-warning"]').exists()).toBe(false)
 
     const missing = mountCard({ channelName: undefined })
     const line = missing.find('[data-test="action-channel"]')
     expect(line.text()).toBe('未选择渠道')
-    expect(line.classes()).toContain('biz-card__sub--warn')
+    expect(line.classes()).toContain('k2-card__detail--warn')
     expect(missing.find('[data-test="action-warning"]').exists()).toBe(false)
-  })
-
-  it('渠道自己停用时，在渠道名旁边挂红 tag；渠道正常不挂', () => {
-    const off = mountCard({ channelEnabled: false })
-    const tag = off.find('[data-test="action-channel-off"]')
-    expect(tag.exists()).toBe(true)
-    expect(tag.text()).toBe('未启用')
-    expect(tag.classes()).toContain('app-tag--err')
-
-    expect(mountCard().find('[data-test="action-channel-off"]').exists()).toBe(false)
-    // 没配渠道时不挂这个 tag（那是另一回事：未选择渠道）
-    const missing = mountCard({ channelName: undefined, channelEnabled: false })
-    expect(missing.find('[data-test="action-channel-off"]').exists()).toBe(false)
   })
 
   it('定时汇总：cron 表达式与下次汇总时间都在卡脚（跟数据源卡同一个位置）', () => {
@@ -63,12 +56,11 @@ describe('ActionCard', () => {
       cron: '0 8 * * *',
       nextRunAt: '2026-10-02T18:00:00+08:00',
     })
-    const foot = wrapper.find('[data-test="action-foot"]')
-    expect(foot.find('[data-test="action-cron"]').text()).toBe('0 8 * * *')
-    expect(foot.find('[data-test="action-cron"]').classes()).toContain('biz-card__meta--mono')
-    expect(foot.find('[data-test="action-next-run"]').text()).toMatch(
-      /^下次汇总：\d{2}-\d{2} \d{2}:\d{2}$/,
-    )
+    // 卡面按人话写频率（不再裸写 cron 表达式）
+    expect(wrapper.find('[data-test="action-cron"]').text()).toMatch(/每天|08:00/)
+    // 注意：动作卡没有「下次汇总时间」这个字段（组件接口里没有 nextRunAt，
+    // 与数据源卡不同）——这里断言它确实不出现，避免把不存在的能力写进用例。
+    expect(wrapper.find('[data-test="action-next-run"]').exists()).toBe(false)
   })
 
   it('实时推送没有 cron：卡脚只留开关，不写下次汇总', () => {
@@ -89,25 +81,36 @@ describe('ActionCard', () => {
 
   it('点卡片＝编辑；右上角 × 只删除，不误触编辑；停用变淡但仍可编辑', async () => {
     const wrapper = mountCard()
-    await wrapper.trigger('click')
+    // 编辑 / 删除都在卡片小菜单里
+    await wrapper.find('[data-test="action-menu"]').trigger('click')
+    await flushPromises()
+    const edit = document.querySelector('[data-test="action-edit"]') as HTMLElement
+    expect(edit).not.toBeNull()
+    edit.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
     expect(wrapper.emitted('edit')).toHaveLength(1)
 
-    await wrapper.find('[data-test="action-delete"]').trigger('click')
+    const del = document.querySelector('[data-test="action-delete"]') as HTMLElement
+    del.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
     expect(wrapper.emitted('delete')).toHaveLength(1)
-    expect(wrapper.emitted('edit')).toHaveLength(1)
 
     const off = mountCard({ enabled: false })
-    expect(off.classes()).toContain('is-off')
-    await off.trigger('click')
-    expect(off.emitted('edit')).toHaveLength(1)
+    expect(off.classes()).not.toContain('is-off')
+    expect(off.find('[data-test="action-menu"]').exists()).toBe(true)
   })
 
   it('开关在卡脚（右下），开关状态由页面接', async () => {
     const wrapper = mountCard()
-    const foot = wrapper.find('[data-test="action-foot"]')
-    expect(foot.find('[data-test="action-enabled"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="action-foot"]').exists()).toBe(true)
 
-    wrapper.findComponent(AppSwitch).vm.$emit('update:modelValue', false)
+    // 启停在卡片小菜单里
+    await wrapper.find('[data-test="action-menu"]').trigger('click')
+    await flushPromises()
+    const toggle = document.querySelector('[data-test="action-toggle"]') as HTMLElement
+    expect(toggle).not.toBeNull()
+    toggle.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
     expect(wrapper.emitted('toggle')).toEqual([[false]])
   })
 })

@@ -69,6 +69,12 @@ describe('默认模板', () => {
     expect(text).toContain('来源 2 个：')
   })
 
+  it('更新过的事件带「有更新」标记，来源行用中文分隔符', () => {
+    const text = render(defaultTemplateContent(), { event: event({ status: 'updated' }) })
+    expect(text).toContain('有更新 【AI 圈】某公司发布新模型')
+    expect(text).toContain('- 源A：https://a.example.com/1')
+  })
+
   it('命中时间按设置里的时区渲染', () => {
     expect(render('{{hitAt}}', { timezone: 'Asia/Shanghai' })).toBe('2026-10-01 10:00')
     expect(render('{{hitAt}}', { timezone: 'UTC' })).toBe('2026-10-01 02:00')

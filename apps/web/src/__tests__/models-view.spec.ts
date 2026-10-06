@@ -1,8 +1,8 @@
-import { flushPromises, mount } from '@vue/test-utils'
+import { DOMWrapper, flushPromises, mount } from '@vue/test-utils'
 import type { ConfigSnapshot } from '@kestrel/contracts'
 import { SETTINGS_DEFAULTS } from '@kestrel/contracts'
 import { createPinia } from 'pinia'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as api from '@/api/config'
 import i18n from '@/plugins/i18n'
@@ -10,6 +10,8 @@ import vuetify from '@/plugins/vuetify'
 import ModelsView from '@/views/ModelsView.vue'
 
 vi.mock('@/api/config')
+// 卡片汇总只是卡片背面：不 mock 的话那次请求在 jsdom 里不落地，装载就永远等不齐
+vi.mock('@/api/cardStats')
 
 const snapshot: ConfigSnapshot = {
   groups: [],
@@ -55,23 +57,35 @@ const snapshot: ConfigSnapshot = {
   settings: SETTINGS_DEFAULTS,
 }
 
+// 弹窗走真组件并 teleport 到 body：页面与弹窗都在 document 里，
+// 这里统一用 DOMWrapper 从 document 取，VTU 的 trigger / classes / text 都照常用。
+const dv = (test: string): DOMWrapper<Element> =>
+  new DOMWrapper(document.querySelector(`[data-test="${test}"]`) as Element)
+const dvAll = (test: string): DOMWrapper<Element>[] =>
+  [...document.querySelectorAll(`[data-test="${test}"]`)].map((el) => new DOMWrapper(el))
+
 function mountView() {
   return mount(ModelsView, {
-    global: {
-      plugins: [createPinia(), vuetify, i18n],
-      stubs: { 'v-dialog': { template: '<div data-test="dialog-stub"><slot /></div>' } },
-    },
+    // 弹窗走真组件 + teleport：挂到 document body，别替身（替身后点击不会触达组件）
+    attachTo: document.body,
+    global: { plugins: [createPinia(), vuetify, i18n] },
   })
 }
 
 async function mountLoaded() {
   vi.mocked(api.fetchConfig).mockResolvedValue(snapshot)
   const wrapper = mountView()
+  // 两轮：装载里除了配置快照还要等卡片汇总那次请求落地，快照才写进 store
+  await flushPromises()
   await flushPromises()
   return wrapper
 }
 
 describe('模型页', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
   beforeEach(() => {
     vi.mocked(api.fetchConfig).mockReset()
     for (const fn of [
@@ -100,7 +114,7 @@ describe('模型页', () => {
     vi.mocked(api.createModel).mockResolvedValue(snapshot.models[0]!)
     const wrapper = await mountLoaded()
 
-    await wrapper.get('[data-test="model-draft-p1"] input').setValue('llama3:8b')
+    await wrapper.get('[data-test="model-draft-p1"]').setValue('llama3:8b')
     await wrapper.get('[data-test="model-add"]').trigger('click')
     await flushPromises()
 
@@ -113,7 +127,7 @@ describe('模型页', () => {
 
   it('停用开关写回后端', async () => {
     const wrapper = await mountLoaded()
-    await wrapper.get('[data-test="model-enabled-m1"] input').setValue(false)
+    await wrapper.get('[data-test="model-enabled-m1"]').trigger('click')
     await flushPromises()
     expect(api.updateModel).toHaveBeenCalledWith('m1', { enabled: false })
   })
@@ -126,8 +140,10 @@ describe('模型页', () => {
 
     await wrapper.get('[data-test="provider-delete"]').trigger('click')
     await flushPromises()
-    expect(wrapper.text()).toContain('它下面的模型清单会一起删掉')
-    await wrapper.get('[data-test="confirm-ok"]').trigger('click')
+    expect(document.body.textContent).toContain('它下面的模型清单会一起删掉')
+    // 弹窗挂在 body 上，历史用例可能留着旧节点：取最后一个（当前这次挂载的）
+    ;([...document.querySelectorAll('[data-test="confirm-ok"]')].pop() as HTMLElement).click()
+    await flushPromises()
     await flushPromises()
     expect(api.removeProvider).toHaveBeenCalledWith('p1')
   })
@@ -137,12 +153,10 @@ describe('模型页', () => {
     const wrapper = await mountLoaded()
 
     await wrapper.get('[data-test="new-provider"]').trigger('click')
-    const dialog = wrapper.get('[data-test="provider-dialog"]')
-    await dialog.get('[data-test="provider-name-input"] input').setValue('远端')
-    await dialog
-      .get('[data-test="provider-base-url-input"] input')
-      .setValue('http://192.168.5.9:11434')
-    await dialog.get('[data-test="provider-api-key-input"] input').setValue('sk-x')
+    const dialog = dv('provider-dialog')
+    await dialog.get('[data-test="provider-name-input"]').setValue('远端')
+    await dialog.get('[data-test="provider-base-url-input"]').setValue('http://192.168.5.9:11434')
+    await dialog.get('[data-test="provider-api-key-input"]').setValue('sk-x')
     await flushPromises()
     await dialog.get('[data-test="provider-save"]').trigger('click')
     await flushPromises()

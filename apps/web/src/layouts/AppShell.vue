@@ -1,6 +1,7 @@
 <!-- 外壳：只负责组织 AppSidebar + AppHeader + 内容区，自己不写样式。
-     桌面是常驻左栏，窄屏是抽屉导航 + 底部导航；顶栏右侧只有主题切换。
-     页名不归顶栏（那是页面自己 AppPage 的事），语言切换在设置页。 -->
+     桌面是浮起的侧栏卡片（可收起），窄屏是抽屉导航 + 底部导航；顶栏右侧只有主题切换。
+     页名不归顶栏（页名归页面自己那份页头），语言切换在设置页。
+     v2 的 CSS 变量（--k2-*）在这里挂到 <html> 上：v2 的页面、弹窗、抽屉才都拿得到。 -->
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -8,7 +9,8 @@ import { useRoute } from 'vue-router'
 
 import { BRAND_LOGO } from '@/brand'
 import type { AppNavItem } from '@/components/app/types'
-import { THEME_PREFERENCES, applyThemeVars, findTheme, type ThemePreference } from '@/design/tokens'
+import ToastHost from '@/components/biz/ToastHost.vue'
+import { THEME_PREFERENCES, applyV2Theme, type ThemePreference } from '@/design/v2/tokens'
 import { useUiStore } from '@/stores/ui'
 import { applyThemeWithReveal } from '@/utils/theme-reveal'
 
@@ -31,6 +33,7 @@ const route = useRoute()
 const { t, locale } = useI18n()
 
 const drawerOpen = ref(false)
+const content = ref<HTMLElement | null>(null)
 
 const navItems = computed<AppNavItem[]>(() =>
   NAV.map((item) => ({ ...item, label: t(`nav.${item.name}`) })),
@@ -70,14 +73,12 @@ watch(
   { immediate: true },
 )
 
-// 主题：Vuetify 那边由 <v-app :theme> 管；这里负责把 CSS 变量（--k-*）挂到 <html> 上，
+// 主题：Vuetify 那边由 <v-app :theme> 管；这里把 CSS 变量挂到 <html> 上——
+// 唯一一份 token（--k2-*）加上兼容别名（--k-* → var(--k2-*)），
 // 弹窗、抽屉这些 teleport 出去的浮层也才跟着换色。
 watch(
   () => ui.theme,
-  (next) => {
-    const definition = findTheme(next)
-    if (definition) applyThemeVars(definition)
-  },
+  () => applyV2Theme(ui.isDark),
   { immediate: true },
 )
 
@@ -96,10 +97,31 @@ onUnmounted(() => {
   media?.removeEventListener('change', onSystemTheme)
 })
 
-// 换页就把抽屉收起来
+// 宽窄切换时把抽屉状态归位：桌面本来就没有抽屉，窄屏进来也默认是关的
+let narrowMedia: MediaQueryList | undefined
+function onNarrowChange(): void {
+  drawerOpen.value = false
+}
+
+// 窄屏判定用 1183：桌面档从 1184 起，那上面展开侧栏也留得住 900 的内容宽度
+const NARROW_QUERY = '(max-width: 1183px)'
+
+onMounted(() => {
+  narrowMedia = window.matchMedia?.(NARROW_QUERY)
+  narrowMedia?.addEventListener('change', onNarrowChange)
+})
+
+onUnmounted(() => {
+  narrowMedia?.removeEventListener('change', onNarrowChange)
+})
+
+// 换页就把抽屉收起来，并把内容区滚回顶部（滚动容器是内容区，不是文档）
 watch(
   () => route.fullPath,
-  () => (drawerOpen.value = false),
+  () => {
+    drawerOpen.value = false
+    content.value?.scrollTo({ top: 0 })
+  },
 )
 
 function onKeydown(event: KeyboardEvent): void {
@@ -109,7 +131,11 @@ function onKeydown(event: KeyboardEvent): void {
 
 <template>
   <v-app :theme="ui.theme">
-    <div class="app-shell" :class="{ 'has-drawer-open': drawerOpen }" @keydown="onKeydown">
+    <div
+      class="k2-shell k2-shell--app"
+      :class="{ 'k2-shell--rail': ui.sidebarCollapsed, 'has-drawer-open': drawerOpen }"
+      @keydown="onKeydown"
+    >
       <AppSidebar
         :items="navItems"
         :open="drawerOpen"
@@ -118,26 +144,26 @@ function onKeydown(event: KeyboardEvent): void {
         @close="drawerOpen = false"
       />
 
-      <main class="app-shell__main">
-        <AppHeader :menu-label="t('nav.openMenu')" @toggle-menu="drawerOpen = !drawerOpen">
-          <template #actions>
-            <button
-              type="button"
-              class="app-iconbtn"
-              data-test="theme-toggle"
-              :title="t(currentTheme.labelKey)"
-              :aria-label="t(currentTheme.labelKey)"
-              @click="onThemeClick"
-            >
-              <v-icon size="18">{{ currentTheme.icon }}</v-icon>
-            </button>
-          </template>
-        </AppHeader>
+      <AppHeader :menu-label="t('nav.openMenu')" @toggle-menu="drawerOpen = !drawerOpen">
+        <template #actions>
+          <button
+            type="button"
+            class="k2-iconbtn"
+            data-test="theme-toggle"
+            :title="t(currentTheme.labelKey)"
+            :aria-label="t(currentTheme.labelKey)"
+            @click="onThemeClick"
+          >
+            <v-icon size="20">{{ currentTheme.icon }}</v-icon>
+          </button>
+        </template>
+      </AppHeader>
 
-        <div class="app-shell__content" data-test="shell-body">
-          <router-view />
-        </div>
-      </main>
+      <div ref="content" class="k2-shell__content" data-test="shell-body">
+        <router-view />
+      </div>
+
+      <ToastHost />
     </div>
   </v-app>
 </template>

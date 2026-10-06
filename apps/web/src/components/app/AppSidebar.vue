@@ -1,7 +1,10 @@
-<!-- AppSidebar：导航的唯一来源。桌面是常驻左栏，窄屏是抽屉 + 底部导航（同一份 items，两处渲染）。
-     窄屏时点遮罩或选完导航自动收起（关抽屉由外壳控制）。 -->
+<!-- AppSidebar：导航的唯一来源。桌面是浮起的圆角卡片（可收成图标轨道），窄屏是抽屉（同一份 items）。
+     收起状态记在 ui store（本地存储 kestrel-ui）；窄屏点遮罩或选完导航自动收起（关抽屉由外壳控制）。
+     折叠把手只在桌面出现——窄屏走抽屉，不需要它。 -->
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
+
+import { useUiStore } from '@/stores/ui'
 
 import type { AppNavItem } from './types'
 
@@ -23,61 +26,56 @@ withDefaults(
 
 const emit = defineEmits<{ (e: 'close'): void }>()
 const route = useRoute()
+const ui = useUiStore()
 </script>
 
 <template>
-  <div>
+  <!-- 包裹层只用来放「遮罩 + 侧栏 + 底部导航」三个兄弟节点，自己不参与布局：
+       外壳是 CSS Grid，侧栏要作为网格项才能撑满整列高度（display: contents，见 v2.scss） -->
+  <div class="k2-nav-wrap">
     <button
       v-if="open"
       type="button"
-      class="app-scrim"
+      class="k2-scrim"
       data-test="drawer-scrim"
       :aria-label="closeLabel"
       @click="emit('close')"
     />
 
-    <aside class="app-rail" :class="{ 'is-open': open }">
-      <div v-if="brand" class="app-rail__brand">
-        <img
-          v-if="brand.logo"
-          class="app-rail__logo"
-          data-test="app-logo"
-          :src="brand.logo"
-          alt=""
-        />
-        <span class="app-rail__name" data-test="app-name">{{ brand.name }}</span>
-        <span v-if="brand.tagline" class="app-rail__tagline">{{ brand.tagline }}</span>
+    <aside class="k2-nav" :class="{ 'is-open': open }">
+      <div v-if="brand" class="k2-nav__brand">
+        <img v-if="brand.logo" class="k2-nav__logo" data-test="app-logo" :src="brand.logo" alt="" />
+        <span class="k2-nav__name" data-test="app-name">{{ brand.name }}</span>
+        <span v-if="brand.tagline" class="k2-nav__tagline">{{ brand.tagline }}</span>
       </div>
 
-      <nav class="app-rail__nav">
+      <nav class="k2-nav__items">
         <router-link
           v-for="item in items"
           :key="item.name"
           :to="{ name: item.name }"
-          class="app-rail__item"
+          class="k2-nav__item"
           :class="{ 'is-active': String(route.name ?? '') === item.name }"
           :data-test="`nav-${item.name}`"
         >
-          <v-icon size="18">{{ item.icon }}</v-icon>
-          <span>{{ item.label }}</span>
+          <v-icon class="k2-nav__icon" size="20">{{ item.icon }}</v-icon>
+          <span class="k2-nav__label">{{ item.label }}</span>
         </router-link>
       </nav>
 
-      <div v-if="version" class="app-rail__foot">{{ version }}</div>
-    </aside>
+      <div v-if="version" class="k2-nav__foot">{{ version }}</div>
 
-    <nav class="app-tabbar">
-      <router-link
-        v-for="item in items"
-        :key="item.name"
-        :to="{ name: item.name }"
-        class="app-tabbar__item"
-        :class="{ 'is-active': String(route.name ?? '') === item.name }"
-        :data-test="`tab-${item.name}`"
+      <button
+        type="button"
+        class="k2-nav__handle"
+        :aria-expanded="!ui.sidebarCollapsed"
+        :aria-label="ui.sidebarCollapsed ? '展开侧栏' : '收起侧栏'"
+        :title="ui.sidebarCollapsed ? '展开侧栏' : '收起侧栏'"
+        data-test="nav-handle"
+        @click="ui.setSidebarCollapsed(!ui.sidebarCollapsed)"
       >
-        <v-icon size="18">{{ item.icon }}</v-icon>
-        <span>{{ item.label }}</span>
-      </router-link>
-    </nav>
+        <v-icon size="16">mdi-chevron-left</v-icon>
+      </button>
+    </aside>
   </div>
 </template>

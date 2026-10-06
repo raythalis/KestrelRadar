@@ -4,157 +4,38 @@
 // 不自己写按钮/卡片/弹窗/间距。
 //
 // 硬规矩：
-// - 只用 --k-* 变量，不出现 #色值、不出现随手写死的 px 间距；
+// - 只消费 design/v2/tokens.ts 发出的正式 token（--k2-*），不出现 #色值、不出现随手写死的 px 间距；
 // - 卡片靠"细边框 + 底色"分层，不用阴影；阴影只给浮层（菜单/弹窗/抽屉）；
-// - 间距只用 --k-space-*（4 的倍数）；
-// - 字号只用 --k-fs-* 七档，字重只用 --k-fw-* 三档。
+// - 间距只用 --k2-s-*（4 的倍数）；
+// - 字号只用 --k2-fs-*，字重只用 --k2-fw-*；
+// - 本批（Design Token 收口）只迁移了现役组件的规则；下面仍出现 --k-* 的规则属于那 12 个零生产引用的
+//   App 组件，值来自 design/v2/tokens.ts 的兼容别名表（--k-* → var(--k2-*)），B 批处理掉组件后一并删除。
 
 /* ---------- AppPage：页面容器与内容宽度策略 ---------- */
 
-.app-page {
-  width: 100%;
-  margin-inline: auto;
-  padding: var(--k-pad-page-mobile);
-}
-
-.app-page--narrow {
-  max-width: var(--k-page-narrow);
-}
-
-.app-page--default {
-  max-width: var(--k-page-default);
-}
-
-.app-page--wide {
-  max-width: var(--k-page-wide);
-}
-
-.app-page--full {
-  max-width: none;
-}
-
 /* AppPage 的头部：标题 + 说明 + 右侧操作 */
-.app-page__error {
-  margin-bottom: var(--k-space-4);
+
+/* 页面自带内边距的宽度档位：把粘住的那条拉到通栏，内容不会从两侧漏出来 */
+@media (max-width: 599px) {
 }
 
-.app-page__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: var(--k-space-3);
-  margin-bottom: var(--k-space-5);
-}
-
-.app-page__title {
-  font-size: var(--k-fs-h1);
-  font-weight: var(--k-fw-semibold);
-  line-height: var(--k-lh-tight);
-}
-
-.app-page__note {
-  margin-top: var(--k-space-1);
-  font-size: var(--k-fs-body);
-  color: var(--k-muted);
-  max-width: 78ch;
-}
-
-.app-page__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--k-space-2);
-  margin-left: auto;
+@media (min-width: 600px) and (max-width: 899px) {
 }
 
 /* ---------- AppSection：页面内的分节 ---------- */
 
-.app-section + .app-section {
-  margin-top: var(--k-space-5);
-}
-
-.app-section__head {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--k-space-2);
-  margin-bottom: var(--k-space-3);
-}
-
-.app-section__title {
-  font-size: var(--k-fs-title);
-  font-weight: var(--k-fw-semibold);
-}
-
-.app-section__note {
-  font-size: var(--k-fs-meta);
-  color: var(--k-muted);
-}
-
-.app-section__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--k-space-2);
-  margin-left: auto;
-}
-
 /* ---------- AppCard / Surface ---------- */
-
-.app-card {
-  background: var(--k-panel);
-  border: 1px solid var(--k-border);
-  border-radius: var(--k-radius-md);
-  overflow: hidden;
-}
-
-.app-card__head {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--k-space-1) var(--k-space-2);
-  padding: var(--k-space-3) var(--k-pad-card);
-  border-bottom: 1px solid var(--k-border);
-}
-
-.app-card__title {
-  font-size: var(--k-fs-title);
-  font-weight: var(--k-fw-semibold);
-}
-
-.app-card__note {
-  font-size: var(--k-fs-meta);
-  color: var(--k-muted);
-}
-
-.app-card__body {
-  padding: var(--k-pad-card);
-}
-
-.app-card__foot {
-  display: flex;
-  align-items: center;
-  gap: var(--k-space-2);
-  padding: var(--k-space-3) var(--k-pad-card);
-  border-top: 1px solid var(--k-border-soft);
-}
-
-/* 内嵌面板：卡片里再放一层时用它，别用第二层边框 */
-.app-surface {
-  background: var(--k-panel-2);
-  border: 1px solid var(--k-border);
-  border-radius: var(--k-radius-md);
-  padding: var(--k-space-3);
-}
 
 .app-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--k-space-3);
+  gap: var(--k2-s-3);
 }
 
 .app-row {
   display: flex;
   align-items: center;
-  gap: var(--k-space-2);
+  gap: var(--k2-s-2);
 }
 
 .app-spacer {
@@ -173,77 +54,97 @@
   z-index: 1;
 }
 
-/* 顶栏里的空档只在桌面用：窄屏靠品牌标的 auto 外边距居中，多一个撑开的空档会把它挤没 */
-/* 统计块网格：手机两列，桌面四列 */
-.app-grid--stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--k-space-3);
-}
-
 /* ---------- AppButton ---------- */
 
 .app-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--k-space-1);
-  height: var(--k-control-h);
-  padding-inline: var(--k-space-3);
-  border: 1px solid var(--k-border);
-  border-radius: var(--k-radius-md);
-  background: var(--k-panel-2);
-  color: var(--k-text);
+  gap: var(--k2-s-1);
+  height: var(--k2-control-h);
+  padding-inline: var(--k2-s-3);
+  border: 1px solid var(--k2-c-border);
+  border-radius: var(--k2-r-md);
+  background: var(--k2-c-surface2);
+  color: var(--k2-c-text);
   font: inherit;
-  font-size: var(--k-fs-body);
-  font-weight: var(--k-fw-medium);
+  font-size: var(--k2-fs-body);
+  font-weight: var(--k2-fw-medium);
   cursor: pointer;
   white-space: nowrap;
 }
+
 @media (hover: hover) and (pointer: fine) {
   .app-btn:hover {
-    background: color-mix(in srgb, var(--k-panel-2) 90%, var(--k-text) 6%);
+    background: color-mix(in srgb, var(--k2-c-surface2) 90%, var(--k2-c-text) 6%);
   }
 }
 
 .app-btn--primary {
-  background: var(--k-accent);
+  background: var(--k2-c-primary);
   border-color: transparent;
-  color: var(--k-on-accent);
+  color: var(--k2-c-on-primary);
 }
+
 @media (hover: hover) and (pointer: fine) {
   .app-btn--primary:hover {
-    background: color-mix(in srgb, var(--k-accent) 88%, #000 12%);
+    background: color-mix(in srgb, var(--k2-c-primary) 88%, #000 12%);
   }
 }
 
 .app-btn--ghost {
   background: transparent;
   border-color: transparent;
-  color: var(--k-muted);
+  color: var(--k2-c-text-muted);
 }
+
 @media (hover: hover) and (pointer: fine) {
   .app-btn--ghost:hover {
-    background: var(--k-panel-2);
-    color: var(--k-text);
+    background: var(--k2-c-surface2);
+    color: var(--k2-c-text);
   }
 }
 
 .app-btn--danger {
   background: transparent;
   border-color: transparent;
-  color: var(--k-err);
+  color: var(--k2-c-danger);
 }
+
 @media (hover: hover) and (pointer: fine) {
   .app-btn--danger:hover {
-    background: color-mix(in srgb, var(--k-err) 10%, transparent);
+    background: color-mix(in srgb, var(--k2-c-danger) 10%, transparent);
+  }
+}
+
+.app-btn--soft {
+  border-color: color-mix(in srgb, var(--k2-c-primary) 28%, transparent);
+  background: var(--k2-c-primary-soft);
+  color: var(--k2-c-primary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-btn--soft:hover {
+    background: color-mix(in srgb, var(--k2-c-primary) 20%, transparent);
+  }
+}
+
+.app-btn--danger-solid {
+  border-color: transparent;
+  background: var(--k2-c-danger);
+  color: #ffffff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-btn--danger-solid:hover {
+    background: color-mix(in srgb, var(--k2-c-danger) 85%, #000000);
   }
 }
 
 .app-btn--sm {
   height: 26px;
-  padding-inline: var(--k-space-2);
-  font-size: var(--k-fs-meta);
+  padding-inline: var(--k2-s-2);
+  font-size: var(--k2-fs-caption);
 }
 
 /* 真禁用一律去色（连主色的蓝也去掉），跟「加载中保持主色 + 转圈」一眼区分 */
@@ -255,6 +156,262 @@
 
 /* ---------- 表单：标签 + 控件 + 说明 ---------- */
 
+.app-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--k2-s-3);
+  min-height: var(--k2-row-h);
+}
+
+/* ---------- AppStatus / Badge / Tag ---------- */
+
+@media (hover: hover) and (pointer: fine) {
+}
+
+/* 圆点与文字同一个语义色：状态不再只靠那个 7px 的点表达 */
+
+/* soft：柔底档，给卡片上的运行状态用（不抢标题，又能一眼看到） */
+
+/* 状态档：soft 底 + 语义色文字（颜色表达含义，但文字本身也在说状态，不靠颜色单独区分） */
+
+/* ---------- EmptyState ---------- */
+
+/* ---------- Skeleton：不用渐变，用呼吸的底色 ---------- */
+
+/* ---------- Hint / Toast ---------- */
+
+/* ---------- 浮层：弹窗与抽屉（阴影只有这一层用） ---------- */
+
+.app-iconbtn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: var(--k-radius-md);
+  background: none;
+  color: var(--k-muted);
+  cursor: pointer;
+}
+
+/* 危险图标按钮（分组删除这种紧挨常用操作的，颜色常显，但不做成实心红块） */
+.app-iconbtn--danger {
+  color: var(--k-err);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-iconbtn:hover {
+    background: var(--k-panel-2);
+    color: var(--k-text);
+  }
+
+  .app-iconbtn--danger:hover {
+    background: color-mix(in srgb, var(--k-err) 12%, transparent);
+    color: var(--k-err);
+  }
+}
+
+/* 开关：关态轨道与描边都和面板底拉开一档，一眼分得清开/关。
+   圆点必须带投影 —— 圆点是白的、卡片底也是白的（亮色下 --k-panel 与 --k-on-accent 都是 #ffffff），
+   圆点又比轨道高（20 > 14）会探出轨道，没有投影就会和卡片底糊在一起。
+   阴影色跟 ELEVATION 用同一套色相：亮色 rgba(13,15,26)、暗色 rgba(0,0,0)。 */
+.app-switch-row .v-switch .v-switch__track {
+  opacity: 1;
+  background: color-mix(in srgb, var(--k2-c-text-muted) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--k2-c-text-muted) 45%, transparent);
+}
+
+.app-switch-row .v-selection-control--dirty .v-switch__track {
+  background: var(--k2-c-primary);
+  border-color: transparent;
+}
+
+.app-switch-row .v-switch .v-switch__thumb {
+  background: var(--k2-c-surface);
+  border: 1px solid color-mix(in srgb, var(--k2-c-text-muted) 45%, transparent);
+  box-shadow:
+    0 1px 2px rgba(13, 15, 26, 0.22),
+    0 2px 6px rgba(13, 15, 26, 0.12);
+}
+
+.app-switch-row .v-selection-control--dirty .v-switch__thumb {
+  background: var(--k2-c-on-primary);
+  border-color: transparent;
+}
+
+/* 暗色：圆点本身就是比底色亮的一档，投影只用来收边 */
+html[data-theme='dark'] .app-switch-row .v-switch .v-switch__thumb {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- 组件补件：转圈、骨架行、只读态、弹窗状态 ---------- */
+
+.app-spinner {
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentcolor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: k-ds-spin 0.7s linear infinite;
+}
+
+.app-btn--block {
+  width: 100%;
+}
+
+.app-btn.is-loading {
+  /* 加载中不变灰：转圈 + 主色，跟真禁用区分开 */
+  opacity: 1;
+  cursor: progress;
+}
+
+.v-field.is-readonly .v-field__input {
+  color: var(--k2-c-text-muted);
+}
+
+.app-switch-row__text {
+  min-width: 0;
+}
+
+.app-switch-row.is-disabled {
+  opacity: 0.6;
+}
+
+@media (hover: hover) and (pointer: fine) {
+}
+
+/* 字段多的弹窗：头尾留在原位，中间那层自己滚。
+   缺了 min-height: 0，flex 子项不肯缩，内容多的时候会把脚（取消/保存）顶到视口外面点不到。 */
+
+/* ---------- Vuetify 对齐：DS 是唯一来源，Vuetify 默认值在这里被拉回来 ---------- */
+/* 输入框高度：Vuetify 的 density 才是有效开关（comfortable 48 / compact 40），
+   触摸端直接给撑到 --k2-touch-h（48），别让手指点不到 */
+/* 圆角：输入框/卡片走 --k2-r-md（12），浮层走 --k2-r-lg（16）；
+   Vuetify 的 rounded 属性只认自己的档位，所以用变量覆盖 */
+.v-field,
+.v-card {
+  border-radius: var(--k2-r-md);
+}
+
+.v-overlay__content > .v-card,
+.v-overlay__content > .v-list,
+.v-overlay__content > .v-sheet,
+.v-menu > .v-overlay__content > .v-list,
+.v-menu > .v-overlay__content > .v-card,
+.v-menu > .v-overlay__content > .v-sheet {
+  border-radius: var(--k2-r-lg);
+}
+
+/* 列表行高跟 --k2-row-h 走 */
+.v-list-item {
+  min-height: var(--k2-row-h);
+}
+
+@media (max-width: 899px) {
+  .v-input .v-field {
+    min-height: var(--k2-touch-h);
+  }
+
+  .v-list-item {
+    min-height: var(--k2-touch-h);
+  }
+}
+
+@keyframes k-ds-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes k-ds-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ---------- AppTabs：标签切换（下划线式） ---------- */
+
+/* ---------- 响应式：组件自己的规矩，不是只有一个开关 ---------- */
+
+@media (max-width: 599px) {
+  /* 小屏：卡片与页面内边距收紧一档 */
+}
+
+@media (min-width: 600px) {
+}
+
+@media (max-width: 899px) {
+  /* 触摸端：一律抬到触摸档（--k2-touch-h = 48px，不低于 44px 可用下限）。
+     桌面上的 40px 控件只在指针设备按紧凑密度显示；手指点的地方不小于 48px。 */
+  /* 可点状态（AppStatus 的 action 档）、导航项、开关：手指点的地方不小于 48px */
+  .k2-chip--action,
+  .k2-nav__item,
+  .v-switch {
+    min-height: var(--k2-touch-h);
+  }
+
+  .k2-chip--action {
+    padding-inline: var(--k2-s-4);
+  }
+
+  .app-btn,
+  .app-btn--sm {
+    height: var(--k2-touch-h);
+    padding-inline: var(--k2-s-4);
+  }
+
+  .app-iconbtn {
+    width: var(--k2-touch-h);
+    height: var(--k2-touch-h);
+  }
+}
+
+@media (min-width: 900px) {
+  /* ≥900：外壳已经给了 24px 边距，页面不再叠加第二层留白（避免双重 gutter） */
+}
+
+@keyframes k-brand-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+
+  50% {
+    filter: drop-shadow(0 0 7px color-mix(in srgb, var(--k2-c-primary) 55%, transparent));
+  }
+}
+
+@keyframes k-ds-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (min-width: 1440px) {
+  /* 宽屏只放宽内容宽度上限（AppPage 的 width 档位），不再叠加第二层留白 */
+}
+
+/* 下拉项：图标与文字之间收紧一点（Vuetify 默认塞了 32px 的间隔，看着太散） */
+.app-select-menu .v-list-item__prepend > .v-list-item__spacer,
+.app-select-menu .v-list-item__append > .v-list-item__spacer {
+  width: var(--k2-s-2);
+}
+
+/* ---------- app-field：AppSelect / AppSwitch / ChannelDialog 仍在用（B2 未删除） ---------- */
 .app-field {
   display: flex;
   flex-direction: column;
@@ -276,7 +433,6 @@
   color: var(--k-err);
 }
 
-/* 固定前缀的输入：前缀和输入框拼成一条，接缝处不收圆角；前缀只展示，值里不含它 */
 .app-field__group {
   display: flex;
   align-items: stretch;
@@ -306,429 +462,6 @@
   border-end-start-radius: 0;
 }
 
-/* 一行一个设置项：左标签右控件，窄屏自动变成上下 */
-.app-field-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--k-space-2);
-  padding: var(--k-space-3) 0;
-  border-top: 1px solid var(--k-border-soft);
-}
-
-.app-switch-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--k-space-3);
-  min-height: var(--k-row-h);
-}
-
-/* ---------- AppStatus / Badge / Tag ---------- */
-
-.app-status {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--k-space-1);
-  padding: 2px var(--k-space-2);
-  border: 1px solid var(--k-border);
-  border-radius: var(--k-radius-pill);
-  background: var(--k-panel);
-  font-size: var(--k-fs-label);
-  color: var(--k-muted);
-  cursor: default;
-}
-
-.app-status--action {
-  cursor: pointer;
-}
-@media (hover: hover) and (pointer: fine) {
-  .app-status--action:hover {
-    color: var(--k-text);
-    border-color: color-mix(in srgb, var(--k-border) 55%, var(--k-text));
-  }
-}
-
-.app-status__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: var(--k-radius-pill);
-  background: var(--k-faint);
-  flex: 0 0 7px;
-}
-
-.app-status--ok .app-status__dot {
-  background: var(--k-ok);
-}
-
-.app-status--warn .app-status__dot {
-  background: var(--k-warn);
-}
-
-.app-status--err .app-status__dot {
-  background: var(--k-err);
-}
-
-.app-status--busy .app-status__dot {
-  background: var(--k-accent);
-  animation: k-ds-pulse 1s ease-in-out infinite;
-}
-
-.app-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--k-space-1);
-  padding: 2px var(--k-space-2);
-  border: 1px solid var(--k-border);
-  border-radius: var(--k-radius-sm);
-  background: var(--k-panel-2);
-  font-size: var(--k-fs-label);
-  color: var(--k-muted);
-  white-space: nowrap;
-}
-
-.app-tag--accent {
-  border-color: color-mix(in srgb, var(--k-accent) 35%, transparent);
-  background: var(--k-accent-soft);
-  color: var(--k-accent);
-}
-
-.app-tag--ok {
-  border-color: color-mix(in srgb, var(--k-ok) 35%, transparent);
-  color: var(--k-ok);
-}
-
-.app-tag--err {
-  border-color: color-mix(in srgb, var(--k-err) 35%, transparent);
-  color: var(--k-err);
-}
-
-.app-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px var(--k-space-1);
-  border-radius: var(--k-radius-sm);
-  background: var(--k-panel-2);
-  border: 1px solid var(--k-border);
-  font-family: var(--k-font-mono);
-  font-size: var(--k-fs-label);
-  font-variant-numeric: tabular-nums;
-  color: var(--k-muted);
-}
-
-/* ---------- EmptyState ---------- */
-
-.app-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--k-space-2);
-  padding: var(--k-space-6) var(--k-space-4);
-  border: 1px dashed var(--k-border);
-  border-radius: var(--k-radius-md);
-  text-align: center;
-  color: var(--k-muted);
-}
-
-.app-empty__icon {
-  color: var(--k-faint);
-}
-
-.app-empty__title {
-  font-size: var(--k-fs-bodyLg);
-  font-weight: var(--k-fw-medium);
-  color: var(--k-text);
-}
-
-.app-empty__note {
-  font-size: var(--k-fs-meta);
-}
-
-/* ---------- Skeleton：不用渐变，用呼吸的底色 ---------- */
-
-.app-skeleton {
-  background: var(--k-panel-2);
-  border-radius: var(--k-radius-sm);
-  animation: k-ds-breathe 1.4s ease-in-out infinite;
-}
-
-.app-skeleton--text {
-  height: 10px;
-}
-
-.app-skeleton--title {
-  height: 14px;
-}
-
-.app-skeleton--block {
-  height: 44px;
-}
-
-/* ---------- Hint / Toast ---------- */
-
-.app-hint {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--k-space-2);
-  padding: var(--k-space-2) var(--k-space-3);
-  border-radius: var(--k-radius-md);
-  font-size: var(--k-fs-meta);
-  border: 1px solid transparent;
-}
-
-.app-hint--info {
-  color: var(--k-muted);
-  background: var(--k-panel-2);
-  border-color: var(--k-border);
-}
-
-.app-hint--ok {
-  color: color-mix(in srgb, var(--k-ok) 80%, var(--k-text) 20%);
-  background: color-mix(in srgb, var(--k-ok) 10%, transparent);
-  border-color: color-mix(in srgb, var(--k-ok) 28%, transparent);
-}
-
-.app-hint--warn {
-  color: color-mix(in srgb, var(--k-warn) 85%, var(--k-text) 15%);
-  background: color-mix(in srgb, var(--k-warn) 10%, transparent);
-  border-color: color-mix(in srgb, var(--k-warn) 28%, transparent);
-}
-
-.app-hint--err {
-  color: var(--k-err);
-  background: color-mix(in srgb, var(--k-err) 10%, transparent);
-  border-color: color-mix(in srgb, var(--k-err) 28%, transparent);
-}
-
-/* ---------- 浮层：弹窗与抽屉（阴影只有这一层用） ---------- */
-
-.app-overlay {
-  background: var(--k-panel);
-  border: 1px solid var(--k-border);
-  border-radius: var(--k-radius-lg);
-  box-shadow: var(--k-elev-2);
-}
-
-/* ---------- AppShell / AppSidebar / AppHeader：外壳布局组件 ---------- */
-
-.app-shell {
-  display: flex;
-  min-height: 100vh;
-  background: var(--k-bg);
-}
-
-.app-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  padding: 0;
-  border: 0;
-  background: rgb(0 0 0 / 40%);
-}
-
-.app-rail {
-  position: fixed;
-  inset: 0 auto 0 0;
-  z-index: 30;
-  display: flex;
-  flex: 0 0 224px;
-  flex-direction: column;
-  width: 224px;
-  background: var(--k-rail);
-  border-right: 1px solid var(--k-border);
-  transform: translateX(-100%);
-  transition: transform 0.18s ease;
-}
-
-.app-rail.is-open {
-  transform: none;
-}
-
-.app-rail__brand {
-  display: flex;
-  flex: 0 0 48px;
-  align-items: center;
-  gap: 8px;
-  height: 48px;
-  padding-inline: 20px;
-  border-bottom: 1px solid var(--k-border);
-}
-
-/* 品牌标：换图只改 src/brand.ts 里的路径 */
-.app-rail__logo {
-  flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  /* 极轻的呼吸光晕；悬停时整块标抬一点（光晕跟着 Svg 形状走，所以用 drop-shadow） */
-  animation: k-brand-glow 6s ease-in-out infinite;
-  transition: transform 0.2s ease;
-}
-@media (hover: hover) and (pointer: fine) {
-  .app-rail__brand:hover .app-rail__logo {
-    transform: scale(1.08);
-  }
-}
-
-.app-rail__name {
-  font-family: var(--k-font-mono);
-  font-size: var(--k-fs-bodyLg);
-  font-weight: var(--k-fw-semibold);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-.app-rail__tagline {
-  font-family: var(--k-font-mono);
-  font-size: 10px;
-  color: var(--k-faint);
-}
-
-.app-rail__nav {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  padding: 6px 0;
-}
-
-.app-rail__item {
-  display: flex;
-  align-items: center;
-  gap: var(--k-space-3);
-  padding: 10px 20px;
-  font-size: var(--k-fs-body);
-  color: var(--k-muted);
-  text-decoration: none;
-  border-left: 2px solid transparent;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
-}
-@media (hover: hover) and (pointer: fine) {
-  .app-rail__item:hover {
-    background: var(--k-panel-2);
-    color: var(--k-text);
-  }
-}
-
-.app-rail__item.is-active {
-  background: var(--k-accent-soft);
-  border-left-color: var(--k-accent);
-  color: var(--k-text);
-}
-
-.app-rail__foot {
-  flex: 0 0 auto;
-  padding: 12px 20px;
-  border-top: 1px solid var(--k-border);
-  font-family: var(--k-font-mono);
-  font-size: 10px;
-  color: var(--k-faint);
-}
-
-.app-shell__main {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.app-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  flex: 0 0 48px;
-  align-items: center;
-  gap: var(--k-space-3);
-  height: 48px;
-  padding-inline: var(--k-space-4);
-  background: var(--k-panel);
-  border-bottom: 1px solid var(--k-border);
-}
-
-/* 窄屏顶栏中间的文字品牌标：居中，且不吃点击（它不是按钮）。 */
-.app-topbar__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--k-space-2);
-}
-
-.app-topbar__menu {
-  margin-left: -6px;
-}
-
-.app-iconbtn {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border: 0;
-  border-radius: var(--k-radius-md);
-  background: none;
-  color: var(--k-muted);
-  cursor: pointer;
-}
-@media (hover: hover) and (pointer: fine) {
-  .app-iconbtn:hover {
-    background: var(--k-panel-2);
-    color: var(--k-text);
-  }
-}
-
-.app-shell__content {
-  flex: 1 1 auto;
-  padding: var(--k-space-4) var(--k-space-4) calc(104px + env(safe-area-inset-bottom));
-  background: var(--k-bg);
-}
-
-.app-tabbar {
-  position: fixed;
-  inset: auto 0 0 0;
-  z-index: 10;
-  display: flex;
-  background: var(--k-panel);
-  border-top: 1px solid var(--k-border);
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.app-tabbar__item {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--k-space-1);
-  min-height: var(--k-control-h-touch);
-  padding: 8px 0 10px;
-  font-size: 10px;
-  color: var(--k-muted);
-  text-decoration: none;
-}
-
-.app-tabbar__item.is-active {
-  color: var(--k-accent);
-}
-
-/* ---------- 组件补件：转圈、骨架行、只读态、弹窗状态 ---------- */
-
-.app-spinner {
-  flex: 0 0 12px;
-  width: 12px;
-  height: 12px;
-  border: 2px solid currentcolor;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: k-ds-spin 0.7s linear infinite;
-}
-
-.app-btn--block {
-  width: 100%;
-}
-
-.app-btn.is-loading {
-  /* 加载中不变灰：转圈 + 主色，跟真禁用区分开 */
-  opacity: 1;
-  cursor: progress;
-}
-
 .app-field__row {
   display: flex;
   align-items: center;
@@ -743,304 +476,4 @@
 .app-field__req {
   margin-left: 2px;
   color: var(--k-err);
-}
-
-.v-field.is-readonly .v-field__input {
-  color: var(--k-muted);
-}
-
-.app-switch-row__text {
-  min-width: 0;
-}
-
-.app-switch-row.is-disabled {
-  opacity: 0.6;
-}
-
-.app-status--neutral .app-status__dot {
-  background: var(--k-faint);
-}
-
-.app-status--info .app-status__dot {
-  background: var(--k-blue);
-}
-
-.app-card.is-interactive {
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
-}
-@media (hover: hover) and (pointer: fine) {
-  .app-card.is-interactive:hover {
-    border-color: color-mix(in srgb, var(--k-border) 45%, var(--k-text) 25%);
-  }
-}
-
-.app-card.is-disabled {
-  opacity: 0.6;
-}
-
-.app-card__body--bare {
-  padding: 0;
-}
-
-.app-empty__actions {
-  margin-top: var(--k-space-2);
-}
-
-.app-skeleton-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--k-space-2);
-}
-
-.app-skeleton--dot {
-  flex: 0 0 16px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-}
-
-.app-skeleton-row {
-  display: flex;
-  gap: var(--k-space-3);
-  align-items: flex-start;
-}
-
-.app-skeleton-row__lines {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.app-dialog {
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100vh - var(--k-space-6));
-}
-
-/* 字段多的弹窗：头尾留在原位，中间那层自己滚。
-   缺了 min-height: 0，flex 子项不肯缩，内容多的时候会把脚（取消/保存）顶到视口外面点不到。 */
-.app-dialog .app-card__body {
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.app-dialog__state {
-  display: flex;
-  align-items: center;
-  gap: var(--k-space-2);
-  color: var(--k-muted);
-}
-
-/* ---------- Vuetify 对齐：DS 是唯一来源，Vuetify 默认值在这里被拉回来 ---------- */
-/* 输入框高度：Vuetify 的 density 才是有效开关（comfortable 48 / compact 40），
-   触摸端直接给撑到 --k-control-h-touch，别让手指点不到 */
-/* 圆角：输入框/卡片 4，浮层 6（Vuetify 的 rounded 属性只认自己的档位，所以用变量覆盖） */
-.v-field,
-.v-card {
-  border-radius: var(--k-radius-md);
-}
-
-.v-overlay__content > .v-card,
-.v-overlay__content > .v-list,
-.v-overlay__content > .v-sheet,
-.v-menu > .v-overlay__content > .v-list,
-.v-menu > .v-overlay__content > .v-card,
-.v-menu > .v-overlay__content > .v-sheet {
-  border-radius: var(--k-radius-lg);
-}
-
-/* 列表行高跟 --k-row-h 走 */
-.v-list-item {
-  min-height: var(--k-row-h);
-}
-
-@media (max-width: 899px) {
-  .v-input .v-field {
-    min-height: var(--k-control-h-touch);
-  }
-
-  .v-list-item {
-    min-height: var(--k-control-h-touch);
-  }
-}
-
-@keyframes k-ds-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.3;
-  }
-}
-
-@keyframes k-ds-breathe {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.55;
-  }
-}
-
-/* ---------- 响应式：组件自己的规矩，不是只有一个开关 ---------- */
-
-@media (max-width: 599px) {
-  /* 小屏：卡片与页面内边距收紧一档 */
-  .app-card__head,
-  .app-card__body,
-  .app-card__foot {
-    padding-inline: var(--k-space-3);
-  }
-}
-
-@media (min-width: 600px) {
-  .app-page {
-    padding: var(--k-space-5);
-  }
-}
-
-@media (max-width: 899px) {
-  /* 触摸端：一律抬到 44px 可点高度。
-     桌面上的 32px 小号按钮只在指针设备出现；手指点的地方不小于 44px。 */
-  .app-btn,
-  .app-btn--sm {
-    height: var(--k-control-h-touch);
-    padding-inline: var(--k-space-4);
-  }
-
-  .app-status--action,
-  .app-rail__item,
-  .app-rail__brand,
-  .v-switch {
-    min-height: var(--k-control-h-touch);
-  }
-
-  .app-iconbtn {
-    width: var(--k-control-h-touch);
-    height: var(--k-control-h-touch);
-  }
-
-  .app-field-row {
-    gap: var(--k-space-1);
-  }
-}
-
-@media (min-width: 900px) {
-  /* ≥900：外壳已经给了 24px 边距，页面不再叠加第二层留白（避免双重 gutter） */
-  .app-page {
-    padding: 0;
-  }
-
-  .app-grid--stats {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .app-field-row {
-    grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
-    align-items: center;
-    gap: var(--k-space-4);
-  }
-}
-
-@media (min-width: 900px) {
-  /* 桌面：左栏常驻，不需要抽屉与底部导航 */
-  .app-rail {
-    position: sticky;
-    inset: auto;
-    /* 铺满整屏：原来只跟内容一样高，看着像半截 */
-    height: 100%;
-    transform: none;
-  }
-
-  .app-scrim,
-  .app-tabbar,
-  .app-topbar__menu {
-    display: none !important;
-  }
-
-  .app-topbar {
-    padding-inline: var(--k-space-5);
-  }
-
-  .app-shell__content {
-    padding: var(--k-space-5) var(--k-space-5) 40px;
-  }
-}
-
-/* 移动端弹窗贴底成抽屉：从小屏底部升起，顶部圆角，别盖满整屏 */
-@media (max-width: 899px) {
-  .v-overlay__content.app-dialog__sheet {
-    align-items: flex-end;
-    align-self: flex-end;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-  }
-
-  .v-overlay__content.app-dialog__sheet > .app-dialog {
-    width: 100%;
-    max-height: 88vh;
-    overflow-y: auto;
-    border-radius: var(--k-radius-lg) var(--k-radius-lg) 0 0;
-    border-bottom: 0;
-  }
-}
-
-@keyframes k-brand-glow {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 0 transparent);
-  }
-
-  50% {
-    filter: drop-shadow(0 0 7px color-mix(in srgb, var(--k-accent) 55%, transparent));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .app-rail__logo {
-    animation: none;
-  }
-}
-
-@keyframes k-ds-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (min-width: 1440px) {
-  /* 宽屏只放宽内容宽度上限（AppPage 的 width 档位），不再叠加第二层留白 */
-  .app-page {
-    padding-inline: 0;
-  }
-}
-
-// 卡片网格：自动填充、单卡最小 16rem，窄屏自然落成单列。
-// 业务卡片（渠道 / 数据源 / 动作）和将来的站点类页面都用它，不要各写一套栅格。
-.app-card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-  gap: var(--k-space-3);
-  align-items: stretch;
-}
-
-/* 下拉项：图标与文字之间收紧一点（Vuetify 默认塞了 32px 的间隔，看着太散） */
-.app-select-menu .v-list-item__prepend > .v-list-item__spacer,
-.app-select-menu .v-list-item__append > .v-list-item__spacer {
-  width: var(--k-space-2);
-}
-
-/* 卡片网格后面跟操作行（新建这类）：留一点气口，不然紧贴着网格 */
-.app-card-grid + .app-row {
-  margin-top: var(--k-space-3);
 }

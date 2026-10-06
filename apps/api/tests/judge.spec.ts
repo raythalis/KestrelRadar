@@ -26,16 +26,28 @@ function content(overrides: Partial<ContentSignals> = {}): ContentSignals {
   }
 }
 
-describe('判定：灵敏度映射两条线', () => {
-  const settings = { scoreHighLine: 65, scoreLowLine: 35, sensitivityShift: 10 }
+describe('判定：三档灵敏度各用自己那两条线', () => {
+  const settings = {
+    scoreHighLine: 65,
+    scoreLowLine: 35,
+    looseHighLine: 55,
+    looseLowLine: 25,
+    strictHighLine: 80,
+    strictLowLine: 45,
+  }
 
-  it('标准就是全局那两条线', () => {
+  it('中等档用全局那两条线', () => {
     expect(resolveBands(settings, 'medium')).toEqual({ high: 65, low: 35 })
   })
 
-  it('宽松把线压低（更少内容被丢），严格把线抬高', () => {
+  it('宽松档线更低（更容易过），严格档线更高（更难过）', () => {
     expect(resolveBands(settings, 'low')).toEqual({ high: 55, low: 25 })
-    expect(resolveBands(settings, 'high')).toEqual({ high: 75, low: 45 })
+    expect(resolveBands(settings, 'high')).toEqual({ high: 80, low: 45 })
+  })
+
+  it('两条线贴太近时低线让位，保证至少差 5 分', () => {
+    const tight = { ...settings, strictHighLine: 48, strictLowLine: 46 }
+    expect(resolveBands(tight, 'high')).toEqual({ high: 48, low: 43 })
   })
 })
 

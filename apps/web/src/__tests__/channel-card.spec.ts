@@ -27,9 +27,9 @@ describe('ChannelCard', () => {
   })
 
   it('图标跟类型走，且都真的存在于图标字体里（写错名字会是空白）', () => {
-    expect(mountCard().find('[data-test="channel-icon"] .v-icon').classes()).toContain('mdi-send')
+    expect(mountCard().find('[data-test="channel-icon"] .mdi').classes()).toContain('mdi-send')
     expect(
-      mountCard({ type: 'webhook' }).find('[data-test="channel-icon"] .v-icon').classes(),
+      mountCard({ type: 'webhook' }).find('[data-test="channel-icon"] .mdi').classes(),
     ).toContain('mdi-webhook')
   })
 
@@ -41,7 +41,7 @@ describe('ChannelCard', () => {
 
   it('状态不写成一句文字：颜色走左侧色条，圆点只写它是什么', () => {
     const wrapper = mountCard({ tone: 'err', probe: 'fail' })
-    expect(wrapper.classes()).toContain('biz-card--err')
+    expect(wrapper.classes()).toContain('k2-t-danger')
     expect(wrapper.find('[data-test="channel-status"]').exists()).toBe(false)
     expect(wrapper.text()).not.toContain('连接失败')
     // 圆点提示不写状态字
@@ -64,9 +64,9 @@ describe('ChannelCard', () => {
     expect(wrapper.emitted('edit')).toHaveLength(1)
   })
 
-  it('右上角 × 只走删除，不会顺带进编辑', async () => {
+  it('卡脚 × 只走删除，不会顺带进编辑', async () => {
     const wrapper = mountCard()
-    expect(wrapper.find('[data-test="channel-delete"]').attributes('title')).toBe('删除')
+    expect(wrapper.find('[data-test="channel-delete"]').attributes('title')).toBe('删除渠道')
     await wrapper.find('[data-test="channel-delete"]').trigger('click')
     expect(wrapper.emitted('delete')).toHaveLength(1)
     expect(wrapper.emitted('edit')).toBeUndefined()
@@ -74,26 +74,26 @@ describe('ChannelCard', () => {
 
   it('圆点状态机：未测／连通／有警告／失败／测试中五种状态各有自己的类', async () => {
     const idle = mountCard()
-    expect(idle.find('[data-test="channel-test"]').classes()).toContain('biz-card__probe--idle')
+    expect(idle.find('[data-test="channel-test"]').classes()).toContain('k2-chan__probe--idle')
 
     await idle.find('[data-test="channel-test"]').trigger('click')
     expect(idle.emitted('test')).toHaveLength(1)
     expect(idle.emitted('edit')).toBeUndefined()
 
     expect(mountCard({ probe: 'ok' }).find('[data-test="channel-test"]').classes()).toContain(
-      'biz-card__probe--ok',
+      'k2-chan__probe--ok',
     )
     expect(mountCard({ probe: 'warn' }).find('[data-test="channel-test"]').classes()).toContain(
-      'biz-card__probe--warn',
+      'k2-chan__probe--warn',
     )
     expect(mountCard({ probe: 'fail' }).find('[data-test="channel-test"]').classes()).toContain(
-      'biz-card__probe--fail',
+      'k2-chan__probe--fail',
     )
 
     // 测试中：转圈，并且点不动
     const testing = mountCard({ probe: 'testing' })
     const dot = testing.find('[data-test="channel-test"]')
-    expect(dot.classes()).toContain('biz-card__probe--testing')
+    expect(dot.classes()).toContain('k2-chan__probe--testing')
     expect((dot.element as HTMLButtonElement).disabled).toBe(true)
     expect(dot.attributes('aria-busy')).toBe('true')
     await dot.trigger('click')

@@ -44,3 +44,20 @@ if (!('visualViewport' in globalThis)) {
   }
   Object.defineProperty(globalThis, 'visualViewport', { value: stub, writable: true })
 }
+
+// jsdom 环境里 localStorage 不总是存在（这套用例大量用它存 UI 偏好），给一个内存实现。
+if (!('localStorage' in globalThis) || !globalThis.localStorage) {
+  const store = new Map<string, string>()
+  const memoryStorage = {
+    get length(): number {
+      return store.size
+    },
+    key: (index: number): string | null => [...store.keys()][index] ?? null,
+    getItem: (key: string): string | null => (store.has(key) ? store.get(key)! : null),
+    setItem: (key: string, value: string): void => void store.set(key, String(value)),
+    removeItem: (key: string): void => void store.delete(key),
+    clear: (): void => void store.clear(),
+  }
+  Object.defineProperty(globalThis, 'localStorage', { value: memoryStorage, writable: true })
+  // 标记：kestrel-test-localStorage
+}

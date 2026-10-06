@@ -2,6 +2,7 @@ import { SETTINGS_DEFAULTS, type Settings } from '@kestrel/contracts'
 
 import type {
   ConfigSnapshot,
+  CardStats,
   CreateActionInput,
   CreateChannelInput,
   CreateDiscoveryInput,
@@ -56,10 +57,13 @@ import {
   updateSettings as updateSettingsApi,
   updateTemplate as updateTemplateApi,
 } from '@/api/config'
+import { fetchCardStats } from '@/api/cardStats'
 import { ApiError } from '@/api/http'
 
 export const useConfigStore = defineStore('config', () => {
   const snapshot = ref<ConfigSnapshot | null>(null)
+  /** 卡片背面的按对象汇总（只有发现 / 监听 / 动作三张，跟配置一起加载） */
+  const cardStats = ref<CardStats | null>(null)
   const loading = ref(false)
   const saving = ref(false)
   const errorMessage = ref('')
@@ -121,13 +125,20 @@ export const useConfigStore = defineStore('config', () => {
   async function load(): Promise<void> {
     loading.value = true
     errorMessage.value = ''
+    // 汇总只是卡片背面，拿不到不影响配置本身
+    const [snapshotResult, statsResult] = await Promise.allSettled([
+      fetchConfig(),
+      fetchCardStats(),
+    ])
     try {
-      snapshot.value = await fetchConfig()
+      if (snapshotResult.status === 'fulfilled') snapshot.value = snapshotResult.value
+      else throw snapshotResult.reason
     } catch (error) {
       errorMessage.value = error instanceof ApiError ? error.message : '读取配置失败'
     } finally {
       loading.value = false
     }
+    if (statsResult.status === 'fulfilled') cardStats.value = statsResult.value
   }
 
   /** 所有写操作都走这里：出错只记消息，不打断界面 */
@@ -242,6 +253,7 @@ export const useConfigStore = defineStore('config', () => {
 
   return {
     snapshot,
+    cardStats,
     loading,
     saving,
     errorMessage,

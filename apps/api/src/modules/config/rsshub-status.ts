@@ -23,8 +23,9 @@ export function createRsshubStatus(deps: RsshubStatusDeps) {
   const timeoutMs = deps.timeoutMs ?? DEFAULT_TIMEOUT_MS
   let cache: { baseUrl: string; at: number; status: StatsRsshub } | null = null
 
-  async function probe(force = false): Promise<StatsRsshub> {
-    const baseUrl = deps.settings.get().rsshubBaseUrl.replace(/\/+$/, '')
+  /** probe(force, baseUrl)：baseUrl 传了就探这一串（设置页测没保存的地址），不传用库里存的 */
+  async function probe(force = false, baseUrlOverride?: string): Promise<StatsRsshub> {
+    const baseUrl = (baseUrlOverride ?? deps.settings.get().rsshubBaseUrl).replace(/\/+$/, '')
     if (!baseUrl) {
       return {
         configured: false,

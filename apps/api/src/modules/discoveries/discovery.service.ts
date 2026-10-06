@@ -2,6 +2,7 @@ import type { CreateDiscoveryInput, Discovery, UpdateDiscoveryInput } from '@kes
 
 import { AppError } from '../../plugins/errors.ts'
 import { isValidCron } from '../collection/scheduler.ts'
+import type { GroupGate } from '../groups/group-gate.ts'
 import type { GroupRepo } from '../groups/group.repo.ts'
 import type { DiscoveryRepo } from './discovery.repo.ts'
 
@@ -13,6 +14,7 @@ export interface DiscoveryScheduleView {
 export function createDiscoveryService(
   repo: DiscoveryRepo,
   groups: GroupRepo,
+  gate: GroupGate,
   schedule?: DiscoveryScheduleView,
 ) {
   function mustGet(id: string): Discovery {
@@ -43,7 +45,9 @@ export function createDiscoveryService(
     create: (input: CreateDiscoveryInput): Discovery => {
       mustGroup(input.groupId)
       assertCron(input.cronExpression)
-      return withSchedule(repo.create(input))
+      const created = repo.create(input)
+      gate.inheritOnCreate(created.groupId, { kind: 'discovery', id: created.id })
+      return withSchedule(mustGet(created.id))
     },
 
     update: (id: string, patch: UpdateDiscoveryInput): Discovery => {
@@ -51,12 +55,14 @@ export function createDiscoveryService(
       if (patch.cronExpression !== undefined) assertCron(patch.cronExpression)
       const updated = repo.update(id, patch)
       if (!updated) throw AppError.notFound('发现不存在')
+      if (patch.enabled !== undefined) gate.syncFromChildren(updated.groupId)
       return withSchedule(updated)
     },
 
     remove: (id: string): void => {
-      mustGet(id)
+      const current = mustGet(id)
       repo.remove(id)
+      gate.syncFromChildren(current.groupId)
     },
   }
 }

@@ -1,5 +1,5 @@
-import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import AppSwitch from '@/components/app/AppSwitch.vue'
 import SourceCard from '@/components/biz/SourceCard.vue'
@@ -21,15 +21,22 @@ function mountCard(props: Record<string, unknown> = {}) {
       ...props,
     },
     global: { plugins: [vuetify, i18n, appComponents] },
+    // Vuetify 的菜单浮层 teleport 到 body：必须真的挂进文档才点得开
+    attachTo: document.body,
   })
 }
+
+afterEach(() => {
+  document.body.innerHTML = ''
+})
 
 describe('SourceCard', () => {
   it('不要左侧色条：状态只由状态块表达；路由等宽显示，实例地址不上卡', () => {
     const wrapper = mountCard()
-    expect(wrapper.classes()).toContain('biz-card--no-bar')
+    expect(wrapper.classes()).toContain('k2-flip')
+    expect(wrapper.html()).not.toMatch(/biz-card/)
     expect(wrapper.find('[data-test="source-target"]').text()).toBe('/bilibili/ranking/all')
-    expect(wrapper.find('[data-test="source-target"]').classes()).toContain('biz-card__sub--mono')
+    expect(wrapper.find('[data-test="source-target"]').classes()).toContain('k2-card__detail--mono')
   })
 
   it('卡上不写已收条数与解释性提示', () => {
@@ -39,58 +46,69 @@ describe('SourceCard', () => {
     expect(wrapper.find('[data-test="source-instance"]').exists()).toBe(false)
   })
 
-  it('状态块本身就是抓取测试的入口，颜色分四档', async () => {
+  it('抓取测试入口在小菜单里；卡脚状态块只表达启用与否', async () => {
     const wrapper = mountCard()
-    const chip = wrapper.find('[data-test="source-test"]')
-    expect(chip.attributes('title')).toBe('抓取测试')
-    expect(wrapper.find('[data-test="source-status"]').classes()).toContain('app-status--ok')
+    // 卡脚状态芯片：启用＝success，停用＝neutral
+    expect(wrapper.find('[data-test="source-status"]').classes().join(' ')).toContain(
+      'k2-t-success',
+    )
+    expect(
+      mountCard({ enabled: false }).find('[data-test="source-status"]').classes().join(' '),
+    ).toContain('k2-t-neutral')
 
-    await chip.trigger('click')
+    await wrapper.find('[data-test="source-menu"]').trigger('click')
+    await flushPromises()
+    const test = document.querySelector('[data-test="source-test"]') as HTMLElement
+    expect(test).not.toBeNull()
+    test.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
     expect(wrapper.emitted('test')).toHaveLength(1)
     expect(wrapper.emitted('edit')).toBeUndefined()
-
-    const toneOf = (props: Record<string, unknown>) =>
-      mountCard(props).find('[data-test="source-status"]').classes().join(' ')
-    expect(toneOf({ tone: 'neutral', statusText: '抓取测试' })).toContain('app-status--neutral')
-    expect(toneOf({ tone: 'warn' })).toContain('app-status--warn')
-    expect(toneOf({ tone: 'err' })).toContain('app-status--err')
   })
 
   it('抓取中：转圈且不给重复点；停用的源也不给抓', async () => {
     const busy = mountCard({ busy: true })
-    expect(busy.find('[data-test="source-status"]').classes()).toContain('app-status--busy')
-    expect((busy.find('[data-test="source-test"]').element as HTMLButtonElement).disabled).toBe(
-      true,
-    )
+    // 抓取中：菜单入口上出现转圈
+    expect(busy.find('[data-test="source-testing"]').exists()).toBe(true)
 
     const off = mountCard({ enabled: false })
-    expect(off.classes()).toContain('is-off')
-    await off.find('[data-test="source-test"]').trigger('click')
+    // 停用不整张压暗：状态由开关说，颜色只说一遍
+    expect(off.classes()).not.toContain('is-off')
+    expect(off.find('[data-test="source-status"]').exists()).toBe(true)
+    await off.find('[data-test="source-menu"]').trigger('click')
+    await flushPromises()
+    const test = document.querySelector('[data-test="source-test"]') as HTMLButtonElement
+    expect(test.disabled).toBe(true)
     expect(off.emitted('test')).toBeUndefined()
   })
 
   it('点卡片＝编辑；右上角 × 只删除，不误触编辑', async () => {
     const wrapper = mountCard()
+    // 编辑 / 删除都在卡片小菜单里，卡面上没有常驻按钮
     expect(wrapper.find('[data-test="source-edit"]').exists()).toBe(false)
-
-    await wrapper.trigger('click')
-    expect(wrapper.emitted('edit')).toHaveLength(1)
-
-    await wrapper.find('[data-test="source-delete"]').trigger('click')
+    await wrapper.find('[data-test="source-menu"]').trigger('click')
+    await flushPromises()
+    const edit = document.querySelector('[data-test="source-edit"]') as HTMLElement
+    const del = document.querySelector('[data-test="source-delete"]') as HTMLElement
+    expect(edit).not.toBeNull()
+    expect(del).not.toBeNull()
+    del.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
     expect(wrapper.emitted('delete')).toHaveLength(1)
-    expect(wrapper.emitted('edit')).toHaveLength(1)
+    expect(wrapper.emitted('edit')).toBeUndefined()
   })
 
   it('脚上写 cron 表达式 + 下次采集时间；停用的源只留表达式，不写下次', () => {
     const on = mountCard()
-    expect(on.find('[data-test="source-cron"]').text()).toBe('*/30 * * * *')
+    // 卡脚按人话写频率（不再裸写 cron 表达式）
+    expect(on.find('[data-test="source-plan"]').text().length).toBeGreaterThan(0)
     // 时区随运行环境，这里只校验形状：标签 + 月-日 时:分
     expect(on.find('[data-test="source-next-run"]').text()).toMatch(
       /^下次采集：\d{2}-\d{2} \d{2}:\d{2}$/,
     )
 
     const off = mountCard({ enabled: false })
-    expect(off.find('[data-test="source-cron"]').text()).toBe('*/30 * * * *')
+    expect(off.find('[data-test="source-plan"]').exists()).toBe(true)
     expect(off.find('[data-test="source-next-run"]').exists()).toBe(false)
 
     const noTime = mountCard({ nextRunAt: null })
@@ -99,10 +117,16 @@ describe('SourceCard', () => {
 
   it('开关在卡脚（右下），开关状态由页面接', async () => {
     const wrapper = mountCard()
-    const foot = wrapper.find('[data-test="source-foot"]')
-    expect(foot.find('[data-test="source-enabled"]').exists()).toBe(true)
-
-    wrapper.findComponent(AppSwitch).vm.$emit('update:modelValue', false)
+    // 启停入口也在小菜单里；卡脚只放状态、频率、下次时间与翻面按钮
+    expect(
+      wrapper.find('[data-test="source-foot"]').find('[data-test="flip-button"]').exists(),
+    ).toBe(true)
+    await wrapper.find('[data-test="source-menu"]').trigger('click')
+    await flushPromises()
+    const toggle = document.querySelector('[data-test="source-toggle"]') as HTMLElement
+    expect(toggle).not.toBeNull()
+    toggle.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
     expect(wrapper.emitted('toggle')).toEqual([[false]])
   })
 })

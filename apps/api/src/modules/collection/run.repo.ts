@@ -4,6 +4,7 @@ import type { CollectionRun } from '@kestrel/contracts'
 
 import type { Db } from '../../db/index.ts'
 import { fromBool, toBool } from '../../db/sql.ts'
+import { dailySumColumns, type DayWindow } from '../../utils/day.ts'
 
 interface RunRow {
   id: string
@@ -29,6 +30,14 @@ export interface NewRun {
   durationMs: number
   code: string | null
   message: string
+}
+
+export interface DiscoveryWindowStat {
+  discoveryId: string
+  rounds: number
+  okRounds: number
+  found: number
+  daily: number[]
 }
 
 function toRun(row: RunRow): CollectionRun {
@@ -111,6 +120,42 @@ export function createRunRepo(db: Db) {
           rows.filter((row) => row.route_ok === 0).map((row) => row.discovery_id),
         ).size,
       }
+    },
+
+    /**
+     * 按源的窗口汇总：成功率看「路由成功」的轮次（与仪表盘同口径），
+     * 计数与 daily 都是抓到的条数。窗口内没有轮次的源不会出现在结果里。
+     */
+    discoveryStatsSince(windows: DayWindow[]): DiscoveryWindowStat[] {
+      const daily = dailySumColumns('found_count', windows)
+      const first = windows[0]
+      const last = windows[windows.length - 1]
+      if (!first || !last) return []
+      const rows = db
+        .prepare(
+          `select discovery_id,
+             count(*) as rounds,
+             coalesce(sum(route_ok), 0) as ok_rounds,
+             coalesce(sum(found_count), 0) as found,
+             ${daily.sql}
+           from collection_runs
+           where created_at >= ? and created_at < ?
+           group by discovery_id`,
+        )
+        .all(...daily.params, first.start, last.end) as unknown as {
+        discovery_id: string
+        rounds: number
+        ok_rounds: number
+        found: number
+        [column: `d${number}`]: number
+      }[]
+      return rows.map((row) => ({
+        discoveryId: row.discovery_id,
+        rounds: row.rounds,
+        okRounds: row.ok_rounds,
+        found: row.found,
+        daily: windows.map((_, index) => row[`d${index}`] ?? 0),
+      }))
     },
 
     /** 保留 N 天：接在同一个每小时清理任务里跑 */

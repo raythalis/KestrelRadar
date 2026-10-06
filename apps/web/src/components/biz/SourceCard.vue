@@ -1,16 +1,16 @@
-<!-- SourceCard：数据源（发现来源）卡片（业务组件层）。
-     结构跟 ChannelCard 对齐：右上角 ×＝删除（二级确认由页面做）、点整张卡片＝编辑、不再摆底部按钮行。
-     状态块（颜色 + 短标签）本身就是「抓取测试」的入口：点它试抓，抓取中转圈且不给再点；
-     还没有结果时它就显示「抓取测试」。停用的源不给抓。
-     没有左侧色条：状态只由状态块的颜色表达（ChannelCard 才用左侧色条）。
-     卡上不写实例地址、已收条数、解释性提示——要么在编辑里，要么由状态自己说。
-     只出事件，不碰 store：数据、试抓结果与写操作都由页面负责。 -->
+<!-- SourceCard：发现卡（业务组件层 · v2）。
+     正面回答：去哪儿看、多久看一次、现在什么状态；背面回答：最近一次采集到底成不成。
+     交互：整卡点＝编辑；状态块只说一次（启用/停用），开关与「抓取测试」收进 ⋯ 菜单；
+     翻面只由卡脚那个三竖线按钮触发，正反面同一高度（高度定在 .k2-flip 上）。
+     背面的统计类数值（成功率 / 迷你柱 / 最近七天条数）等后端有落库统计再上，这里只放现有真数据。
+     只出事件，不碰 store：数据、试抓与写操作都由页面负责。 -->
 <script setup lang="ts">
-import { computed } from 'vue'
+import { CUSTOM_SCHEDULE_COPY, humanizeCron, type CardStat } from '@kestrel/contracts'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import AppStatus from '@/components/app/AppStatus.vue'
-import AppSwitch from '@/components/app/AppSwitch.vue'
+import { cardStatView } from '@/components/biz/card-stat'
+import { SEMANTIC_ICONS } from '@/components/biz/icons'
 import { formatShortDateTime } from '@/utils/format'
 
 const props = withDefaults(
@@ -23,17 +23,25 @@ const props = withDefaults(
     enabled: boolean
     /** 抓取目标：路由路径或网址 */
     target: string
-    /** 采集周期：原样展示 cron 表达式，不做人话翻译 */
+    /** 采集周期：裸 cron 表达式，展示时翻成人话 */
     cron: string
     /** 下次采集时间；停用的源没有下次 */
     nextRunAt?: string | null
-    tone?: 'ok' | 'warn' | 'err' | 'neutral'
-    /** 状态短标签；还没抓过时页面传「抓取测试」 */
-    statusText: string
-    /** 抓取中 */
+    /** 抓取测试正在跑 */
     busy?: boolean
+    /* ---- 背面：后端按对象 + 最近 N 天算好的汇总（与仪表盘同窗口） ---- */
+    /** 成功率 / 筛选率 / 计数 / 每天的柱 */
+    stat?: CardStat | null
+    /** 窗口天数，文案里写「最近 N 天」 */
+    windowDays?: number
   }>(),
-  { icon: 'mdi-rss', tone: 'neutral', nextRunAt: null, busy: false },
+  {
+    icon: 'mdi-rss',
+    nextRunAt: null,
+    busy: false,
+    stat: null,
+    windowDays: 7,
+  },
 )
 
 const emit = defineEmits<{
@@ -44,72 +52,168 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const flipped = ref(false)
+const menuOpen = ref(false)
 
-/** 抓取中或已停用都不给再抓 */
-const probeDisabled = computed(() => props.busy || !props.enabled)
+/** 背面三件套：成功率、迷你柱、窗口内计数 */
+const stat = computed(() => props.stat ?? null)
+const days = computed(() => props.windowDays)
+const { hasRate, rateText, barHeights, total } = cardStatView(stat, days)
+
+/** 计划：认得出写人话；认不出写「自定义时间」，原表达式挂 tooltip */
+const plan = computed(() => humanizeCron(props.cron))
+const planText = computed(() => plan.value ?? CUSTOM_SCHEDULE_COPY)
+const stateLabel = computed(() => (props.enabled ? t('common.enabled') : t('common.disabled')))
 </script>
 
 <template>
-  <div
-    class="biz-card biz-card--no-bar"
-    :class="[`biz-card--${tone}`, { 'is-off': !enabled }]"
-    role="button"
-    tabindex="0"
-    data-test="source-card"
-    @click="emit('edit')"
-    @keydown.enter.prevent="emit('edit')"
-  >
-    <div class="biz-card__head">
-      <span class="biz-card__icon" data-test="source-icon">
-        <v-icon size="18">{{ icon }}</v-icon>
-      </span>
-      <span class="biz-card__heading">
-        <span class="biz-card__title" data-test="source-name">{{ name }}</span>
-        <span class="biz-card__kind" data-test="source-kind">{{ kindLabel }}</span>
-      </span>
-      <span class="app-spacer" />
-      <button
-        type="button"
-        class="biz-card__remove"
-        data-test="source-delete"
-        :title="t('common.delete')"
-        :aria-label="t('common.delete')"
-        @click.stop="emit('delete')"
+  <article class="k2-flip" :class="{ 'k2-flip--back': flipped }" data-test="source-card">
+    <div class="k2-flip__inner">
+      <!-- 正面 -->
+      <div
+        class="k2-card k2-card--interactive k2-flip__face k2-flip__face--front k2-t-info"
+        role="button"
+        tabindex="0"
+        @click="emit('edit')"
+        @keydown.enter.prevent="emit('edit')"
       >
-        <v-icon size="16">mdi-close</v-icon>
-      </button>
-    </div>
+        <div class="k2-card__head">
+          <span class="k2-tile" data-test="source-icon">
+            <v-icon size="20">{{ icon }}</v-icon>
+          </span>
+          <span class="k2-card__heading">
+            <span class="k2-card__title" data-test="source-name">{{ name }}</span>
+            <span class="k2-card__sub" data-test="source-kind">{{ kindLabel }}</span>
+          </span>
+          <v-menu v-model="menuOpen" :close-on-content-click="true" content-class="k2-menu">
+            <template #activator="{ props: menuProps }">
+              <button
+                v-bind="menuProps"
+                type="button"
+                class="k2-iconbtn"
+                :aria-label="busy ? t('discovery.testRunning') : t('config.more')"
+                :aria-busy="busy || undefined"
+                :disabled="busy"
+                data-test="source-menu"
+                @click.stop
+              >
+                <span v-if="busy" class="k2-spin" data-test="source-testing" />
+                <v-icon v-else size="18">mdi-dots-horizontal</v-icon>
+              </button>
+            </template>
+            <button
+              type="button"
+              class="k2-menu__item"
+              data-test="source-edit"
+              @click="emit('edit')"
+            >
+              <v-icon size="18">mdi-pencil-outline</v-icon>{{ t('common.edit') }}
+            </button>
+            <button
+              type="button"
+              class="k2-menu__item"
+              data-test="source-test"
+              :disabled="busy || !enabled"
+              @click="emit('test')"
+            >
+              <v-icon size="18">{{ SEMANTIC_ICONS.testFetch }}</v-icon
+              >{{ t('discovery.test') }}
+            </button>
+            <button
+              type="button"
+              class="k2-menu__item"
+              data-test="source-toggle"
+              @click="emit('toggle', !enabled)"
+            >
+              <v-icon size="18">{{ enabled ? 'mdi-pause' : 'mdi-play' }}</v-icon
+              >{{ enabled ? t('common.disable') : t('common.enable') }}
+            </button>
+            <button
+              type="button"
+              class="k2-menu__item k2-menu__item--danger"
+              data-test="source-delete"
+              @click="emit('delete')"
+            >
+              <v-icon size="18">mdi-trash-can-outline</v-icon>{{ t('common.delete') }}
+            </button>
+          </v-menu>
+        </div>
 
-    <div class="biz-card__body">
-      <button
-        type="button"
-        class="biz-card__chipbtn"
-        data-test="source-test"
-        :title="t('discovery.test')"
-        :aria-label="t('discovery.test')"
-        :aria-busy="busy || undefined"
-        :disabled="probeDisabled"
-        @click.stop="emit('test')"
-      >
-        <AppStatus :tone="tone" :busy="busy" data-test="source-status">{{ statusText }}</AppStatus>
-      </button>
-      <span class="biz-card__sub biz-card__sub--mono" data-test="source-target">{{ target }}</span>
-    </div>
+        <span class="k2-card__detail k2-card__detail--mono" data-test="source-target">
+          {{ target }}
+        </span>
 
-    <div class="biz-card__foot" data-test="source-foot">
-      <span class="biz-card__meta biz-card__meta--mono" data-test="source-cron">{{ cron }}</span>
-      <span v-if="enabled && nextRunAt" class="biz-card__meta" data-test="source-next-run">
-        {{ t('discovery.nextRun') }}{{ formatShortDateTime(nextRunAt) }}
-      </span>
-      <span class="app-spacer" />
-      <span @click.stop>
-        <AppSwitch
-          :model-value="enabled"
-          :aria-label="enabled ? t('common.enabled') : t('common.disabled')"
-          data-test="source-enabled"
-          @update:model-value="(value: boolean) => emit('toggle', value)"
-        />
-      </span>
+        <div class="k2-card__foot" data-test="source-foot">
+          <span
+            class="k2-chip"
+            :class="enabled ? 'k2-t-success' : 'k2-t-neutral'"
+            data-test="source-status"
+          >
+            <span class="k2-chip__dot" />{{ stateLabel }}
+          </span>
+          <span class="k2-card__when">
+            <span
+              class="k2-card__when-plan"
+              :title="plan ? undefined : cron"
+              data-test="source-plan"
+            >
+              {{ planText }}
+            </span>
+            <span
+              v-if="enabled && nextRunAt"
+              class="k2-card__when-next"
+              data-test="source-next-run"
+            >
+              {{ t('discovery.nextRun') }}{{ formatShortDateTime(nextRunAt) }}
+            </span>
+          </span>
+          <button
+            type="button"
+            class="k2-iconbtn k2-card__flipbtn"
+            :aria-label="t('config.flipToBack')"
+            data-test="flip-button"
+            @click.stop="flipped = true"
+          >
+            <v-icon size="18" :title="t('config.flipToBack')">{{ SEMANTIC_ICONS.flip }}</v-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- 背面：与 /style-lab 的卡片样例同一个形状（抓取成功率 + 最近 7 天抓到条数） -->
+      <div class="k2-card k2-card--flat k2-flip__face k2-flip__face--back k2-t-info">
+        <div class="k2-metric">
+          <span class="k2-metric__label">{{ t('config.back.rate') }}</span>
+          <div class="k2-metric__line">
+            <span class="k2-num k2-num--sm" data-test="source-back-rate">
+              {{ rateText }}<span v-if="hasRate" class="k2-unit">%</span>
+            </span>
+            <span class="k2-bars" data-test="source-back-bars">
+              <span
+                v-for="(height, index) in barHeights"
+                :key="index"
+                class="k2-bars__bar"
+                :class="{ 'k2-bars__bar--on': index === barHeights.length - 1 }"
+                :style="{ blockSize: `${height}px` }"
+              />
+            </span>
+          </div>
+        </div>
+        <hr class="k2-card__sep" />
+        <div class="k2-card__foot">
+          <span class="k2-card__meta" data-test="source-back-total">
+            {{ t('config.back.windowItems', { days, n: total }) }}
+          </span>
+          <button
+            type="button"
+            class="k2-iconbtn k2-card__flipbtn"
+            :aria-label="t('config.flipToFront')"
+            data-test="flip-back-button"
+            @click.stop="flipped = false"
+          >
+            <v-icon size="18" :title="t('config.flipToFront')">{{ SEMANTIC_ICONS.flip }}</v-icon>
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
+  </article>
 </template>

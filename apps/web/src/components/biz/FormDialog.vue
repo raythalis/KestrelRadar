@@ -1,6 +1,7 @@
-<!-- FormDialog：所有"填表-保存"弹窗的共享外壳（原来是七个弹窗各写一遍同一套骨架）。
-     职责：标题、说明、内容插槽、取消/保存、保存中、错误提示、手机端贴底。
-     页面只往里放字段，不再自己拼 header / footer / 关闭逻辑。 -->
+<!-- FormDialog：所有「填表-保存」弹窗的共享外壳（v2）。
+     职责：标题、说明（标题下的副行）、内容插槽、取消 / 保存、保存中、错误提示、字段多时正文自己滚。
+     页面只往里放字段，不再自己拼 header / footer / 关闭逻辑。
+     样式只消费 v2 零件（.k2-dialog / .k2-btn / .k2-alert / .k2-skeleton / .k2-iconbtn）。 -->
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -20,16 +21,19 @@ const props = withDefaults(
     /** 主按钮不可点（表单没填完用） */
     submitDisabled?: boolean
     submitLabel?: string
-    /** 只读型弹窗（比如"查看详情"）可以不要保存按钮 */
+    /** 只读型弹窗（比如「查看详情」）可以不要保存按钮 */
     hideSubmit?: boolean
     /** 保存中不许点遮罩关掉 */
     persistent?: boolean
   }>(),
   {
+    note: undefined,
     width: 480,
     loading: false,
+    error: undefined,
     busy: false,
     submitDisabled: false,
+    submitLabel: undefined,
     hideSubmit: false,
     persistent: false,
   },
@@ -42,45 +46,81 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
 const open = computed({
   get: () => props.modelValue,
   set: (value: boolean) => emit('update:modelValue', value),
 })
 
+/** 保存中自己也点不动：避免重复提交 */
+const locked = computed(() => props.busy || props.submitDisabled)
+
 function cancel(): void {
+  if (props.busy) return
   emit('cancel')
   open.value = false
+}
+
+function submit(): void {
+  if (locked.value) return
+  emit('submit')
 }
 </script>
 
 <template>
-  <AppDialog
-    v-model="open"
-    :title="title"
-    :width="width"
-    :loading="loading"
-    :error="error"
-    :persistent="persistent"
-  >
-    <p v-if="note" class="app-card__note" data-test="form-dialog-note">{{ note }}</p>
-    <slot />
+  <v-dialog v-model="open" :max-width="width" :persistent="persistent" content-class="k2-dialog">
+    <div class="k2-dialog__head" data-test="form-dialog">
+      <span class="k2-card__heading">
+        <span class="k2-card__title">{{ title }}</span>
+        <span v-if="note" class="k2-card__sub" data-test="form-dialog-note">{{ note }}</span>
+      </span>
+      <button
+        type="button"
+        class="k2-iconbtn"
+        :aria-label="t('common.close')"
+        data-test="form-dialog-close"
+        @click="cancel"
+      >
+        <v-icon size="18">mdi-close</v-icon>
+      </button>
+    </div>
 
-    <template #footer>
-      <AppButton variant="ghost" :disabled="busy" data-test="form-dialog-cancel" @click="cancel">
+    <div class="k2-dialog__body">
+      <p v-if="error" class="k2-alert k2-t-danger" data-test="app-dialog-error">{{ error }}</p>
+
+      <template v-if="loading">
+        <span class="k2-skeleton k2-skeleton--line" />
+        <span class="k2-skeleton k2-skeleton--line" />
+        <span class="k2-skeleton k2-skeleton--line" />
+      </template>
+      <slot v-else />
+    </div>
+
+    <div class="k2-dialog__foot">
+      <button
+        type="button"
+        class="k2-btn k2-btn--ghost"
+        :disabled="busy"
+        data-test="form-dialog-cancel"
+        @click="cancel"
+      >
         {{ t('common.cancel') }}
-      </AppButton>
-      <span class="app-spacer" />
+      </button>
+      <span class="k2-dialog__gap" />
       <slot name="footer-extra" />
-      <AppButton
+      <button
         v-if="!hideSubmit"
-        variant="primary"
-        :loading="busy"
+        type="button"
+        class="k2-btn k2-btn--primary"
+        :aria-busy="busy"
+        :aria-disabled="locked"
         :disabled="submitDisabled"
         data-test="form-dialog-submit"
-        @click="emit('submit')"
+        @click="submit"
       >
+        <span v-if="busy" class="k2-spin" />
         {{ submitLabel ?? t('common.save') }}
-      </AppButton>
-    </template>
-  </AppDialog>
+      </button>
+    </div>
+  </v-dialog>
 </template>

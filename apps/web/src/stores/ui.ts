@@ -3,13 +3,13 @@ import { defineStore } from 'pinia'
 
 import {
   DEFAULT_PREFERENCE,
-  applyThemeVars,
+  applyV2Theme,
   findTheme,
   isThemePreference,
   resolveTheme,
   type AppTheme,
   type ThemePreference,
-} from '@/design/tokens'
+} from '@/design/v2/tokens'
 import type { AppLocale } from '@/plugins/i18n'
 
 export type { AppTheme, ThemePreference }
@@ -19,6 +19,8 @@ const STORAGE_KEY = 'kestrel-ui'
 interface StoredUi {
   theme?: ThemePreference
   locale?: AppLocale
+  /** 桌面侧栏是不是收起成图标轨道了 */
+  sidebarCollapsed?: boolean
 }
 
 function readStored(): StoredUi {
@@ -52,6 +54,7 @@ export const useUiStore = defineStore('ui', () => {
     isThemePreference(stored.theme) ? stored.theme : DEFAULT_PREFERENCE,
   )
   const locale = ref<AppLocale>(stored.locale ?? 'zh-CN')
+  const sidebarCollapsed = ref(stored.sidebarCollapsed === true)
   const prefersDark = ref(systemPrefersDark())
 
   /** 真正生效的那套色值 */
@@ -60,7 +63,7 @@ export const useUiStore = defineStore('ui', () => {
 
   function setPreference(next: ThemePreference) {
     preference.value = next
-    writeStored({ theme: next, locale: locale.value })
+    writeStored({ theme: next, locale: locale.value, sidebarCollapsed: sidebarCollapsed.value })
   }
 
   /** 顶栏那个三态段控件是按钮，点一下切到下一个 */
@@ -72,7 +75,13 @@ export const useUiStore = defineStore('ui', () => {
 
   function setLocale(next: AppLocale) {
     locale.value = next
-    writeStored({ theme: preference.value, locale: next })
+    writeStored({ theme: preference.value, locale: next, sidebarCollapsed: sidebarCollapsed.value })
+  }
+
+  /** 桌面侧栏收起 / 展开（窄屏走抽屉，不看这个） */
+  function setSidebarCollapsed(next: boolean) {
+    sidebarCollapsed.value = next
+    writeStored({ theme: preference.value, locale: locale.value, sidebarCollapsed: next })
   }
 
   /** 跟随系统时，系统切亮暗要跟着变 */
@@ -83,11 +92,13 @@ export const useUiStore = defineStore('ui', () => {
   return {
     preference,
     locale,
+    sidebarCollapsed,
     theme,
     isDark,
     setPreference,
     cyclePreference,
     setLocale,
+    setSidebarCollapsed,
     syncSystemTheme,
   }
 })
@@ -95,5 +106,5 @@ export const useUiStore = defineStore('ui', () => {
 /** 把当前主题的色值灌到 <html> 上（弹窗、原生控件也跟着换） */
 export function applyCurrentTheme(id: AppTheme): void {
   const definition = findTheme(id)
-  if (definition) applyThemeVars(definition)
+  if (definition) applyV2Theme(definition.dark)
 }

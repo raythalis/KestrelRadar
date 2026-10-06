@@ -50,6 +50,10 @@ export function createActionRepo(db: Db) {
        template_id = ?, include_delivered = ?, merge_messages = ?, enabled = ?, updated_at = ? where id = ?`,
   )
 
+  const setEnabledByGroupOne = db.prepare(
+    'update actions set enabled = ?, updated_at = ? where group_id = ?',
+  )
+
   function find(id: string): ActionRow | undefined {
     return selectOne.get(id) as unknown as ActionRow | undefined
   }
@@ -107,6 +111,11 @@ export function createActionRepo(db: Db) {
 
     remove(id: string): boolean {
       return db.prepare('delete from actions where id = ?').run(id).changes > 0
+    },
+
+    /** 分组开关往下传：一次改一组的动作 */
+    setEnabledByGroup(groupId: string, enabled: boolean): void {
+      setEnabledByGroupOne.run(fromBool(enabled), nowIso(), groupId)
     },
   }
 }

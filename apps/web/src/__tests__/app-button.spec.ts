@@ -16,11 +16,13 @@ function mountButton(props: Record<string, unknown> = {}, slots: Record<string, 
 }
 
 describe('AppButton', () => {
-  it('默认是次要按钮，四种变体各有自己的类名', () => {
+  it('默认是次要按钮，六种变体各有自己的类名', () => {
     expect(mountButton().classes()).toContain('app-btn--secondary')
     expect(mountButton({ variant: 'primary' }).classes()).toContain('app-btn--primary')
+    expect(mountButton({ variant: 'soft' }).classes()).toContain('app-btn--soft')
     expect(mountButton({ variant: 'ghost' }).classes()).toContain('app-btn--ghost')
     expect(mountButton({ variant: 'danger' }).classes()).toContain('app-btn--danger')
+    expect(mountButton({ variant: 'danger-solid' }).classes()).toContain('app-btn--danger-solid')
   })
 
   it('小号、撑满宽度是可选项', () => {

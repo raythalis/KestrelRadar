@@ -61,19 +61,27 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
 
-/** 灵敏度映射到全局那两条线：宽松往低让，严格往高抬 */
+/** 每个监听用自己那档灵敏度对应的区间：宽松 / 中等 / 严格各有各的两条线 */
 export function resolveBands(
-  settings: Pick<Settings, 'scoreHighLine' | 'scoreLowLine' | 'sensitivityShift'>,
+  settings: Pick<
+    Settings,
+    | 'scoreHighLine'
+    | 'scoreLowLine'
+    | 'looseHighLine'
+    | 'looseLowLine'
+    | 'strictHighLine'
+    | 'strictLowLine'
+  >,
   sensitivity: Sensitivity,
 ): Bands {
-  const shift =
+  const pair =
     sensitivity === 'high'
-      ? settings.sensitivityShift
+      ? { high: settings.strictHighLine, low: settings.strictLowLine }
       : sensitivity === 'low'
-        ? -settings.sensitivityShift
-        : 0
-  const high = clamp(settings.scoreHighLine + shift, 5, 100)
-  const low = clamp(Math.min(settings.scoreLowLine + shift, high - 5), 0, 99)
+        ? { high: settings.looseHighLine, low: settings.looseLowLine }
+        : { high: settings.scoreHighLine, low: settings.scoreLowLine }
+  const high = clamp(pair.high, 5, 100)
+  const low = clamp(Math.min(pair.low, high - 5), 0, 99)
   return { high, low }
 }
 

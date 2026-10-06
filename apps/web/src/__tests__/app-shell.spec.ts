@@ -104,19 +104,52 @@ describe('AppShell', () => {
     expect(toggle.get('i').classes()).toContain('mdi-weather-night')
   })
 
-  it('窄屏底部导航有五个入口，抽屉默认收着', async () => {
+  it('窄屏只剩抽屉这一个导航入口，默认收着', async () => {
     const { wrapper } = mountShell()
+    // 底部导航条已去掉：高度紧张时靠抽屉，不再有第二条导航
     for (const name of ['dashboard', 'config', 'channels', 'models', 'settings']) {
-      expect(wrapper.find(`[data-test="tab-${name}"]`).exists()).toBe(true)
+      expect(wrapper.find(`[data-test="tab-${name}"]`).exists()).toBe(false)
     }
-    expect(wrapper.find('.app-rail.is-open').exists()).toBe(false)
+    expect(wrapper.find('.k2-tabbar').exists()).toBe(false)
+    expect(wrapper.find('.k2-nav.is-open').exists()).toBe(false)
 
     await wrapper.get('[data-test="drawer-toggle"]').trigger('click')
-    expect(wrapper.find('.app-rail.is-open').exists()).toBe(true)
+    expect(wrapper.find('.k2-nav.is-open').exists()).toBe(true)
     expect(wrapper.find('[data-test="drawer-scrim"]').exists()).toBe(true)
 
     await wrapper.get('[data-test="drawer-scrim"]').trigger('click')
-    expect(wrapper.find('.app-rail.is-open').exists()).toBe(false)
+    expect(wrapper.find('.k2-nav.is-open').exists()).toBe(false)
+  })
+
+  it('侧栏能收成图标轨道，收起状态记在本地存储里', async () => {
+    const { wrapper } = mountShell()
+    expect(wrapper.find('.k2-shell--rail').exists()).toBe(false)
+
+    await wrapper.get('[data-test="nav-handle"]').trigger('click')
+    expect(wrapper.find('.k2-shell--rail').exists()).toBe(true)
+    expect(JSON.parse(localStorage.getItem('kestrel-ui') ?? '{}').sidebarCollapsed).toBe(true)
+
+    await wrapper.get('[data-test="nav-handle"]').trigger('click')
+    expect(wrapper.find('.k2-shell--rail').exists()).toBe(false)
+    expect(JSON.parse(localStorage.getItem('kestrel-ui') ?? '{}').sidebarCollapsed).toBe(false)
+  })
+
+  it('存过收起状态的话，刷新后侧栏还是收着的', () => {
+    localStorage.setItem('kestrel-ui', JSON.stringify({ sidebarCollapsed: true }))
+    const { wrapper } = mountShell()
+    expect(wrapper.find('.k2-shell--rail').exists()).toBe(true)
+  })
+
+  it('v2 变量挂在 <html> 上：外壳与仪表盘都靠 --k2-* 取色取距', () => {
+    mountShell()
+    const root = document.documentElement.style
+    expect(root.getPropertyValue('--k2-sidebar-w')).toBe('248px')
+    expect(root.getPropertyValue('--k2-sidebar-rail-w')).toBe('72px')
+    // 页面宽度默认 1120 上限（另有窄 720 / 宽 1440 两档可选）；正文内边距 24px
+    expect(root.getPropertyValue('--k2-w-default')).toBe('1120px')
+    expect(root.getPropertyValue('--k2-w-narrow')).toBe('720px')
+    expect(root.getPropertyValue('--k2-w-wide')).toBe('1440px')
+    expect(root.getPropertyValue('--k2-page-pad')).toBe('24px')
   })
 
   it('顶栏右侧只剩主题按钮：没有页名、没有语言按钮', () => {

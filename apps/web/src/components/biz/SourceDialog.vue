@@ -1,7 +1,7 @@
-<!-- SourceDialog：数据源（发现）的填表弹窗（业务组件层）。
-     类型在弹窗里选：三种类型共用「名称 + 目标 + 采集频率」这套骨架，目标那栏随类型变。
+<!-- SourceDialog：数据源（发现）的填表弹窗（业务组件层，v2 零件）。
+     类型在弹窗里选：三种类型共用「启用 + 名称 + 目标 + 采集频率」这套骨架，目标那栏随类型变。
      RSSHub 全站共用一个实例：
-       · 没配实例地址 → 下拉里这一项灰掉不可选，右侧挂一个「前往配置」的入口（点它出事件，页面负责跳转）；
+       · 没配实例地址 → 下拉里这一项灰着，点它不是选类型、而是去配置（出事件，页面负责跳转）；
        · 配了 → 把它当地址前缀挂在路由输入框前面；前缀只展示，保存的还是路由本身（后端拼前缀）。
      只出事件，不碰 store、不发请求。 -->
 <script setup lang="ts">
@@ -9,20 +9,20 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppInput from '@/components/app/AppInput.vue'
-import AppSelect from '@/components/app/AppSelect.vue'
-import AppStatus from '@/components/app/AppStatus.vue'
-import AppSwitch from '@/components/app/AppSwitch.vue'
 import CronPicker from '@/components/biz/CronPicker.vue'
 import FormDialog from '@/components/biz/FormDialog.vue'
 import type { SourceDialogValues } from '@/components/biz/types'
 import { checkCron } from '@/utils/cron'
+
+const KINDS = ['rsshub', 'rss', 'web'] as const
+type Kind = (typeof KINDS)[number]
 
 const props = withDefaults(
   defineProps<{
     modelValue: boolean
     /** 编辑已有数据源时的初值；新建时留空 */
     name?: string
-    kind?: 'rsshub' | 'rss' | 'web'
+    kind?: Kind
     target?: string
     cron?: string
     enabled?: boolean
@@ -53,10 +53,13 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const name = ref(props.name)
-const kind = ref<'rsshub' | 'rss' | 'web'>(props.kind)
+const kind = ref<Kind>(props.kind)
 const target = ref(props.target)
 const cron = ref(props.cron)
 const enabled = ref(props.enabled)
+
+/** 类型面板开着没有；选项本身不进状态 */
+const kindOpen = ref(false)
 
 watch(
   () => props.modelValue,
@@ -75,47 +78,23 @@ const rsshubConfigured = computed(() => props.rsshubBaseUrl.trim().length > 0)
 /** 前缀去掉末尾斜杠后展示；后端拼地址时也这么处理 */
 const rsshubPrefix = computed(() => props.rsshubBaseUrl.trim().replace(/\/+$/, ''))
 
-const kindItems = computed(() => [
-  {
-    title: t('discovery.kind.rsshub'),
-    value: 'rsshub',
-    muted: !rsshubConfigured.value,
-    // 灰掉时交给 Vuetify 的 disabled：整行不响应点击、不响应悬停、点了也不会关掉下拉
-    props: { disabled: !rsshubConfigured.value },
-  },
-  { title: t('discovery.kind.rss'), value: 'rss', muted: false },
-  { title: t('discovery.kind.web'), value: 'web', muted: false },
-])
-
-/** 灰掉的那一项不可选：点了不改类型（只有里面的「前往配置」能点） */
-function onKindChange(value: unknown): void {
-  const next = String(value)
-  if (next === 'rsshub' && !rsshubConfigured.value) return
-  kind.value = next as 'rsshub' | 'rss' | 'web'
+function kindLabel(value: Kind): string {
+  return t(`discovery.kind.${value}`)
 }
 
-/** 下拉项取值/取标题：Vuetify 给的 item 是原样对象，类型上可能是裸字符串，这里两种都兜住 */
-function itemValue(item: unknown): string {
-  return typeof item === 'object' && item !== null && 'value' in item
-    ? String((item as { value: unknown }).value)
-    : String(item)
+/** RSSHub 没配时点这一项＝去配置，不选类型 */
+function pickKind(value: Kind): void {
+  if (value === 'rsshub' && !rsshubConfigured.value) {
+    emit('configureRsshub')
+    return
+  }
+  kind.value = value
 }
 
-/** 灰态标记挂在 item 自己的字段上（Vuetify 会把原对象放在 raw 里） */
-function itemMuted(item: unknown): boolean {
-  const raw = (
-    typeof item === 'object' && item !== null && 'raw' in item
-      ? (item as { raw: unknown }).raw
-      : item
-  ) as { muted?: unknown } | null
-  return Boolean(raw && typeof raw === 'object' && raw.muted)
-}
-
-function itemTitle(item: unknown): string {
-  return typeof item === 'object' && item !== null && 'title' in item
-    ? String((item as { title: unknown }).title)
-    : String(item)
-}
+/** 只有配了实例、且目标填了，才拿得到完整地址 */
+const prefix = computed(() =>
+  kind.value === 'rsshub' && rsshubConfigured.value ? rsshubPrefix.value : '',
+)
 
 const title = computed(() => (props.name ? t('discovery.editSource') : t('discovery.addSource')))
 
@@ -152,79 +131,77 @@ function submit(): void {
     @submit="submit"
     @cancel="emit('cancel')"
   >
-    <div class="app-stack">
-      <AppSwitch v-model="enabled" :label="t('common.enable')" data-test="source-dialog-enabled" />
-
-      <AppInput v-model="name" :label="t('common.name')" required data-test="source-dialog-name" />
-
-      <AppSelect
-        :model-value="kind"
-        :label="t('discovery.kindLabel')"
-        :items="kindItems"
-        data-test="source-dialog-kind"
-        @update:model-value="onKindChange"
+    <div class="k2-switchrow">
+      <span class="k2-switchrow__main">
+        <span class="k2-row__title">{{ t('common.enable') }}</span>
+      </span>
+      <button
+        type="button"
+        class="k2-switch"
+        :class="{ 'k2-switch--on': enabled }"
+        :aria-label="t('common.enable')"
+        :aria-pressed="enabled"
+        data-test="source-dialog-enabled"
+        @click="enabled = !enabled"
       >
-        <template #item="{ props: itemProps, item }">
-          <v-list-item
-            v-bind="itemProps"
-            :class="{ 'source-dialog__kindrow--muted': itemMuted(item) }"
-          >
-            <template #title>
-              <span class="source-dialog__kind" data-test="source-dialog-kind-item">
-                <span class="source-dialog__kindlabel">{{ itemTitle(item) }}</span>
-                <AppStatus
-                  v-if="itemValue(item) === 'rsshub' && !rsshubConfigured"
-                  tone="info"
-                  :dot="false"
-                  action
-                  data-test="source-dialog-rsshub-configure"
-                  @click.stop="emit('configureRsshub')"
-                >
-                  {{ t('discovery.goConfigure') }}
-                </AppStatus>
-              </span>
-            </template>
-          </v-list-item>
-        </template>
-      </AppSelect>
-
-      <AppInput
-        v-model="target"
-        mono
-        required
-        :label="t(`discovery.targetLabel.${kind}`)"
-        :hint="t(`discovery.targetHint.${kind}`)"
-        :prefix="kind === 'rsshub' && rsshubConfigured ? rsshubPrefix : undefined"
-        data-test="source-dialog-target"
-      />
-
-      <CronPicker v-model="cron" :label="t('discovery.frequency')" data-test="source-dialog-cron" />
+        <span class="k2-switch__dot" />
+      </button>
     </div>
+
+    <AppInput
+      v-model="name"
+      :label="t('common.name')"
+      :maxlength="60"
+      required
+      data-test="source-dialog-name"
+    />
+
+    <div class="k2-field">
+      <span class="k2-field__label">{{ t('discovery.kindLabel') }}</span>
+      <v-menu v-model="kindOpen" :close-on-content-click="true" content-class="k2-menu">
+        <template #activator="{ props: menuProps }">
+          <button
+            v-bind="menuProps"
+            type="button"
+            class="k2-select"
+            :aria-label="t('discovery.kindLabel')"
+            data-test="source-dialog-kind"
+          >
+            <span>{{ kindLabel(kind) }}</span>
+            <v-icon size="18" class="k2-select__caret">mdi-chevron-down</v-icon>
+          </button>
+        </template>
+        <button
+          v-for="value in KINDS"
+          :key="value"
+          type="button"
+          class="k2-menu__item"
+          :class="{ 'k2-menu__item--muted': value === 'rsshub' && !rsshubConfigured }"
+          data-test="source-dialog-kind-item"
+          @click="pickKind(value)"
+        >
+          <v-icon size="18">
+            {{ value === kind ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank' }}
+          </v-icon>
+          {{ kindLabel(value) }}
+          <span v-if="value === 'rsshub' && !rsshubConfigured" class="k2-menu__hint">
+            {{ t('discovery.goConfigure') }}
+          </span>
+        </button>
+      </v-menu>
+    </div>
+
+    <AppInput
+      v-model="target"
+      :label="t(`discovery.targetLabel.${kind}`)"
+      :hint="t(`discovery.targetHint.${kind}`)"
+      :prefix="prefix"
+      mono
+      :maxlength="1000"
+      required
+      data-test="source-dialog-target"
+    />
+
+    <CronPicker v-model="cron" :label="t('discovery.frequency')" data-test="source-dialog-cron" />
   </FormDialog>
 </template>
-
-<style scoped>
-/* 下拉项：标题在左，动作在右；只有这一处排版属于弹窗自己 */
-.source-dialog__kind {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--k-space-3);
-  width: 100%;
-}
-
-/* 没配 RSSHub 的那一项：整行交给 Vuetify 的 disabled 处理——不响应点击、不响应悬停、
-   点了也不会把下拉关掉。但它顺手把整行压成 opacity .6，会把行里的「前往配置」一起压暗，
-   这里把整行的透明度还回来、只压灰标题，并把指针事件还给它里面的那个 chip。 */
-.source-dialog__kindrow--muted.v-list-item--disabled {
-  opacity: 1;
-}
-
-.source-dialog__kindrow--muted .source-dialog__kindlabel {
-  color: var(--k-muted);
-}
-
-.source-dialog__kindrow--muted .app-status--action {
-  pointer-events: auto;
-}
-</style>

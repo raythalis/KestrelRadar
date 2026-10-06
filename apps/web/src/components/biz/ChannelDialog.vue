@@ -49,7 +49,8 @@ const props = withDefaults(
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   submit: [values: ChannelDialogValues]
-  readChats: []
+  /** 读会话要用「当前输入框里的 token」（新建时还没保存，页面拿不到） */
+  readChats: [token: string]
   cancel: []
 }>()
 
@@ -124,7 +125,13 @@ function submit(): void {
     <div class="app-stack">
       <AppSwitch v-model="enabled" :label="t('common.enable')" data-test="channel-dialog-enabled" />
 
-      <AppInput v-model="name" :label="t('common.name')" required data-test="channel-dialog-name" />
+      <AppInput
+        v-model="name"
+        :label="t('common.name')"
+        :maxlength="60"
+        required
+        data-test="channel-dialog-name"
+      />
 
       <template v-if="type === 'telegram'">
         <AppInput
@@ -147,7 +154,7 @@ function submit(): void {
           :action-loading="chatsLoading"
           required
           data-test="channel-dialog-chat-id"
-          @action="emit('readChats')"
+          @action="emit('readChats', botToken)"
         />
 
         <div v-if="chats.length" class="app-stack" data-test="channel-dialog-chats">

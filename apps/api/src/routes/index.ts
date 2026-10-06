@@ -7,6 +7,7 @@ import { registerChannelRoutes } from '../modules/channels/channel.routes.ts'
 import { registerConfigRoutes } from '../modules/config/config.routes.ts'
 import { registerDeliveryRoutes } from '../modules/delivery/delivery.routes.ts'
 import { registerTemplateRoutes } from '../modules/templates/template.routes.ts'
+import { registerEventRoutes } from '../modules/events/event.routes.ts'
 import { registerDiscoveryRoutes } from '../modules/discoveries/discovery.routes.ts'
 import { registerGroupRoutes } from '../modules/groups/group.routes.ts'
 import { registerIconRoutes } from '../modules/icons/icon.routes.ts'
@@ -33,6 +34,7 @@ export function registerRoutes(app: FastifyInstance, container: Container): void
   registerModelProviderRoutes(app, container.modelProviders)
   registerSettingsRoutes(app, container.settings)
   registerIncidentRoutes(app, container.incidents)
+  registerEventRoutes(app, container.merger)
   registerStatsRoutes(app, container.stats)
   if (container.iconDir) registerIconRoutes(app, container.iconDir)
   registerConfigRoutes(app, container)

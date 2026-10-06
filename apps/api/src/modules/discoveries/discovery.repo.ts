@@ -82,6 +82,9 @@ export function createDiscoveryRepo(db: Db) {
      where id = ?`,
   )
   const deleteOne = db.prepare('delete from discoveries where id = ?')
+  const setEnabledByGroupOne = db.prepare(
+    'update discoveries set enabled = ?, updated_at = ? where group_id = ?',
+  )
 
   function find(id: string): DiscoveryRow | undefined {
     return selectOne.get(id) as unknown as DiscoveryRow | undefined
@@ -135,6 +138,11 @@ export function createDiscoveryRepo(db: Db) {
 
     remove(id: string): boolean {
       return deleteOne.run(id).changes > 0
+    },
+
+    /** 分组开关往下传：一次改一组的发现 */
+    setEnabledByGroup(groupId: string, enabled: boolean): void {
+      setEnabledByGroupOne.run(fromBool(enabled), nowIso(), groupId)
     },
 
     /** 图标抓取结果回写：只存文件名，null 表示这次没抓到 */

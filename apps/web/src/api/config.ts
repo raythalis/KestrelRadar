@@ -19,6 +19,7 @@ import type {
   ModelProvider,
   Monitor,
   Settings,
+  StatsRsshub,
   TelegramChat,
   UpdateActionInput,
   UpdateChannelInput,
@@ -187,4 +188,18 @@ export async function updateModel(id: string, patch: UpdateModelInput): Promise<
 
 export async function removeModel(id: string): Promise<void> {
   await http.delete(`/models/${id}`)
+}
+
+/**
+ * RSSHub 连通性测试：只读探测。
+ * force 时跳过缓存重新探；baseUrl 传了就探这一串（表单里还没保存的地址也能测），不传才用库里存的。
+ */
+export async function probeRsshub(force = true, baseUrl?: string): Promise<StatsRsshub> {
+  const params: Record<string, string> = {}
+  if (force) params.force = '1'
+  if (baseUrl) params.baseUrl = baseUrl
+  const { data } = await http.get<StatsRsshub>('/config/rsshub-status', {
+    params: Object.keys(params).length ? params : undefined,
+  })
+  return data
 }

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 
 import type { Db } from '../../db/index.ts'
 import { nowIso, parseStringArray } from '../../db/sql.ts'
+import { dailySumColumns, type DayWindow } from '../../utils/day.ts'
 
 export interface Delivery {
   id: string
@@ -49,6 +50,13 @@ export interface NewDelivery {
   status: 'sent' | 'failed'
   message: string
   error: string | null
+}
+
+export interface ActionWindowStat {
+  actionId: string
+  deliveries: number
+  sent: number
+  daily: number[]
 }
 
 export function createDeliveryRepo(db: Db) {
@@ -129,6 +137,40 @@ export function createDeliveryRepo(db: Db) {
     countByStatusSince(status: 'sent' | 'failed', iso: string): number {
       const row = countByStatus.get(status, iso) as unknown as { total: number }
       return row.total
+    },
+
+    /**
+     * 按动作的窗口汇总：成功率看「发送成功 / 全部投递」，
+     * 计数与 daily 都是投递次数。窗口内没有投递的动作不会出现在结果里。
+     */
+    actionStatsSince(windows: DayWindow[]): ActionWindowStat[] {
+      // daily 是「投递次数」（每条一次），成功率才看 status
+      const daily = dailySumColumns('1', windows)
+      const first = windows[0]
+      const last = windows[windows.length - 1]
+      if (!first || !last) return []
+      const rows = db
+        .prepare(
+          `select action_id,
+             count(*) as deliveries,
+             coalesce(sum(case when status = 'sent' then 1 else 0 end), 0) as sent,
+             ${daily.sql}
+           from deliveries
+           where created_at >= ? and created_at < ?
+           group by action_id`,
+        )
+        .all(...daily.params, first.start, last.end) as unknown as {
+        action_id: string
+        deliveries: number
+        sent: number
+        [column: `d${number}`]: number
+      }[]
+      return rows.map((row) => ({
+        actionId: row.action_id,
+        deliveries: row.deliveries,
+        sent: row.sent,
+        daily: windows.map((_, index) => row[`d${index}`] ?? 0),
+      }))
     },
 
     listByAction(actionId: string, limit = 50): Delivery[] {

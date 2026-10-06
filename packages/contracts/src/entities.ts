@@ -172,6 +172,8 @@ export const channelSchema = z.object({
   config: z.record(z.string(), z.string()),
   hasSecret: z.boolean(),
   enabled: z.boolean(),
+  /** 只读：最近一次投递成功的时间；null＝从未推送过，不传＝还没实现这个字段 */
+  lastDeliveredAt: z.string().nullable().optional(),
 })
 export type Channel = z.infer<typeof channelSchema>
 

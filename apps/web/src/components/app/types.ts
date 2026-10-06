@@ -13,3 +13,11 @@ export interface AppSelectItem {
   title: string
   value: string | number
 }
+
+/** 标签项（AppTabs 用）；count 是可选的尾部计数，icon 是可选的 mdi 图标名 */
+export interface AppTabItem {
+  value: string
+  label: string
+  count?: number
+  icon?: string
+}

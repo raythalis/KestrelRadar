@@ -26,7 +26,14 @@ http.interceptors.response.use(
   (error: unknown) => {
     if (axios.isAxiosError(error)) {
       const data = error.response?.data as ErrorResponse | undefined
-      if (data?.error) return Promise.reject(new ApiError(data.error.code, data.error.message))
+      if (data?.error) {
+        // 校验失败的信息由后端契约给出（英文原文），页面不该原样展示：换成人话
+        const message =
+          data.error.code === 'validation_error'
+            ? '填写的内容不符合要求，请检查长度与格式'
+            : data.error.message
+        return Promise.reject(new ApiError(data.error.code, message))
+      }
       return Promise.reject(new ApiError('network_error', `连不上后端（${API_BASE}）`))
     }
     return Promise.reject(new ApiError('network_error', String(error)))

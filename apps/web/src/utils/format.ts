@@ -27,3 +27,25 @@ export function formatShortDateTime(value: string | null | undefined): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
+
+/**
+ * 相对时间的「事实部分」：多久之前。
+ * 只给单位与数值，具体的字（分钟前 / minutes ago）交给页面按语言拼；超过一天返回 null，
+ * 由调用方改用日期格式——「27 小时前」不如直接写时间。
+ */
+export interface TimeAgo {
+  unit: 'now' | 'minute' | 'hour'
+  value: number
+}
+
+export function timeAgo(value: string | null | undefined, now: Date = new Date()): TimeAgo | null {
+  if (!value) return null
+  const at = new Date(value)
+  if (Number.isNaN(at.getTime())) return null
+  const minutes = Math.floor((now.getTime() - at.getTime()) / 60_000)
+  if (minutes < 1) return { unit: 'now', value: 0 }
+  if (minutes < 60) return { unit: 'minute', value: minutes }
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return { unit: 'hour', value: hours }
+  return null
+}

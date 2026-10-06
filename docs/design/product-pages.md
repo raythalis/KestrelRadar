@@ -36,8 +36,6 @@
 - 三个操作是不是分了层级？
 - 有没有把 Lab 里的说明文字抄过来？有就删。
 
-> 具体组件的改造清单见 `docs/design/plan-p3-channels.md`（ChannelCard 九条）。
-
 ## 五、与 UX Writing 规则的关系
 
 文案规则见 `docs/design/ux-writing.md`（界面自解释；需求文档是唯一语义来源）。
@@ -51,5 +49,4 @@
 - 弹窗：`FormDialog`（外壳）、`ChannelDialog`、`SourceDialog`、`MonitorDialog`、`ActionDialog`、`ConfirmDialog`
 - 其他零件：`CronPicker`、`components/biz/icons.ts`、`AppTagsInput` / `AppTextarea`（App 层新增的两个输入件）
 
-改这一层里的任何东西之前先问一声。逐项决定记在 `plan-p3-*-dialog.md` 与 `plan-p3-*.md` 里；
-主题色的只读审计见 `theme-audit.md`。
+改这一层里的任何东西之前先问一声。

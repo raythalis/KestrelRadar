@@ -17,8 +17,23 @@ function mountDialog(props: Record<string, unknown> = {}) {
 
 const q = (test: string): HTMLElement | null =>
   document.querySelector(`[data-test="${test}"]`) as HTMLElement | null
-const input = (test: string): HTMLInputElement =>
-  document.querySelector(`[data-test="${test}"] input`) as HTMLInputElement
+const input = (test: string): HTMLInputElement => {
+  const root = document.querySelector(`[data-test="${test}"]`) as HTMLElement | null
+  if (!root) return null as unknown as HTMLInputElement
+  return (root.matches('input') ? root : root.querySelector('input')) as HTMLInputElement
+}
+
+/** 字段后面那个动作按钮（例如「读取会话」）：v2 的 AppInput 把 data-test 放在 input 上，按钮在它外层 */
+const actionButton = (test: string): HTMLButtonElement | null => {
+  const root = document.querySelector(`[data-test="${test}"]`) as HTMLElement | null
+  let node: HTMLElement | null = root
+  for (let i = 0; i < 3 && node; i += 1) {
+    const found = node.querySelector('button')
+    if (found) return found as HTMLButtonElement
+    node = node.parentElement
+  }
+  return null
+}
 const submit = (): HTMLButtonElement =>
   document.querySelector('[data-test="form-dialog-submit"]') as HTMLButtonElement
 const click = async (el: HTMLElement | null): Promise<void> => {
@@ -141,7 +156,7 @@ describe('ChannelDialog', () => {
   it('读取会话由页面接；读回来点一个就填进会话框', async () => {
     const wrapper = mountDialog({ name: 'TG', type: 'telegram', chatId: '', hasSecret: true })
     await flushPromises()
-    await click(q('channel-dialog-chat-id')?.querySelector('button') as HTMLButtonElement)
+    await click(actionButton('channel-dialog-chat-id'))
     expect(wrapper.emitted('readChats')).toHaveLength(1)
 
     await wrapper.setProps({

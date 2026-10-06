@@ -16,12 +16,18 @@ export const settingsSchema = z.object({
   eventArchiveDays: z.number().int().min(1).max(365),
   /** 新鲜窗口天数，0 表示关闭 */
   freshnessWindowDays: z.number().int().min(0).max(365),
-  /** 高分线：分数到这条线直接放行（标准灵敏度用它） */
+  /** 中等档的高分线：分数到这条线直接放行 */
   scoreHighLine: z.number().int().min(5).max(100),
-  /** 低分线：分数到这条线直接丢掉 */
+  /** 中等档的低分线：分数到这条线直接丢掉 */
   scoreLowLine: z.number().int().min(0).max(95),
-  /** 灵敏度往两边让多少分：宽松减、严格加，中间那档就是全局这两条线 */
-  sensitivityShift: z.number().int().min(0).max(40),
+  /** 宽松档的低分线（比中等档低，更容易命中） */
+  looseLowLine: z.number().int().min(0).max(95),
+  /** 宽松档的高分线 */
+  looseHighLine: z.number().int().min(5).max(100),
+  /** 严格档的低分线（比中等档高，更难过关） */
+  strictLowLine: z.number().int().min(0).max(95),
+  /** 严格档的高分线 */
+  strictHighLine: z.number().int().min(5).max(100),
   /** 模型不通时怎么办：fallback = 降级到纯算法，error = 这次不判（等下次再判） */
   llmFallbackMode: z.enum(['fallback', 'error']),
   /** 全局排除词 */
@@ -36,6 +42,10 @@ export const settingsSchema = z.object({
   deliveryTimeoutSeconds: z.number().int().min(5).max(120),
   /** 界面与默认消息模板的语言 */
   language: z.enum(['zh', 'en']),
+  /** 单次模型请求超时（秒） */
+  llmTimeoutSeconds: z.number().int().min(5).max(300),
+  /** 模型请求级重试次数 */
+  llmMaxRetries: z.number().int().min(0).max(5),
   /** 时区：system 表示跟随系统 */
   timezone: z.string().min(1).max(60),
 })
@@ -54,7 +64,10 @@ export const SETTINGS_DEFAULTS: Settings = {
   freshnessWindowDays: 7,
   scoreHighLine: 65,
   scoreLowLine: 35,
-  sensitivityShift: 10,
+  looseLowLine: 25,
+  looseHighLine: 55,
+  strictLowLine: 45,
+  strictHighLine: 80,
   llmFallbackMode: 'fallback',
   globalExcludeKeywords: [],
   dailyDeliveryLimit: 0,
@@ -62,6 +75,8 @@ export const SETTINGS_DEFAULTS: Settings = {
   maxRetries: 2,
   deliveryTimeoutSeconds: 15,
   language: 'zh',
+  llmTimeoutSeconds: 30,
+  llmMaxRetries: 1,
   timezone: 'system',
 }
 

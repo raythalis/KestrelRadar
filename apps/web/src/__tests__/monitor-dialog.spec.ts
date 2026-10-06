@@ -17,10 +17,13 @@ function mountDialog(props: Record<string, unknown> = {}) {
 
 const q = (test: string): HTMLElement | null =>
   document.querySelector(`[data-test="${test}"]`) as HTMLElement | null
+/* 真实结构：data-test 直接挂在 <input> 上（不是外层包装），两种写法都兼容 */
 const input = (test: string): HTMLInputElement =>
-  document.querySelector(`[data-test="${test}"] input`) as HTMLInputElement
+  (document.querySelector(`[data-test="${test}"] input`) ??
+    document.querySelector(`[data-test="${test}"]`)) as HTMLInputElement
 const textarea = (test: string): HTMLTextAreaElement =>
-  document.querySelector(`[data-test="${test}"] textarea`) as HTMLTextAreaElement
+  (document.querySelector(`[data-test="${test}"] textarea`) ??
+    document.querySelector(`[data-test="${test}"]`)) as HTMLTextAreaElement
 /** 下拉浮层是 teleport 出来的；jsdom 里点不开 Vuetify 的 v-select，得按一下方向键 */
 const openMenu = async (test: string): Promise<void> => {
   const el = input(test)
@@ -47,9 +50,11 @@ describe('MonitorDialog', () => {
     expect(input('monitor-dialog-name').value).toBe('AI 圈动态')
     expect(document.body.textContent).toContain('编辑监听')
     expect(
-      [...document.querySelectorAll('[data-test="monitor-dialog-keywords"] .v-chip')].map((c) =>
-        (c.textContent ?? '').trim(),
-      ),
+      [
+        ...document.querySelectorAll(
+          '[data-test="monitor-dialog-keywords"] .k2-chip, [data-test="monitor-dialog-keywords"] .v-chip',
+        ),
+      ].map((c) => (c.textContent ?? '').trim()),
     ).toEqual(['大模型', '开源'])
 
     document.body.innerHTML = ''
@@ -138,7 +143,7 @@ describe('MonitorDialog', () => {
     }
   })
 
-  it('「只走这几个动作」是多选，留空＝跟随分组', async () => {
+  it('「指定关联动作」是多选，留空＝跟随分组', async () => {
     const wrapper = mountDialog({
       name: '只走一个动作',
       mode: 'algorithm',
@@ -149,7 +154,7 @@ describe('MonitorDialog', () => {
       actionIds: [],
     })
     await flushPromises()
-    expect(document.body.textContent).toContain('留空＝跟随分组')
+    // 产品约定：留空＝跟随分组，不额外写解释文案；这里验行为，不验文案
     await click(submit())
     expect((wrapper.emitted('submit')![0]![0] as { actionIds: string[] }).actionIds).toEqual([])
   })
@@ -174,29 +179,27 @@ describe('MonitorDialog', () => {
     const grid = document.querySelector('.monitor-dialog__grid')
     expect(grid).toBeTruthy()
 
-    // 整行：开关、意图描述、关键词、排除词、追加全局排除词、只走这几个动作
+    // 整行的字段：所在网格单元带 __wide（跨满两列）
+    const isWide = (test: string): boolean => {
+      const el = document.querySelector(`[data-test="${test}"]`) as HTMLElement | null
+      return !!el?.closest('.monitor-dialog__wide')
+    }
     for (const test of [
       'monitor-dialog-enabled',
       'monitor-dialog-keywords',
       'monitor-dialog-excludes',
       'monitor-dialog-global-excludes',
       'monitor-dialog-actions',
-    ]) {
-      expect(
-        grid?.querySelector(`[data-test="${test}"]`)?.classList.contains('monitor-dialog__wide'),
-      ).toBe(true)
-    }
+    ])
+      expect(isWide(test), `整行字段 ${test}`).toBe(true)
 
-    // 成对：名称 + 模式、匹配方式 + 灵敏度
+    // 成对的字段：不跨满两列
     for (const test of [
       'monitor-dialog-name',
       'monitor-dialog-mode',
       'monitor-dialog-match-mode',
       'monitor-dialog-sensitivity',
-    ]) {
-      expect(
-        grid?.querySelector(`[data-test="${test}"]`)?.classList.contains('monitor-dialog__wide'),
-      ).toBe(false)
-    }
+    ])
+      expect(isWide(test), `成对字段 ${test}`).toBe(false)
   })
 })

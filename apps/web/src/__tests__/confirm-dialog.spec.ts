@@ -28,12 +28,30 @@ afterEach(() => {
 })
 
 describe('ConfirmDialog', () => {
-  it('确认按钮是危险样式，取消是弱化样式：两者不同视觉层级', async () => {
-    mountConfirm()
+  it('确认是实心危险按钮、取消是描边按钮，并写清删什么', async () => {
+    mountConfirm({ confirmLabel: '删除分组' })
     await flushPromises()
-    expect(ok()?.className).toContain('app-btn--danger')
-    expect(cancel()?.className).toContain('app-btn--ghost')
-    expect(ok()?.textContent?.trim()).toBe('删除')
+    expect(ok()?.className).toContain('k2-btn--danger')
+    expect(cancel()?.className).toContain('k2-btn--ghost')
+    expect(ok()?.textContent?.trim()).toBe('删除分组')
+  })
+
+  it('给了 details 就按「将删除 / 将保留」两块列出来，对象名走错误色', async () => {
+    mountConfirm({
+      message: undefined,
+      details: { name: 'AI 圈', counts: { discoveries: 2, monitors: 1, actions: 0 } },
+    })
+    await flushPromises()
+    const lead = document.querySelector('[data-test="confirm-lead"]')
+    expect(lead?.textContent).toContain('AI 圈')
+    expect(lead?.querySelector('.k2-dialog__subject')).not.toBeNull()
+    const removed = document.querySelector('[data-test="confirm-remove-list"]')?.textContent ?? ''
+    expect(removed).toContain('2')
+    expect(removed).toContain('发现')
+    expect(document.querySelector('[data-test="confirm-keep-list"]')?.textContent).toContain('事件')
+    expect(document.querySelector('[data-test="confirm-question"]')).not.toBeNull()
+    // 有清单时不再重复那句纯文本说明
+    expect(document.querySelector('[data-test="confirm-message"]')).toBeNull()
   })
 
   it('后果说明显示在弹窗里，取消文案用通用「取消」', async () => {
@@ -60,7 +78,7 @@ describe('ConfirmDialog', () => {
     const wrapper = mountConfirm({ busy: true })
     await flushPromises()
 
-    expect(ok()?.className).toContain('is-loading')
+    expect(ok()?.querySelector('.k2-spin')).not.toBeNull()
     expect((cancel() as HTMLButtonElement).disabled).toBe(true)
 
     // busy 时弹窗是 persistent：点遮罩不关

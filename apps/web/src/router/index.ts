@@ -15,13 +15,14 @@ const routes: RouteRecordRaw[] = [
   { path: '/settings', name: 'settings', component: SettingsView },
 ]
 
-// /design 是 Design System 预览页：只在开发环境注册。
-// 生产构建里 import.meta.env.DEV 是 false，这段连同 DesignView 的 chunk 一起被删掉。
+// 开发预览页只在开发环境注册：生产构建里 import.meta.env.DEV 是 false，这段连同它的 chunk 一起被删掉。
 if (import.meta.env.DEV) {
+  // /style-lab 是视觉方向 v2 的并行预览页，只在开发环境注册。
+  // 它自带 styles/v2.scss，样式收在 .k2 作用域内，不参与产品样式表。
   routes.push({
-    path: '/design',
-    name: 'design',
-    component: () => import('@/views/DesignView.vue'),
+    path: '/style-lab',
+    name: 'style-lab',
+    component: () => import('@/views/StyleLabView.vue'),
     meta: { devOnly: true },
   })
 }

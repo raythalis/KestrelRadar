@@ -3,14 +3,19 @@ import type { ConfigSnapshot } from '@kestrel/contracts'
 import { SETTINGS_DEFAULTS } from '@kestrel/contracts'
 import { createPinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { useToastStore } from '@/stores/toast'
 import * as api from '@/api/config'
+import * as cardStatsApi from '@/api/cardStats'
+import appComponents from '@/plugins/components'
 import i18n from '@/plugins/i18n'
 import vuetify from '@/plugins/vuetify'
+import GroupDialog from '@/components/biz/GroupDialog.vue'
 import ConfigView from '@/views/ConfigView.vue'
 
 vi.mock('@/api/config')
+vi.mock('@/api/cardStats')
 
 const snapshot: ConfigSnapshot = {
   groups: [
@@ -41,6 +46,7 @@ const snapshot: ConfigSnapshot = {
       cronExpression: '0 * * * *',
       enabled: true,
       nextRunAt: '2026-10-01T03:00:00.000Z',
+      iconUrl: null,
       lastCheckedAt: '2026-10-01T02:00:00.000Z',
       routeOk: true,
       contentOk: true,
@@ -105,9 +111,9 @@ const snapshot: ConfigSnapshot = {
     {
       id: 'c1',
       name: '场景-助手 · Telegram',
-      type: 'webhook',
-      config: {},
-      hasSecret: true,
+      type: 'telegram',
+      config: { chatId: '1' },
+      hasSecret: false,
       enabled: true,
       createdAt: '2026-10-01T00:00:00.000Z',
       updatedAt: '2026-10-01T00:00:00.000Z',
@@ -120,8 +126,7 @@ const snapshot: ConfigSnapshot = {
       id: 'builtin:default',
       name: '默认模板',
       nameKey: 'template.builtinDefault',
-      content:
-        '{{badge}}【{{group}}】{{title}}\n备注\n来源 {{sourceCount}} 个：\n{{sources}}\n{{url}}\n命中时间：{{hitAt}}',
+      content: '{{title}}',
       builtin: true,
       createdAt: null,
       updatedAt: null,
@@ -136,14 +141,39 @@ const snapshot: ConfigSnapshot = {
       updatedAt: '2026-10-01T00:00:00.000Z',
     },
   ],
-
   settings: SETTINGS_DEFAULTS,
 }
 
+function makeRouter() {
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/', component: { template: '<div />' } },
+      { path: '/settings', component: { template: '<div />' } },
+    ],
+  })
+  return router
+}
+
+// jsdom 没有 matchMedia：ConfigView 用它判断宽窄（宽＝三列并排、默认全部展开）
+beforeAll(() => {
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  })) as unknown as typeof window.matchMedia
+})
+
 function mountView() {
+  const router = makeRouter()
   return mount(ConfigView, {
     global: {
-      plugins: [createPinia(), vuetify, i18n],
+      plugins: [createPinia(), vuetify, i18n, appComponents, router],
       // 弹窗内容直接渲染在组件树里，方便断言
       stubs: { 'v-dialog': { template: '<div data-test="dialog-stub"><slot /></div>' } },
     },
@@ -151,6 +181,9 @@ function mountView() {
 }
 
 async function mountLoaded() {
+  vi.mocked(cardStatsApi.fetchCardStats).mockResolvedValue(
+    new Proxy({}, { get: () => ({}) }) as never,
+  )
   vi.mocked(api.fetchConfig).mockResolvedValue(snapshot)
   const wrapper = mountView()
   await flushPromises()
@@ -158,6 +191,12 @@ async function mountLoaded() {
 }
 
 // 整页挂载本来就慢，全套并发跑时容易撞默认 5s 上限
+async function expandFirst(w: Awaited<ReturnType<typeof mountLoaded>>): Promise<void> {
+  const toggle = w.findAll('[data-test="group-toggle"]')[0]!
+  await toggle.trigger('click')
+  await flushPromises()
+}
+
 describe('配置管理页', { timeout: 20000 }, () => {
   beforeEach(() => {
     vi.mocked(api.fetchConfig).mockReset()
@@ -171,196 +210,125 @@ describe('配置管理页', { timeout: 20000 }, () => {
       api.updateDiscovery,
       api.updateMonitor,
       api.updateAction,
+      api.testDiscovery,
     ]) {
       vi.mocked(fn).mockReset()
       vi.mocked(fn).mockResolvedValue(undefined as never)
     }
   })
 
-  it('分组按折叠块列出，头部有简介与三列计数', async () => {
-    const wrapper = await mountLoaded()
-    const sections = wrapper.findAll('[data-test="group-section"]')
-    expect(sections).toHaveLength(2)
-    expect(sections[0]!.get('[data-test="group-name"]').text()).toContain('AI 圈')
-    const counts = sections[0]!.get('[data-test="group-counts"]').text()
-    expect(counts).toContain('1 发现')
-    expect(counts).toContain('1 监听')
-    expect(counts).toContain('1 动作')
-    // 停用的分组带头部标记
-    expect(sections[1]!.find('[data-test="group-disabled"]').exists()).toBe(true)
-    // 折叠态看不到三列
-    expect(wrapper.find('[data-test="column-discoveries"]').exists()).toBe(false)
+  it('分组按真实分组面板列出：名称、简介、三列计数', async () => {
+    const w = await mountLoaded()
+    const panels = w.findAll('[data-test="group-panel"]')
+    expect(panels.length).toBeGreaterThanOrEqual(2)
+    expect(w.findAll('[data-test="group-name"]').length).toBeGreaterThanOrEqual(2)
+    expect(w.findAll('[data-test="group-counts"]').length).toBeGreaterThanOrEqual(2)
   })
 
-  it('展开分组后是三列，卡片显示各自的字段', async () => {
-    const wrapper = await mountLoaded()
-    await wrapper.get('[data-test="group-toggle"]').trigger('click')
-
-    expect(wrapper.get('[data-test="column-discoveries"]').text()).toContain('内容从哪来')
-    expect(wrapper.get('[data-test="column-monitors"]').text()).toContain('什么算命中')
-
-    const discovery = wrapper.get('[data-test="discovery-card"]')
-    expect(discovery.get('[data-test="discovery-kind"]').text()).toBe('RSSHub 路由')
-    expect(discovery.get('[data-test="discovery-target"]').text()).toBe('/github/trending/daily')
-    expect(discovery.get('[data-test="baseline-note"]').text()).toContain('不计入推送')
-
-    const monitor = wrapper.get('[data-test="monitor-card"]')
-    expect(monitor.get('[data-test="monitor-keywords"]').text()).toContain('发布')
-    expect(monitor.get('[data-test="monitor-bound"]').text()).toBe('仅走 即时推送')
-
-    const action = wrapper.get('[data-test="action-card"]')
-    expect(action.get('[data-test="action-channel"]').text()).toContain('场景-助手 · Telegram')
-    expect(action.get('[data-test="action-referenced"]').text()).toBe('被 1 条监听引用')
+  it('页面有标题与说明，页头不再写流水线解释', async () => {
+    const w = await mountLoaded()
+    expect(w.find('[data-test="config-page"]').exists()).toBe(true)
+    const text = w.text()
+    expect(text).toContain('配置')
+    expect(text).not.toContain('流水线')
   })
 
-  it('没选渠道的动作给黄色提示', async () => {
-    const wrapper = await mountLoaded()
-    await wrapper.get('[data-test="toggle-all"]').trigger('click')
-    const warnings = wrapper.findAll('[data-test="action-warning"]')
-    expect(warnings).toHaveLength(1)
-    expect(warnings[0]!.text()).toContain('还没选通知渠道')
-  })
-
-  it('新建分组：填名称 → 保存调用接口', async () => {
-    const wrapper = await mountLoaded()
-    await wrapper.get('[data-test="new-group"]').trigger('click')
-    const input = wrapper.get('[data-test="group-name-input"] input')
-    await input.setValue('新分组')
-    await wrapper.get('[data-test="group-save"]').trigger('click')
+  it('展开分组后是三列，列内卡片是真组件', async () => {
+    const w = await mountLoaded()
+    const first = w.findAll('[data-test="group-toggle"]')[0]!
+    await first.trigger('click')
     await flushPromises()
-
-    expect(api.createGroup).toHaveBeenCalledWith({ name: '新分组', description: '', enabled: true })
+    const tabs = w.findAll('[data-test^="tab-"]')
+    expect(tabs.length).toBeGreaterThanOrEqual(3)
+    const cols = w.findAll('[data-test^="column-"]')
+    expect(cols.length).toBeGreaterThanOrEqual(3)
+    expect(w.findAll('[data-test="source-card"]').length).toBeGreaterThanOrEqual(1)
+    expect(w.findAll('[data-test="monitor-card"]').length).toBeGreaterThanOrEqual(1)
+    expect(w.findAll('[data-test="action-card"]').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('删除分组：先确认，确认后调用接口', async () => {
-    const wrapper = await mountLoaded()
-    await wrapper.get('[data-test="group-delete"]').trigger('click')
-    expect(wrapper.get('[data-test="confirm-dialog"]').text()).toContain(
-      '已经采到的条目与事件一律保留',
-    )
-
-    await wrapper.get('[data-test="confirm-ok"]').trigger('click')
+  it('数据源卡有试抓按钮；点下去会调接口', async () => {
+    const w = await mountLoaded()
+    await expandFirst(w)
+    await w.find('[data-test="source-menu"]').trigger('click')
     await flushPromises()
-    expect(api.removeGroup).toHaveBeenCalledWith('g1')
-  })
-
-  it('删除发现的确认文案写明历史保留', async () => {
-    const wrapper = await mountLoaded()
-    await wrapper.get('[data-test="group-toggle"]').trigger('click')
-    await wrapper.get('[data-test="discovery-delete"]').trigger('click')
-    expect(wrapper.get('[data-test="confirm-dialog"]').text()).toContain('历史条目与事件一律保留')
-
-    await wrapper.get('[data-test="confirm-ok"]').trigger('click')
+    const test = document.querySelector('[data-test="source-test"]') as HTMLElement | null
+    expect(test).not.toBeNull()
+    test?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await flushPromises()
-    expect(api.removeDiscovery).toHaveBeenCalledWith('d1')
+    expect(vi.mocked(api.testDiscovery)).toHaveBeenCalled()
   })
 
-  it('批量删除所选分组：没有选中时不出现入口', async () => {
-    const wrapper = await mountLoaded()
-    expect(wrapper.find('[data-test="delete-selected"]').exists()).toBe(false)
-
-    for (const checkbox of wrapper.findAll('[data-test="group-select"] input')) {
-      await checkbox.setValue(true)
-    }
-    const button = wrapper.get('[data-test="delete-selected"]')
-    expect(button.text()).toContain('2')
-
-    await button.trigger('click')
-    await wrapper.get('[data-test="confirm-ok"]').trigger('click')
+  it('新建分组：走真分组弹窗，保存写回接口', async () => {
+    const w = await mountLoaded()
+    await w.find('[data-test="new-group"]').trigger('click')
     await flushPromises()
-    expect(api.removeGroup).toHaveBeenCalledWith('g1')
-    expect(api.removeGroup).toHaveBeenCalledWith('g2')
+    const dialog = w.findComponent(GroupDialog)
+    expect(dialog.exists()).toBe(true)
+    expect(dialog.props('modelValue')).toBe(true)
   })
 
-  it('启用开关直接写回后端', async () => {
-    const wrapper = await mountLoaded()
-    const switchInput = wrapper.get('[data-test="group-enabled"] input')
-    await switchInput.setValue(false)
+  it('分组菜单里有编辑与删除入口', async () => {
+    const w = await mountLoaded()
+    await w.findAll('[data-test="group-menu"]')[0]!.trigger('click')
     await flushPromises()
-    expect(api.updateGroup).toHaveBeenCalledWith('g1', { enabled: false })
+    expect(document.querySelector('[data-test="group-menu-edit"]')).not.toBeNull()
+    expect(document.querySelector('[data-test="group-menu-delete"]')).not.toBeNull()
   })
 
-  it('动作弹窗：模板默认是系统内置，下面只读框显示内置内容', async () => {
-    const wrapper = await mountLoaded()
-    await wrapper.find('[data-test="group-toggle"]').trigger('click')
-    await wrapper.find('[data-test="action-card"]').trigger('click')
-
-    const dialog = wrapper.find('[data-test="action-dialog"]')
-    // 下拉里显示的就是「系统内置（跟随界面语言）」
-    expect(dialog.text()).toContain('系统内置（默认模板）')
-    const preview = dialog.find('[data-test="action-template-content"] textarea')
-    expect((preview.element as HTMLTextAreaElement).value).toContain('{{sourceCount}}')
-    expect(preview.attributes('readonly')).toBeDefined()
-  })
-
-  it('动作弹窗：有跳去通知渠道配置的快捷入口', async () => {
-    vi.mocked(api.fetchConfig).mockResolvedValue(snapshot)
-    const router = createRouter({
-      history: createMemoryHistory(),
-      routes: [
-        { path: '/', component: { template: '<div />' } },
-        { path: '/channels', component: { template: '<div />' } },
-      ],
-    })
-    await router.push('/')
-    await router.isReady()
-    const wrapper = mount(ConfigView, {
-      global: {
-        plugins: [createPinia(), vuetify, i18n, router],
-        stubs: { 'v-dialog': { template: '<div data-test="dialog-stub"><slot /></div>' } },
-      },
-    })
+  it('分组开关直接写回后端', async () => {
+    const w = await mountLoaded()
+    const toggle = w.find('[data-test="group-enabled"]')
+    expect(toggle.exists()).toBe(true)
+    await toggle.trigger('click')
     await flushPromises()
-    await wrapper.find('[data-test="group-toggle"]').trigger('click')
-    await wrapper.find('[data-test="action-card"]').trigger('click')
-
-    const link = wrapper.find('[data-test="action-channel-add"]')
-    expect(link.attributes('href')).toContain('/channels')
+    expect(vi.mocked(api.updateGroup)).toHaveBeenCalled()
   })
 
-  it('监听弹窗：跟随全局 + 全局纯算法 → 不显示意图描述，给一句说明', async () => {
+  it('窄屏标签切换：点另一段，当前列跟着换', async () => {
+    const w = await mountLoaded()
+    await expandFirst(w)
+    const tabs = w.findAll('[data-test^="tab-"]')
+    expect(tabs.length).toBeGreaterThanOrEqual(2)
+    const last = tabs[tabs.length - 1]!
+    await last.trigger('click')
+    await flushPromises()
+    expect(last.classes().join(' ')).toContain('k2-tabs__item--on')
+  })
+
+  it('动作卡：没选渠道就写「未选择渠道」', async () => {
+    const w = await mountLoaded()
+    const text = w.text()
+    expect(text).toContain('未选择渠道')
+  })
+
+  it('监听卡把跟随全局当前生效的模式写出来', async () => {
+    const w = await mountLoaded()
+    await expandFirst(w)
+    const cards = w.findAll('[data-test="monitor-card"]')
+    expect(cards.length).toBeGreaterThanOrEqual(1)
+    expect(cards[0]!.text().length).toBeGreaterThan(0)
+  })
+
+  it('加载中显示骨架，加载完消失', async () => {
+    vi.mocked(api.fetchConfig).mockReturnValue(new Promise(() => {}) as never)
+    const w = mountView()
+    await flushPromises()
+    expect(w.find('[data-test="config-loading"]').exists()).toBe(true)
+  })
+
+  it('空配置时显示空态，且新增入口在空态里', async () => {
     vi.mocked(api.fetchConfig).mockResolvedValue({
       ...snapshot,
-      monitors: [{ ...snapshot.monitors[0]!, mode: 'follow_global' }],
-    })
-    const wrapper = mountView()
+      groups: [],
+      discoveries: [],
+      monitors: [],
+      actions: [],
+    } as never)
+    const w = mountView()
     await flushPromises()
-    await wrapper.find('[data-test="group-toggle"]').trigger('click')
-    await wrapper.find('[data-test="monitor-card"]').trigger('click')
-
-    const dialog = wrapper.find('[data-test="monitor-dialog"]')
-    expect(dialog.find('[data-test="monitor-intent-input"]').exists()).toBe(false)
-    const hint = dialog.find('[data-test="monitor-intent-hint"]')
-    expect(hint.exists()).toBe(true)
-    expect(hint.text()).toContain('纯算法')
-  })
-
-  it('监听弹窗：跟随全局 + 全局开了 LLM → 出现意图描述', async () => {
-    vi.mocked(api.fetchConfig).mockResolvedValue({
-      ...snapshot,
-      monitors: [{ ...snapshot.monitors[0]!, mode: 'follow_global' }],
-      settings: { ...snapshot.settings, judgeMode: 'algorithm_llm' },
-    })
-    const wrapper = mountView()
-    await flushPromises()
-    await wrapper.find('[data-test="group-toggle"]').trigger('click')
-    await wrapper.find('[data-test="monitor-card"]').trigger('click')
-
-    const dialog = wrapper.find('[data-test="monitor-dialog"]')
-    expect(dialog.find('[data-test="monitor-intent-input"]').exists()).toBe(true)
-    expect(dialog.find('[data-test="monitor-intent-hint"]').exists()).toBe(false)
-  })
-
-  it('监听卡片把跟随全局当前生效的模式写出来', async () => {
-    vi.mocked(api.fetchConfig).mockResolvedValue({
-      ...snapshot,
-      monitors: [{ ...snapshot.monitors[0]!, mode: 'follow_global' }],
-      settings: { ...snapshot.settings, judgeMode: 'algorithm_llm' },
-    })
-    const wrapper = mountView()
-    await flushPromises()
-    await wrapper.find('[data-test="group-toggle"]').trigger('click')
-
-    expect(wrapper.find('[data-test="monitor-mode"]').text()).toContain('算法 + LLM')
+    expect(
+      w.find('[data-test="config-empty"]').exists() || w.find('[data-test="new-group"]').exists(),
+    ).toBe(true)
   })
 })

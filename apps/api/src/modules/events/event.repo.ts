@@ -83,6 +83,13 @@ export function createEventRepo(db: Db) {
     `insert or ignore into event_items (event_id, item_id, discovery_id, added_at) values (?, ?, ?, ?)`,
   )
   const selectById = db.prepare(`select events.*, ${COUNTS} from events where events.id = ?`)
+  /** 仪表盘最近事件：没归档的按最近一次发生时间倒序 */
+  const selectRecent = db.prepare(
+    `select events.*, ${COUNTS} from events
+      where events.status <> 'archived'
+      order by events.last_item_at desc, events.id
+      limit ?`,
+  )
   const selectByGroup = db.prepare(
     `select events.*, ${COUNTS} from events where events.group_id = ? order by events.last_item_at desc, events.id`,
   )
@@ -156,6 +163,11 @@ export function createEventRepo(db: Db) {
     countCreatedSince(iso: string): number {
       const row = countCreatedSince.get(iso) as unknown as { total: number }
       return row.total
+    },
+
+    /** 仪表盘的最近事件列表用：只给没归档的，按最近一次发生时间倒序 */
+    listRecent(limit: number): Event[] {
+      return (selectRecent.all(limit) as unknown as EventRow[]).map(toEvent)
     },
 
     listByGroup(groupId: string): Event[] {

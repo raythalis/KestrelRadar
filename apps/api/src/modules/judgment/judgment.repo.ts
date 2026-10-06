@@ -4,6 +4,7 @@ import type { Judgment } from '@kestrel/contracts'
 
 import type { Db } from '../../db/index.ts'
 import { nowIso, parseStringArray } from '../../db/sql.ts'
+import { dailySumColumns, type DayWindow } from '../../utils/day.ts'
 
 interface JudgmentRow {
   id: string
@@ -29,6 +30,13 @@ export interface NewJudgment {
   layer: 'keywords' | 'excludes' | 'score' | 'llm'
   reasons: string[]
   llmReason: string | null
+}
+
+export interface MonitorWindowStat {
+  monitorId: string
+  judged: number
+  passed: number
+  daily: number[]
 }
 
 function toJudgment(row: JudgmentRow): Judgment {
@@ -92,6 +100,39 @@ export function createJudgmentRepo(db: Db) {
         item_id: string
       }[]
       return new Set(rows.map((row) => row.item_id))
+    },
+
+    /**
+     * 按监听的窗口汇总：筛选率看「命中 / 全部判定」，
+     * 计数与 daily 都是命中条数。窗口内没有判定的监听不会出现在结果里。
+     */
+    monitorStatsSince(windows: DayWindow[]): MonitorWindowStat[] {
+      const daily = dailySumColumns("case when decision = 'pass' then 1 else 0 end", windows)
+      const first = windows[0]
+      const last = windows[windows.length - 1]
+      if (!first || !last) return []
+      const rows = db
+        .prepare(
+          `select monitor_id,
+             count(*) as judged,
+             coalesce(sum(case when decision = 'pass' then 1 else 0 end), 0) as passed,
+             ${daily.sql}
+           from judgments
+           where created_at >= ? and created_at < ?
+           group by monitor_id`,
+        )
+        .all(...daily.params, first.start, last.end) as unknown as {
+        monitor_id: string
+        judged: number
+        passed: number
+        [column: `d${number}`]: number
+      }[]
+      return rows.map((row) => ({
+        monitorId: row.monitor_id,
+        judged: row.judged,
+        passed: row.passed,
+        daily: windows.map((_, index) => row[`d${index}`] ?? 0),
+      }))
     },
 
     /** 这条监听已经判过的条目 id，用来跳过重复判定 */

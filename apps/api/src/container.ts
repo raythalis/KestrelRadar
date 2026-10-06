@@ -6,7 +6,7 @@ import { createChannelService } from './modules/channels/channel.service.ts'
 import { createCollector, type Collector } from './modules/collection/collector.ts'
 import { createRunRepo, type RunRepo } from './modules/collection/run.repo.ts'
 import { createScheduler, type Scheduler } from './modules/collection/scheduler.ts'
-import { createRsshubStatus } from './modules/config/rsshub-status.ts'
+import { createRsshubStatus, type RsshubStatus } from './modules/config/rsshub-status.ts'
 import { createDiscoveryRepo } from './modules/discoveries/discovery.repo.ts'
 import { createDiscoveryService } from './modules/discoveries/discovery.service.ts'
 import { builtinTemplates } from './modules/templates/builtin.ts'
@@ -24,6 +24,7 @@ import { createTelegramGateway, type TelegramGateway } from './modules/delivery/
 import { createEventRepo, type EventRepo } from './modules/events/event.repo.ts'
 import { createEventService } from './modules/events/event.service.ts'
 import { createGroupRepo } from './modules/groups/group.repo.ts'
+import { createGroupGate } from './modules/groups/group-gate.ts'
 import { createGroupService } from './modules/groups/group.service.ts'
 import { createIncidentRepo } from './modules/incidents/incident.repo.ts'
 import {
@@ -60,6 +61,8 @@ export interface Container {
   icons?: IconService
   iconDir?: string
   stats: StatsService
+  /** RSSHub 连通性探测（设置页的测试按钮、仪表盘那张卡都用它） */
+  rsshub: RsshubStatus
   items: ItemRepo
   judgments: JudgmentRepo
   events: EventRepo
@@ -95,6 +98,15 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
   const discoveryRepo = createDiscoveryRepo(db)
   const monitorRepo = createMonitorRepo(db)
   const actionRepo = createActionRepo(db)
+
+  /** 分组开关与组内卡片的联动（分组服务往下传、三个子服务往上传） */
+  const groupGate = createGroupGate({
+    db,
+    groups: groupRepo,
+    discoveries: discoveryRepo,
+    monitors: monitorRepo,
+    actions: actionRepo,
+  })
   const channelRepo = createChannelRepo(db)
   const providerRepo = createModelProviderRepo(db)
   const modelRepo = createModelRepo(db)
@@ -224,6 +236,7 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     channels: channelRepo,
     events: eventRepo,
     deliveries: deliveryRepo,
+    judgments: judgmentRepo,
     runs,
     settings,
     hidden,
@@ -265,10 +278,11 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
   })
 
   return {
-    groups: createGroupService(groupRepo),
-    discoveries: createDiscoveryService(discoveryRepo, groupRepo, scheduler),
-    monitors: createMonitorService(monitorRepo, groupRepo, actionRepo),
-    actions: createActionService(actionRepo, groupRepo, channelRepo),
+    rsshub,
+    groups: createGroupService(groupRepo, groupGate),
+    discoveries: createDiscoveryService(discoveryRepo, groupRepo, groupGate, scheduler),
+    monitors: createMonitorService(monitorRepo, groupRepo, actionRepo, groupGate),
+    actions: createActionService(actionRepo, groupRepo, channelRepo, groupGate),
     channels: createChannelService(channelRepo),
     modelProviders: createModelProviderService(providerRepo, modelRepo),
     settings,

@@ -2,7 +2,6 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import FormDialog from '@/components/biz/FormDialog.vue'
-import AppDialog from '@/components/app/AppDialog.vue'
 import appComponents from '@/plugins/components'
 import i18n from '@/plugins/i18n'
 import vuetify from '@/plugins/vuetify'
@@ -26,7 +25,7 @@ describe('FormDialog', () => {
   it('标题、说明、默认的取消与保存都在', async () => {
     mountDialog({ note: '填完记得保存' })
     await flushPromises()
-    expect(body().querySelector('[data-test="app-dialog"]')).toBeTruthy()
+    expect(body().querySelector('[data-test="form-dialog"]')).toBeTruthy()
     expect(body().textContent).toContain('新建渠道')
     expect(body().textContent).toContain('填完记得保存')
     expect(body().querySelector('[data-test="form-dialog-cancel"]')).toBeTruthy()
@@ -50,7 +49,7 @@ describe('FormDialog', () => {
   it('保存中：主按钮转圈、取消锁住', async () => {
     mountDialog({ busy: true })
     await flushPromises()
-    expect(body().querySelector('[data-test="form-dialog-submit"] .app-spinner')).toBeTruthy()
+    expect(body().querySelector('[data-test="form-dialog-submit"] .k2-spin')).toBeTruthy()
     expect(
       (body().querySelector('[data-test="form-dialog-cancel"]') as HTMLButtonElement).disabled,
     ).toBe(true)
@@ -64,9 +63,12 @@ describe('FormDialog', () => {
     ).toBe(true)
   })
 
-  it('错误信息交给弹窗的错误条显示', () => {
-    const wrapper = mountDialog({ error: '服务器返回 500' })
-    expect(wrapper.findComponent(AppDialog).props('error')).toBe('服务器返回 500')
+  it('错误信息交给弹窗的错误条显示', async () => {
+    mountDialog({ error: '服务器返回 500' })
+    await flushPromises()
+    expect(
+      (body().querySelector('[data-test="app-dialog-error"]') as HTMLElement).textContent?.trim(),
+    ).toBe('服务器返回 500')
   })
 
   it('只读弹窗可以不显示保存按钮，主按钮文案也能换', async () => {

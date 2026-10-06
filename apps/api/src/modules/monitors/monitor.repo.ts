@@ -58,6 +58,9 @@ export function createMonitorRepo(db: Db) {
   )
   const insertLink = db.prepare('insert into monitor_actions (monitor_id, action_id) values (?, ?)')
   const deleteLinks = db.prepare('delete from monitor_actions where monitor_id = ?')
+  const setEnabledByGroupOne = db.prepare(
+    'update monitors set enabled = ?, updated_at = ? where group_id = ?',
+  )
 
   function linksByMonitor(): Map<string, string[]> {
     const rows = selectLinks.all() as unknown as { monitor_id: string; action_id: string }[]
@@ -139,6 +142,11 @@ export function createMonitorRepo(db: Db) {
 
     remove(id: string): boolean {
       return db.prepare('delete from monitors where id = ?').run(id).changes > 0
+    },
+
+    /** 分组开关往下传：一次改一组的监听 */
+    setEnabledByGroup(groupId: string, enabled: boolean): void {
+      setEnabledByGroupOne.run(fromBool(enabled), nowIso(), groupId)
     },
   }
 }

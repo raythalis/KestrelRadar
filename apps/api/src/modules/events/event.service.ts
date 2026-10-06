@@ -1,3 +1,5 @@
+import { EVENT_SOURCE_NAME_LIMIT, type RecentEvent } from '@kestrel/contracts'
+
 import type { DiscoveryRepo } from '../discoveries/discovery.repo.ts'
 import type { GroupRepo } from '../groups/group.repo.ts'
 import type { Item, ItemRepo } from '../items/item.repo.ts'
@@ -72,6 +74,35 @@ export function createEventService(deps: EventServiceDeps) {
   }
 
   return {
+    /**
+     * 仪表盘的最近事件列表：按最近一次发生时间倒序，只给界面要的字段。
+     * 来源名按发现去重（同一发现转两条只算一个来源），最多给 EVENT_SOURCE_NAME_LIMIT 个。
+     */
+    listRecent(limit: number): RecentEvent[] {
+      return deps.events.listRecent(limit).map((event) => {
+        const members = deps.events.listItems(event.id)
+        const names: string[] = []
+        for (const member of members) {
+          if (!names.includes(member.discoveryName)) names.push(member.discoveryName)
+        }
+        // 行首那个图标按最先提到这件事的来源类型取；来源被删掉就退回 rss
+        const kind = deps.discoveries.get(members[0]?.discoveryId ?? '')?.kind ?? 'rss'
+        return {
+          id: event.id,
+          title: event.title,
+          url: event.url,
+          groupId: event.groupId,
+          groupName: deps.groups.get(event.groupId)?.name ?? '',
+          kind,
+          sourceNames: names.slice(0, EVENT_SOURCE_NAME_LIMIT),
+          sourceCount: event.sourceCount,
+          itemCount: event.itemCount,
+          firstItemAt: event.firstItemAt,
+          lastItemAt: event.lastItemAt,
+        }
+      })
+    },
+
     /** 把这条来源里还没并入事件的条目归并一遍（幂等，重复调用不会多出事件） */
     async mergePendingItems(discoveryId: string): Promise<EventMergeResult> {
       const empty: EventMergeResult = { created: 0, merged: 0, updatedMarked: 0 }

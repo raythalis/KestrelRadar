@@ -1,4 +1,4 @@
-import type { ConfigSnapshot } from '@kestrel/contracts'
+import type { ConfigSnapshot, StatsRsshub } from '@kestrel/contracts'
 import type { FastifyInstance } from 'fastify'
 
 import type { Container } from '../../container.ts'
@@ -18,4 +18,15 @@ export function registerConfigRoutes(app: FastifyInstance, container: Container)
       settings: container.settings.get(),
     }
   })
+
+  /**
+   * RSSHub 连通性测试：设置页那个按钮用的。
+   * 只发一个 GET 探测，不写日志、不落库；force=1 时跳过 20 秒缓存重新探。
+   */
+  app.get<{ Querystring: { force?: string; baseUrl?: string } }>(
+    '/config/rsshub-status',
+    async (request): Promise<StatsRsshub> => {
+      return container.rsshub.probe(request.query.force === '1', request.query.baseUrl)
+    },
+  )
 }

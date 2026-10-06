@@ -2,10 +2,16 @@ import type { CreateMonitorInput, Monitor, UpdateMonitorInput } from '@kestrel/c
 
 import { AppError } from '../../plugins/errors.ts'
 import type { ActionRepo } from '../actions/action.repo.ts'
+import type { GroupGate } from '../groups/group-gate.ts'
 import type { GroupRepo } from '../groups/group.repo.ts'
 import type { MonitorRepo } from './monitor.repo.ts'
 
-export function createMonitorService(repo: MonitorRepo, groups: GroupRepo, actions: ActionRepo) {
+export function createMonitorService(
+  repo: MonitorRepo,
+  groups: GroupRepo,
+  actions: ActionRepo,
+  gate: GroupGate,
+) {
   function mustGet(id: string): Monitor {
     const monitor = repo.get(id)
     if (!monitor) throw AppError.notFound('监听不存在')
@@ -29,7 +35,9 @@ export function createMonitorService(repo: MonitorRepo, groups: GroupRepo, actio
     create: (input: CreateMonitorInput): Monitor => {
       if (!groups.get(input.groupId)) throw AppError.notFound('分组不存在')
       assertActionsUsable(input.groupId, input.actionIds)
-      return repo.create(input)
+      const created = repo.create(input)
+      gate.inheritOnCreate(created.groupId, { kind: 'monitor', id: created.id })
+      return mustGet(created.id)
     },
 
     update: (id: string, patch: UpdateMonitorInput): Monitor => {
@@ -37,12 +45,14 @@ export function createMonitorService(repo: MonitorRepo, groups: GroupRepo, actio
       if (patch.actionIds !== undefined) assertActionsUsable(current.groupId, patch.actionIds)
       const updated = repo.update(id, patch)
       if (!updated) throw AppError.notFound('监听不存在')
+      if (patch.enabled !== undefined) gate.syncFromChildren(updated.groupId)
       return updated
     },
 
     remove: (id: string): void => {
-      mustGet(id)
+      const current = mustGet(id)
       repo.remove(id)
+      gate.syncFromChildren(current.groupId)
     },
   }
 }

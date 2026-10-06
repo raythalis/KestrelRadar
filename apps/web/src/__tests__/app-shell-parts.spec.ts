@@ -37,10 +37,10 @@ function mountSidebar(open = false) {
 }
 
 describe('AppSidebar', () => {
-  it('导航与底部导航用同一份条目', () => {
+  it('导航就是一份条目，窄屏靠抽屉，不再有底部导航条', () => {
     const { wrapper } = mountSidebar()
-    expect(wrapper.findAll('.app-rail__item')).toHaveLength(2)
-    expect(wrapper.findAll('.app-tabbar__item')).toHaveLength(2)
+    expect(wrapper.findAll('.k2-nav__item')).toHaveLength(2)
+    expect(wrapper.find('.k2-tabbar').exists()).toBe(false)
     expect(wrapper.get('[data-test="nav-config"]').text()).toContain('配置管理')
   })
 
@@ -58,7 +58,7 @@ describe('AppSidebar', () => {
 
   it('抽屉展开时显示左栏与遮罩，点遮罩收起', async () => {
     const { wrapper } = mountSidebar(true)
-    expect(wrapper.find('.app-rail.is-open').exists()).toBe(true)
+    expect(wrapper.find('.k2-nav.is-open').exists()).toBe(true)
     expect(wrapper.find('[data-test="drawer-scrim"]').exists()).toBe(true)
     await wrapper.get('[data-test="drawer-scrim"]').trigger('click')
     expect(wrapper.emitted('close')).toHaveLength(1)
@@ -74,7 +74,7 @@ function mountHeader(props: Record<string, unknown> = {}, slots: Record<string, 
 }
 
 describe('AppHeader', () => {
-  it('顶栏不显示页名（页名归页面自己的 AppPage）', () => {
+  it('顶栏不显示页名（页名归页面自己那份页头）', () => {
     expect(mountHeader().find('[data-test="page-title"]').exists()).toBe(false)
   })
 
@@ -86,6 +86,6 @@ describe('AppHeader', () => {
 
   it('右侧操作区放什么都行（现在放的是主题切换）', () => {
     const wrapper = mountHeader({}, { actions: '<button>EN</button>' })
-    expect(wrapper.get('.app-topbar__actions').text()).toContain('EN')
+    expect(wrapper.get('.k2-shell__actions').text()).toContain('EN')
   })
 })

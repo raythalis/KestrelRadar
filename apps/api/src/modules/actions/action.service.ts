@@ -2,10 +2,16 @@ import type { Action, CreateActionInput, UpdateActionInput } from '@kestrel/cont
 
 import { AppError } from '../../plugins/errors.ts'
 import type { ChannelRepo } from '../channels/channel.repo.ts'
+import type { GroupGate } from '../groups/group-gate.ts'
 import type { GroupRepo } from '../groups/group.repo.ts'
 import type { ActionRepo } from './action.repo.ts'
 
-export function createActionService(repo: ActionRepo, groups: GroupRepo, channels: ChannelRepo) {
+export function createActionService(
+  repo: ActionRepo,
+  groups: GroupRepo,
+  channels: ChannelRepo,
+  gate: GroupGate,
+) {
   function mustGet(id: string): Action {
     const action = repo.get(id)
     if (!action) throw AppError.notFound('动作不存在')
@@ -24,7 +30,9 @@ export function createActionService(repo: ActionRepo, groups: GroupRepo, channel
     create: (input: CreateActionInput): Action => {
       if (!groups.get(input.groupId)) throw AppError.notFound('分组不存在')
       mustChannel(input.channelId)
-      return repo.create(input)
+      const created = repo.create(input)
+      gate.inheritOnCreate(created.groupId, { kind: 'action', id: created.id })
+      return mustGet(created.id)
     },
 
     update: (id: string, patch: UpdateActionInput): Action => {
@@ -32,12 +40,14 @@ export function createActionService(repo: ActionRepo, groups: GroupRepo, channel
       if (patch.channelId !== undefined) mustChannel(patch.channelId)
       const updated = repo.update(id, patch)
       if (!updated) throw AppError.notFound('动作不存在')
+      if (patch.enabled !== undefined) gate.syncFromChildren(updated.groupId)
       return updated
     },
 
     remove: (id: string): void => {
-      mustGet(id)
+      const current = mustGet(id)
       repo.remove(id)
+      gate.syncFromChildren(current.groupId)
     },
   }
 }

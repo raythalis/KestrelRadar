@@ -76,4 +76,119 @@ describe('分组接口', () => {
       await cleanup()
     }
   })
+
+  it('分组开关带着组内卡片一起走：关掉分组三条一起停用，开回来一起启用', async () => {
+    const { app, cleanup } = await createTestApp()
+    try {
+      const group = (
+        await app.inject({ method: 'POST', url: '/api/groups', payload: { name: 'G' } })
+      ).json()
+      const channel = (
+        await app.inject({
+          method: 'POST',
+          url: '/api/channels',
+          payload: {
+            name: 'Webhook',
+            type: 'webhook',
+            config: { url: 'https://hook.example.com/x' },
+          },
+        })
+      ).json()
+      await app.inject({
+        method: 'POST',
+        url: '/api/discoveries',
+        payload: {
+          groupId: group.id,
+          name: 'D',
+          kind: 'rsshub',
+          target: '/example',
+          cronExpression: '0 * * * *',
+        },
+      })
+      await app.inject({
+        method: 'POST',
+        url: '/api/monitors',
+        payload: { groupId: group.id, name: 'M' },
+      })
+      await app.inject({
+        method: 'POST',
+        url: '/api/actions',
+        payload: { groupId: group.id, name: 'A', channelId: channel.id },
+      })
+
+      const states = async () => ({
+        group: (await app.inject({ method: 'GET', url: `/api/groups/${group.id}` })).json().enabled,
+        discoveries: (await app.inject({ method: 'GET', url: '/api/discoveries' })).json(),
+        monitors: (await app.inject({ method: 'GET', url: '/api/monitors' })).json(),
+        actions: (await app.inject({ method: 'GET', url: '/api/actions' })).json(),
+      })
+
+      await app.inject({
+        method: 'PATCH',
+        url: `/api/groups/${group.id}`,
+        payload: { enabled: false },
+      })
+      const off = await states()
+      expect(off.discoveries.map((row: { enabled: boolean }) => row.enabled)).toEqual([false])
+      expect(off.monitors.map((row: { enabled: boolean }) => row.enabled)).toEqual([false])
+      expect(off.actions.map((row: { enabled: boolean }) => row.enabled)).toEqual([false])
+
+      await app.inject({
+        method: 'PATCH',
+        url: `/api/groups/${group.id}`,
+        payload: { enabled: true },
+      })
+      const on = await states()
+      expect(on.discoveries.map((row: { enabled: boolean }) => row.enabled)).toEqual([true])
+      expect(on.monitors.map((row: { enabled: boolean }) => row.enabled)).toEqual([true])
+      expect(on.actions.map((row: { enabled: boolean }) => row.enabled)).toEqual([true])
+    } finally {
+      await cleanup()
+    }
+  })
+
+  it('反向同理：组内只要有一条停用，分组也跟着停用；全部启用才回到启用', async () => {
+    const { app, cleanup } = await createTestApp()
+    try {
+      const group = (
+        await app.inject({ method: 'POST', url: '/api/groups', payload: { name: 'G' } })
+      ).json()
+      const make = async (name: string) =>
+        (
+          await app.inject({
+            method: 'POST',
+            url: '/api/discoveries',
+            payload: {
+              groupId: group.id,
+              name,
+              kind: 'rsshub',
+              target: '/example',
+              cronExpression: '0 * * * *',
+            },
+          })
+        ).json()
+      const first = await make('D1')
+      await make('D2')
+
+      const groupEnabled = async () =>
+        (await app.inject({ method: 'GET', url: `/api/groups/${group.id}` })).json().enabled
+      expect(await groupEnabled()).toBe(true)
+
+      await app.inject({
+        method: 'PATCH',
+        url: `/api/discoveries/${first.id}`,
+        payload: { enabled: false },
+      })
+      expect(await groupEnabled()).toBe(false)
+
+      await app.inject({
+        method: 'PATCH',
+        url: `/api/discoveries/${first.id}`,
+        payload: { enabled: true },
+      })
+      expect(await groupEnabled()).toBe(true)
+    } finally {
+      await cleanup()
+    }
+  })
 })

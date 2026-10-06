@@ -28,8 +28,10 @@ function mountDialog(props: Record<string, unknown> = {}) {
 
 const q = (test: string): HTMLElement | null =>
   document.querySelector(`[data-test="${test}"]`) as HTMLElement | null
+/* 真实结构：data-test 直接挂在 <input> 上（不是外层包装），两种写法都兼容 */
 const input = (test: string): HTMLInputElement =>
-  document.querySelector(`[data-test="${test}"] input`) as HTMLInputElement
+  (document.querySelector(`[data-test="${test}"] input`) ??
+    document.querySelector(`[data-test="${test}"]`)) as HTMLInputElement
 /** 下拉浮层是 teleport 出来的；jsdom 里点不开 Vuetify 的 v-select，得按一下方向键 */
 const openMenu = async (test: string): Promise<void> => {
   const el = input(test)
@@ -181,23 +183,24 @@ describe('ActionDialog', () => {
     const grid = document.querySelector('.action-dialog__grid')
     expect(grid).toBeTruthy()
 
-    for (const test of ['action-dialog-enabled', 'action-dialog-cron']) {
-      expect(
-        grid?.querySelector(`[data-test="${test}"]`)?.classList.contains('action-dialog__wide'),
-      ).toBe(true)
+    const isWide = (test: string): boolean => {
+      const el = document.querySelector(`[data-test="${test}"]`) as HTMLElement | null
+      return !!el?.closest('.action-dialog__wide')
     }
+    for (const test of [
+      'action-dialog-enabled',
+      'action-dialog-cron',
+      'action-dialog-include-delivered',
+    ])
+      expect(isWide(test), `整行字段 ${test}`).toBe(true)
 
     for (const test of [
       'action-dialog-name',
       'action-dialog-trigger',
       'action-dialog-channel',
       'action-dialog-template',
-      'action-dialog-include-delivered',
-    ]) {
-      expect(
-        grid?.querySelector(`[data-test="${test}"]`)?.classList.contains('action-dialog__wide'),
-      ).toBe(false)
-    }
+    ])
+      expect(isWide(test), `成对字段 ${test}`).toBe(false)
   })
 
   it('这次没保存的输入不会留到下次打开', async () => {
@@ -213,13 +216,20 @@ describe('ActionDialog', () => {
     expect(input('action-dialog-name').value).toBe('实时推送')
   })
 
-  it('渠道下拉：左边标出渠道类型，右边标出还没启用的渠道', async () => {
-    mountDialog({ name: '看渠道', channelId: 'c1' })
+  it('渠道下拉：标出渠道类型与未启用，末尾一个「新建通知渠道」', async () => {
+    const wrapper = mountDialog({ name: '看渠道', channelId: 'c1' })
     await flushPromises()
-    await openMenu('action-dialog-channel')
+    q('action-dialog-channel')?.click()
+    await flushPromises()
 
-    const items = [...document.querySelectorAll('.v-list-item')]
-    expect(items).toHaveLength(2)
+    const menu = document.querySelector('.k2-menu')
+    const items = [...(menu?.querySelectorAll('.k2-menu__item') ?? [])]
+    expect(items.map((el) => el.textContent.trim().replace(/\s+/g, ' '))).toEqual([
+      '我的 Telegram',
+      '停用的 Webhook 未启用',
+      '新建通知渠道',
+    ])
+
     // 类型图标：telegram → mdi-send、webhook → mdi-webhook
     // （v-icon 用字体连字，名字在 class 上，不在文字里）
     expect(items[0]?.querySelector('.v-icon')?.className).toContain('mdi-send')
@@ -230,5 +240,12 @@ describe('ActionDialog', () => {
     expect(off).toHaveLength(1)
     expect(off[0]?.textContent.trim()).toBe('未启用')
     expect(items[1]?.contains(off[0] as Node)).toBe(true)
+
+    // 末尾那条是「去别处做事」，不选中任何渠道；点它只发事件，怎么开由页面定
+    const add = q('action-dialog-new-channel')
+    expect(add?.classList.contains('k2-menu__item--accent')).toBe(true)
+    add?.click()
+    await flushPromises()
+    expect(wrapper.emitted('new-channel')).toBeTruthy()
   })
 })
