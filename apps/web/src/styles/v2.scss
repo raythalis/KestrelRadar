@@ -1384,6 +1384,15 @@ a.k2-row--link {
   color: var(--k2-c-danger-ink);
 }
 
+/* 长列表限高滚动：仪表盘等长列表在卡片内侧滚，避免把整页撑长、两列高度失衡 */
+.k2-scroll {
+  max-block-size: min(460px, 50vh);
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--k2-c-border) transparent;
+}
+
 /* 长列表（如全球时区）在面板内侧限高滚动：直接限在面板上会和 Vuetify 的开合动画冲突，面板会渲染成一条 */
 /* 重置那一块：危险按钮 + 就地结果 */
 .k2-menu__scroll {

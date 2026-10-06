@@ -300,7 +300,7 @@ const loading = computed(() => store.loading && !store.stats)
           />
         </div>
 
-        <div v-else class="k2-card k2-card--flat k2-list" data-test="events-list">
+        <div v-else class="k2-card k2-card--flat k2-list k2-scroll" data-test="events-list">
           <component
             :is="event.url ? 'a' : 'article'"
             v-for="event in store.events"
@@ -348,7 +348,7 @@ const loading = computed(() => store.loading && !store.stats)
           />
         </div>
 
-        <div v-else class="k2-rows" data-test="incidents-list">
+        <div v-else class="k2-rows k2-scroll" data-test="incidents-list">
           <article
             v-for="incident in store.incidents"
             :key="incident.id"
