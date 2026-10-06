@@ -27,6 +27,7 @@ import {
   ACTIVITY_SOURCE_NAMES,
   FORM_TEXT,
   LAZY_EXTRA_EVENTS,
+  LAZY_FILLER_EVENTS,
   MANY_ACTIVITY_EVENTS,
   MANY_ACTIVITY_INCIDENTS,
   MANY_SOURCES,
@@ -95,11 +96,12 @@ const visibleManyEvents = computed(() => manyEvents.slice(0, DASHBOARD_EVENT_LIM
  * 生产里这是后端 cursor 分页（前端只把 cursor 递上去、把回来的那页接在后面），
  * 这里没有后端，就用定时器假装一次网络往返，好看清加载态和结果追加。
  */
-const LAZY_PAGE = 6
+const LAZY_PAGE = 20
 const LAZY_DELAY = 900
 const lazyPool = reactive<RecentEvent[]>([
   ...manyEvents,
   ...LAZY_EXTRA_EVENTS.map((event) => ({ ...event })),
+  ...LAZY_FILLER_EVENTS.map((event) => ({ ...event })),
 ])
 const lazyLoaded = ref(LAZY_PAGE)
 const lazyLoading = ref(false)
@@ -115,14 +117,13 @@ function loadMoreLazy(): void {
   }, LAZY_DELAY)
 }
 
-/** 样例里的动作只提示，不跳转、不写库：这里展示的是组件长什么样 */
+/**
+ * 样例里的动作：记一次已读（组件只抛 open，记已读是页面的事），并照生产的行为跳去原文。
+ * 行本身不是 <a>（里面挂着来源标签），所以跳转由页面在这里做。
+ */
 function openEvent(event: RecentEvent): void {
   event.readAt = new Date().toISOString()
-  window.console.info('[style-lab] 点开事件：', event.title)
-}
-
-function openManyEvent(event: RecentEvent): void {
-  event.readAt = new Date().toISOString()
+  if (event.url) window.open(event.url, '_blank', 'noopener,noreferrer')
 }
 
 function resetFilter(): void {
@@ -378,7 +379,7 @@ function eventTime(value: string): string {
           :event="event"
           :time="eventTime(event.lastItemAt)"
           :rest-sources="restOf(event)"
-          @open="openManyEvent"
+          @open="openEvent"
         />
         <template #foot>
           <button type="button" class="k2-panel__more" @click="manyDialogOpen = true">
@@ -417,7 +418,7 @@ function eventTime(value: string): string {
       :note="`24h内关注的事件动态 · 先给一页，滚到底再补一页（模拟后端的 cursor 分页）`"
       :time-of="timeOfEvent"
       :rest-of="restOf"
-      @open="openManyEvent"
+      @open="openEvent"
       @load-more="loadMoreLazy"
     />
 

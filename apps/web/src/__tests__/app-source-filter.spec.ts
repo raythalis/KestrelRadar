@@ -71,6 +71,20 @@ describe('AppSourceFilter', () => {
     expect(wrapper.emitted('reset')).toHaveLength(1)
   })
 
+  it('浮层右上角的关闭按钮能真的关掉浮层', async () => {
+    const wrapper = mountFilter()
+    const trigger = wrapper.find('[data-test="app-source-filter-trigger"]')
+    await trigger.trigger('click')
+    await flushPromises()
+    expect(trigger.attributes('aria-expanded')).toBe('true')
+
+    await document
+      .querySelector('[data-test="app-source-filter-close"]')
+      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
+    expect(trigger.attributes('aria-expanded')).toBe('false')
+  })
+
   it('选中项带选中态，其余不带', async () => {
     const wrapper = mountFilter({ modelValue: '少数派' })
     await wrapper.find('[data-test="app-source-filter-trigger"]').trigger('click')

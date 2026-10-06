@@ -776,3 +776,43 @@ export const LAZY_EXTRA_EVENTS: RecentEvent[] = [
     readAt: minutesAgo(1500),
   },
 ]
+
+/** 懒加载池的填充部分：按模板铺到 50 条，好看清「每批 20 条」的翻页（纯样例数据） */
+const LAZY_TOPICS = [
+  'Vue',
+  'Vite',
+  'pnpm',
+  'Node',
+  'TypeScript',
+  'SQLite',
+  'Fastify',
+  'RSSHub',
+  'Obsidian',
+  'Datasette',
+  'Stash',
+  'Home Assistant',
+] as const
+const LAZY_SOURCE_NAMES = ['少数派', 'IT之家', 'GitHub 趋势', 'Hacker News 榜单', 'RSSHub'] as const
+
+export const LAZY_FILLER_EVENTS: RecentEvent[] = Array.from({ length: 32 }, (_, i) => {
+  const source = LAZY_SOURCE_NAMES[i % LAZY_SOURCE_NAMES.length]
+  const kind = i % 3 === 0 ? 'web' : i % 3 === 1 ? 'rss' : 'rsshub'
+  const index = i + 1
+  return {
+    id: `lazy-fill-${index}`,
+    title: `${LAZY_TOPICS[i % LAZY_TOPICS.length]} ${3 + (i % 2)}.${i % 12} 更新（模拟第 ${index} 条）`,
+    url: `https://example.com/lazy-fill-${index}`,
+    groupId: 'g1',
+    groupName: '111',
+    kind,
+    sources: [
+      { discoveryId: `d-${index}`, name: source, url: `https://example.com/lazy-fill-${index}` },
+    ],
+    sourceCount: 1,
+    sourceNames: [source],
+    itemCount: 1,
+    firstItemAt: minutesAgo(1700 + index * 60),
+    lastItemAt: minutesAgo(1700 + index * 60),
+    readAt: i % 3 === 0 ? null : minutesAgo(1700 + index * 60 - 30),
+  } as RecentEvent
+})

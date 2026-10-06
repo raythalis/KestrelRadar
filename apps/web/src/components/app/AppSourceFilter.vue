@@ -3,6 +3,8 @@
      浮层挂在 body 上（VMenu teleport），不会被面板的滚动容器裁掉。
      copy 全走 props：组件本身不写死文案，由页面（或 Style Lab）给。 -->
 <script setup lang="ts">
+import { ref } from 'vue'
+
 export interface SourceFilterOption {
   name: string
   count: number
@@ -27,11 +29,15 @@ withDefaults(
   },
 )
 const emit = defineEmits<{ 'update:modelValue': [value: string]; reset: [] }>()
+
+/** 浮层开合：右上角的关闭按钮要真的能关，所以自己拿着开合状态 */
+const menuOpen = ref(false)
 </script>
 
 <template>
   <span class="k2-filter" data-test="app-source-filter">
     <VMenu
+      v-model="menuOpen"
       :close-on-content-click="false"
       content-class="k2-pop k2-pop--filter"
       location="bottom end"
@@ -55,7 +61,13 @@ const emit = defineEmits<{ 'update:modelValue': [value: string]; reset: [] }>()
           <span class="k2-pop__title">{{ title }}</span>
           <span class="k2-pop__note">{{ note }}</span>
         </span>
-        <button type="button" class="k2-pop__close" aria-label="关闭">
+        <button
+          type="button"
+          class="k2-pop__close"
+          aria-label="关闭"
+          data-test="app-source-filter-close"
+          @click="menuOpen = false"
+        >
           <v-icon size="15">mdi-close</v-icon>
         </button>
       </div>
