@@ -163,7 +163,7 @@ export default {
     onlyActions: 'Only through {names}',
     onlyActionsLabel: 'Actions to use',
     onlyActionsHint: 'Empty means follow the group',
-    followGroup: 'Empty means follow the group',
+    followGroup: 'Empty runs all actions',
   },
   action: {
     add: 'Add action',
@@ -278,9 +278,6 @@ export default {
       hit: 'Above {value}: hit',
     },
     words: {
-      empty: 'No global exclude words yet',
-      placeholder: 'Type a word, press Enter',
-      remove: 'Remove {word}',
       count: '{n} total',
     },
     bandField: {

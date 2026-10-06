@@ -9,8 +9,8 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { probeRsshub } from '@/api/config'
-import ExcludeWordsField from '@/components/settings/ExcludeWordsField.vue'
 import ScoreBandField from '@/components/settings/ScoreBandField.vue'
+import TagsField from '@/components/biz/TagsField.vue'
 import type { SettingsCard, SettingsField } from '@/components/settings/types'
 import { useConfigStore } from '@/stores/config'
 import { useUiStore } from '@/stores/ui'
@@ -371,10 +371,11 @@ function asStringArray(value: unknown): string[] {
             </span>
           </span>
 
-          <ExcludeWordsField
+          <TagsField
             v-else
             :model-value="asStringArray(draft[field.key])"
-            :test-id="`setting-${field.id ?? field.key}`"
+            :hint="t('settings.words.count', { n: asStringArray(draft[field.key]).length })"
+            :data-test="`setting-${field.id ?? field.key}`"
             @update:model-value="
               (value) => {
                 draft[field.key] = value

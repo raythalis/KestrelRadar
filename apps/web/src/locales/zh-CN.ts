@@ -164,7 +164,7 @@ export default {
     onlyActions: '仅走 {names}',
     onlyActionsLabel: '指定关联动作',
     onlyActionsHint: '留空＝跟随分组',
-    followGroup: '留空则跟随分组',
+    followGroup: '留空则执行全部动作',
   },
   action: {
     add: '添加动作',
@@ -276,9 +276,6 @@ export default {
       hit: '高于 {value} 分：直接命中',
     },
     words: {
-      empty: '还没有全局排除词',
-      placeholder: '输入一个词，回车添加',
-      remove: '删除 {word}',
       count: '共 {n} 个',
     },
     bandField: {

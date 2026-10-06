@@ -167,6 +167,7 @@ function sourceProps(discovery: Discovery): InstanceType<typeof SourceCard>['$pr
     name: discovery.name,
     kindLabel: t(`discovery.kind.${discovery.kind}`),
     icon: DISCOVERY_ICONS[discovery.kind],
+    iconUrl: discovery.iconUrl,
     enabled: discovery.enabled,
     target: discovery.target,
     cron: discovery.cronExpression,
@@ -415,7 +416,7 @@ async function confirmDelete(): Promise<void> {
           data-test="new-group"
           @click="openGroupDialog(null)"
         >
-          <v-icon size="18">mdi-plus</v-icon>
+          <i class="mdi mdi-plus" />
           {{ t('config.newGroup') }}
         </button>
       </div>

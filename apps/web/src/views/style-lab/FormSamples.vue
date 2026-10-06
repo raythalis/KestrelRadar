@@ -11,8 +11,8 @@ import ConfirmDialog from '@/components/biz/ConfirmDialog.vue'
 import CronPicker from '@/components/biz/CronPicker.vue'
 import FormDialog from '@/components/biz/FormDialog.vue'
 import GroupDialog from '@/components/biz/GroupDialog.vue'
-import ExcludeWordsField from '@/components/settings/ExcludeWordsField.vue'
 import ScoreBandField from '@/components/settings/ScoreBandField.vue'
+import TagsField from '@/components/biz/TagsField.vue'
 
 type ThemeMode = 'light' | 'dark' | 'system'
 
@@ -27,7 +27,7 @@ const theme = ref<ThemeMode>('system')
 const bandLow = ref(30)
 const bandHigh = ref(70)
 
-/** 真 ExcludeWordsField */
+/** 真 TagsField：设置页全局排除词、监听弹窗关键词/排除词，都是这一份 */
 const excludeWords = ref(['广告', '抽奖', '优惠券'])
 
 /** 真 CronPicker：生产里长在弹窗里（SourceDialog / ActionDialog） */
@@ -160,7 +160,7 @@ const pushTimeout = ref(15)
           <span class="k2-field__hint">命中任意一个词的事件直接丢弃，不进入打分</span>
         </div>
         <div class="k2-set__control">
-          <ExcludeWordsField v-model="excludeWords" test-id="lab-exclude" />
+          <TagsField v-model="excludeWords" data-test="lab-exclude" />
         </div>
       </div>
     </div>

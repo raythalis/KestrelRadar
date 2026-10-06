@@ -6,7 +6,7 @@
      只出事件，不碰 store：数据、试抓与写操作都由页面负责。 -->
 <script setup lang="ts">
 import { CUSTOM_SCHEDULE_COPY, humanizeCron, type CardStat } from '@kestrel/contracts'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { cardStatView } from '@/components/biz/card-stat'
@@ -18,8 +18,10 @@ const props = withDefaults(
     name: string
     /** 来源类型文案（RSSHub 路由 / RSS 源 / 网页） */
     kindLabel: string
-    /** 来源图标（mdi-xxx） */
+    /** 来源图标（mdi-xxx）：没抓到网站图标时用它 */
     icon?: string
+    /** 后端抓回来的网站图标地址；null/缺失就回落上面的类型图标 */
+    iconUrl?: string | null
     enabled: boolean
     /** 抓取目标：路由路径或网址 */
     target: string
@@ -37,6 +39,7 @@ const props = withDefaults(
   }>(),
   {
     icon: 'mdi-rss',
+    iconUrl: null,
     nextRunAt: null,
     busy: false,
     stat: null,
@@ -54,6 +57,14 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const flipped = ref(false)
 const menuOpen = ref(false)
+
+/** 网站图标加载失败就回落类型图标（外站抽风不该让卡片开天窗） */
+const iconFailed = ref(false)
+const showSiteIcon = computed(() => Boolean(props.iconUrl) && !iconFailed.value)
+watch(
+  () => props.iconUrl,
+  () => (iconFailed.value = false),
+)
 
 /** 背面三件套：成功率、迷你柱、窗口内计数 */
 const stat = computed(() => props.stat ?? null)
@@ -79,7 +90,15 @@ const stateLabel = computed(() => (props.enabled ? t('common.enabled') : t('comm
       >
         <div class="k2-card__head">
           <span class="k2-tile" data-test="source-icon">
-            <v-icon size="20">{{ icon }}</v-icon>
+            <img
+              v-if="showSiteIcon"
+              class="k2-tile__img"
+              :src="iconUrl || undefined"
+              alt=""
+              data-test="source-icon-img"
+              @error="iconFailed = true"
+            />
+            <v-icon v-else size="20">{{ icon }}</v-icon>
           </span>
           <span class="k2-card__heading">
             <span class="k2-card__title" data-test="source-name">{{ name }}</span>

@@ -18,8 +18,8 @@ import GroupDialog from '@/components/biz/GroupDialog.vue'
 import GroupPanel from '@/components/biz/GroupPanel.vue'
 import MonitorCard from '@/components/biz/MonitorCard.vue'
 import SourceCard from '@/components/biz/SourceCard.vue'
-import ExcludeWordsField from '@/components/settings/ExcludeWordsField.vue'
 import ScoreBandField from '@/components/settings/ScoreBandField.vue'
+import TagsField from '@/components/biz/TagsField.vue'
 import StyleLabView from '@/views/StyleLabView.vue'
 
 /**
@@ -72,7 +72,7 @@ describe('style-lab 结构守卫', () => {
 
   it('设置页控件是真组件：分数区间与全局排除词', () => {
     expect(wrapper.findAllComponents(ScoreBandField).length).toBeGreaterThanOrEqual(1)
-    expect(wrapper.findAllComponents(ExcludeWordsField).length).toBeGreaterThanOrEqual(1)
+    expect(wrapper.findAllComponents(TagsField).length).toBeGreaterThanOrEqual(1)
     expect(wrapper.find('[data-test="lab-score-bands"]').exists()).toBe(true)
   })
 

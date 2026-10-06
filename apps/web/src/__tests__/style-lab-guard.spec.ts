@@ -67,7 +67,8 @@ const LAB_CLASS_ALLOWLIST = new Set([
 const FORBIDDEN = [
   'k2-line', // 旧手写分线（S4 已换成真 ScoreBandField）
   'k2-band', // 真组件内部类，不得在样例里手写
-  'k2-words', // 真 ExcludeWordsField 内部类
+  'k2-words', // 真 TagsField / RSSHub 测试格内部类
+  'k2-tags', // 标签输入只走真 TagsField，样例里不许手写
   'k2-empty', // 空态只走真 AppEmptyState
   'k2-alert', // 提示类只走真 AppHint
   'k2-flip', // 翻卡结构由真卡片给出
@@ -86,7 +87,7 @@ const FORBIDDEN = [
 /** 必须能在样例里找到的真组件（正面断言） */
 const REQUIRED_COMPONENTS = [
   'ScoreBandField',
-  'ExcludeWordsField',
+  'TagsField',
   'CronPicker',
   'FormDialog',
   'ConfirmDialog',

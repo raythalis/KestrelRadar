@@ -8,6 +8,8 @@ import type { Channel, ChannelType } from '@kestrel/contracts'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { CHANNEL_ICONS } from '@/components/biz/icons'
+
 import { readTelegramChats, testChannel } from '@/api/config'
 import ChannelCard from '@/components/biz/ChannelCard.vue'
 import ChannelDialog from '@/components/biz/ChannelDialog.vue'
@@ -155,6 +157,7 @@ watch(
               data-test="new-channel-telegram"
               @click="openCreate('telegram')"
             >
+              <v-icon size="18">{{ CHANNEL_ICONS.telegram }}</v-icon>
               {{ t('channel.type.telegram') }}
             </button>
             <button
@@ -163,6 +166,7 @@ watch(
               data-test="new-channel-webhook"
               @click="openCreate('webhook')"
             >
+              <v-icon size="18">{{ CHANNEL_ICONS.webhook }}</v-icon>
               {{ t('channel.type.webhook') }}
             </button>
           </div>

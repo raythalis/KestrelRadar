@@ -31,6 +31,22 @@ afterEach(() => {
 })
 
 describe('SourceCard', () => {
+  it('有网站图标就用它；图挂了回落类型图标', async () => {
+    const wrapper = mountCard({ icon: 'mdi-rss', iconUrl: '/api/icons/abc.png' })
+    const img = wrapper.get('[data-test="source-icon-img"]')
+    expect(img.attributes('src')).toBe('/api/icons/abc.png')
+
+    await img.trigger('error')
+    expect(wrapper.find('[data-test="source-icon-img"]').exists()).toBe(false)
+    expect(wrapper.get('[data-test="source-icon"]').text()).toBe('')
+  })
+
+  it('没抓到图标（iconUrl 为空）时照旧用类型图标', () => {
+    const wrapper = mountCard({ iconUrl: null })
+    expect(wrapper.find('[data-test="source-icon-img"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="source-icon"]').exists()).toBe(true)
+  })
+
   it('不要左侧色条：状态只由状态块表达；路由等宽显示，实例地址不上卡', () => {
     const wrapper = mountCard()
     expect(wrapper.classes()).toContain('k2-flip')

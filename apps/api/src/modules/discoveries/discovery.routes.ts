@@ -41,12 +41,17 @@ export function registerDiscoveryRoutes(
   app.patch<{ Params: IdParams }>('/discoveries/:id', async (request) => {
     const patch = parseOrThrow(updateDiscoveryInputSchema, request.body)
     const before = service.get(request.params.id)
-    const updated = service.update(request.params.id, patch)
+    service.update(request.params.id, patch)
     onScheduleChanged()
-    const targetChanged = updated.target !== before.target || updated.kind !== before.kind
-    // 目标换了图标就过期了：不等结果，抓到再刷新
-    if (icons && targetChanged) void icons.refresh(updated.id, { waitMs: 0 })
-    return service.get(updated.id)
+    const after = service.get(request.params.id)
+    const targetChanged = after.target !== before.target || after.kind !== before.kind
+    if (icons) {
+      // 目标换了图标就过期了：不等结果，抓到再刷新
+      if (targetChanged) void icons.refresh(after.id, { waitMs: 0 })
+      // 还没抓到过图标的（图标功能上线前建的老源）：这次等一小会儿，保存返回就带图
+      else if (!after.iconUrl) await icons.refresh(after.id, { waitMs: 1500 })
+    }
+    return service.get(after.id)
   })
 
   /** 手动重新抓图标（编辑弹窗里那顆按钮） */

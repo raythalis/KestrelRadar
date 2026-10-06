@@ -191,18 +191,22 @@ describe('设置页', () => {
     expect(document.body.textContent).toContain('直接命中')
   })
 
-  it('全局排除词：全部平铺可见，能删', async () => {
+  it('全局排除词：与关键词同一份标签输入，标签平铺可见、能删', async () => {
     const wrapper = await mountLoaded('judge', {
       ...snapshot,
       settings: { ...snapshot.settings, globalExcludeKeywords: ['剧透', '抽奖'] },
     })
-    const items = wrapper.findAll('[data-test="setting-globalExcludeKeywords"] .k2-words__item')
-    expect(items.map((item) => item.text())).toEqual(['剧透', '抽奖'])
+    const field = wrapper.get('[data-test="setting-globalExcludeKeywords"]')
+    expect(field.classes()).toContain('k2-field')
+    expect(field.find('.k2-tags').exists()).toBe(true)
 
-    await wrapper.get('[data-test="word-remove-剧透"]').trigger('click')
+    const chips = field.findAll('.k2-chip--tag')
+    expect(chips.map((chip) => chip.text())).toEqual(['剧透', '抽奖'])
+
+    await chips[0]!.get('.k2-chip__x').trigger('click')
     await flushPromises()
     expect(
-      wrapper.findAll('[data-test="setting-globalExcludeKeywords"] .k2-words__item'),
+      wrapper.findAll('[data-test="setting-globalExcludeKeywords"] .k2-chip--tag'),
     ).toHaveLength(1)
   })
 

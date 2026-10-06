@@ -161,7 +161,7 @@ const enabledLabel = computed(() =>
           :data-test="`add-${column.key}-empty`"
           @click="emit('add', column.key)"
         >
-          <v-icon size="18">mdi-plus</v-icon>
+          <i class="mdi mdi-plus" />
           <span>{{ t(`column.empty.${column.key}`) }}</span>
           <span class="k2-col__add-sub">{{ t(`column.emptyHint.${column.key}`) }}</span>
         </button>
@@ -172,7 +172,7 @@ const enabledLabel = computed(() =>
           :data-test="`add-${column.key}`"
           @click="emit('add', column.key)"
         >
-          <v-icon size="18">mdi-plus</v-icon>
+          <i class="mdi mdi-plus" />
           {{ t(column.addKey) }}
         </button>
       </section>

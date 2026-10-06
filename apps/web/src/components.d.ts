@@ -34,7 +34,6 @@ declare module 'vue' {
     ConfirmDialog: typeof import('./components/biz/ConfirmDialog.vue')['default']
     CronPicker: typeof import('./components/biz/CronPicker.vue')['default']
     EventRow: typeof import('./components/biz/EventRow.vue')['default']
-    ExcludeWordsField: typeof import('./components/settings/ExcludeWordsField.vue')['default']
     FormDialog: typeof import('./components/biz/FormDialog.vue')['default']
     GroupDialog: typeof import('./components/biz/GroupDialog.vue')['default']
     GroupPanel: typeof import('./components/biz/GroupPanel.vue')['default']

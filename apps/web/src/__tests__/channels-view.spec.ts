@@ -110,6 +110,16 @@ describe('通知渠道页', () => {
     expect(wrapper.find('[data-test="channels-empty"]').exists()).toBe(true)
   })
 
+  it('新建渠道的类型下拉每项都带图标（与动作卡片选渠道同一套）', async () => {
+    const wrapper = await mountLoaded()
+    await wrapper.get('[data-test="new-channel"]').trigger('click')
+
+    const telegram = wrapper.get('[data-test="new-channel-telegram"]')
+    const webhook = wrapper.get('[data-test="new-channel-webhook"]')
+    expect(telegram.find('i.mdi-send').exists()).toBe(true)
+    expect(webhook.find('i.mdi-webhook').exists()).toBe(true)
+  })
+
   it('新建 Telegram 渠道：填 token 与会话 → 调创建接口', async () => {
     vi.mocked(api.createChannel).mockResolvedValue(snapshot.channels[0]!)
     const wrapper = await mountLoaded()

@@ -160,6 +160,65 @@ describe('保存发现时顺手抓图标（走接口）', () => {
       db.cleanup()
     }
   })
+
+  it('之前没抓到图标的源：改个名字保存一下会补抓一次，返回里就带图标地址', async () => {
+    const { buildApp } = await import('../src/app.ts')
+    const { createTempDb: tempDb } = await import('./helpers/temp-db.ts')
+    const db = tempDb()
+    let allowImage = false
+    const flaky = (async (input: string | URL | Request) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+      calls.push(url)
+      if (!allowImage) return new Response('nope', { status: 404 })
+      return new Response(new Uint8Array(PNG), {
+        status: 200,
+        headers: { 'content-type': 'image/png' },
+      })
+    }) as typeof fetch
+
+    const app = await buildApp({
+      dbPath: db.path,
+      logger: false,
+      enableScheduler: false,
+      fetchImpl: flaky,
+    })
+    try {
+      const group = (
+        await app.inject({
+          method: 'POST',
+          url: '/api/groups',
+          payload: { name: '分组', description: '', enabled: true },
+        })
+      ).json()
+      const created = (
+        await app.inject({
+          method: 'POST',
+          url: '/api/discoveries',
+          payload: {
+            groupId: group.id,
+            name: '老源',
+            kind: 'rss',
+            target: 'https://example.com/feed.xml',
+            cronExpression: '0 * * * *',
+            enabled: true,
+          },
+        })
+      ).json()
+      expect(created.iconUrl).toBeNull()
+
+      allowImage = true
+      const saved = await app.inject({
+        method: 'PATCH',
+        url: `/api/discoveries/${created.id}`,
+        payload: { name: '老源改名' },
+      })
+      expect(saved.statusCode).toBe(200)
+      expect(saved.json().iconUrl).toMatch(/^\/api\/icons\/[a-f0-9]{12}-[a-f0-9]{10}\.png$/)
+    } finally {
+      await app.close()
+      db.cleanup()
+    }
+  })
 })
 
 describe('读图接口', () => {

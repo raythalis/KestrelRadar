@@ -59,6 +59,7 @@
   background: var(--c-soft);
   /* 图标用柔和底上的深色版，保证小图标也看得清（实色只留给图表与渐变） */
   color: var(--c-ink);
+  overflow: hidden;
   font-size: var(--k2-fs-subtitle);
 }
 
@@ -727,9 +728,20 @@
   padding: var(--k2-s-2) var(--k2-s-3);
 }
 
-/* 标签输入里的标签最多占六成宽：太长时让出位置，输入框跟它同排，不至于各占一行 */
+/* 标签输入里的标签：文字整段看得见（不给省略号），一条装不下就自己换行，容器跟着长高 */
 .k2-tags .k2-chip--tag {
-  max-inline-size: 60%;
+  block-size: auto;
+  min-block-size: var(--k2-chip-h);
+  max-inline-size: 100%;
+  padding-block: 2px;
+}
+
+.k2-tags .k2-chip__text {
+  flex: 1 1 auto;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
 }
 
 .k2-tags__input {
@@ -1662,6 +1674,12 @@ a.k2-row--link {
   display: flex;
   flex-direction: column;
   gap: var(--k2-s-5);
+  /* 字段多到一屏放不下时正文自己滚，标题和按钮始终留在原位 */
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--k2-c-border) transparent;
   /* 焦点圈画在框外 3px + 偏移 2px，滚动容器（手机档正文会滚）会把它左右切掉：
      正文自己留出这块位置，不给负外边距（负的会把正文撑得比弹窗还宽） */
   padding-inline: 5px;
@@ -2081,59 +2099,7 @@ a.k2-row--link {
 }
 
 /* ---------- 设置页：全局排除词管理器 ---------- */
-.k2-words {
-  display: flex;
-  flex-direction: column;
-  gap: var(--k2-s-3);
-  inline-size: 100%;
-}
-
-.k2-words__list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--k2-s-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.k2-words__item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--k2-s-1);
-  padding-inline: var(--k2-s-3) var(--k2-s-1);
-  block-size: 32px;
-  border: 1px solid var(--k2-c-border-soft);
-  border-radius: var(--k2-r-full);
-  background: var(--k2-c-surface2);
-  font-size: var(--k2-fs-caption);
-  color: var(--k2-c-text);
-}
-
-.k2-words__del {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 24px;
-  block-size: 24px;
-  border: 0;
-  border-radius: var(--k2-r-full);
-  background: none;
-  color: var(--k2-c-text-faint);
-  cursor: pointer;
-}
-
-.k2-words__del:hover {
-  background: var(--k2-c-danger-soft);
-  color: var(--k2-c-danger-ink);
-}
-
-.k2-words__empty {
-  margin: 0;
-  font-size: var(--k2-fs-caption);
-  color: var(--k2-c-text-faint);
-}
-
+/* RSSHub 连接测试那一格（唯一的用途）：与输入框同排的按钮 + 就地结果 */
 .k2-words__add {
   display: flex;
   gap: var(--k2-s-2);
