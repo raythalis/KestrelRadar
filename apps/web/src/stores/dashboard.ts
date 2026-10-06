@@ -40,7 +40,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     ])
     const [statsResult, eventsResult, incidentsResult] = results
     if (statsResult.status === 'fulfilled') stats.value = statsResult.value
-    if (eventsResult.status === 'fulfilled') events.value = eventsResult.value
+    if (eventsResult.status === 'fulfilled') events.value = eventsResult.value.events
     if (incidentsResult.status === 'fulfilled') incidents.value = incidentsResult.value.incidents
     // 八张卡是最重要的那块：它没拿到才算整页失败
     if (statsResult.status === 'rejected') {

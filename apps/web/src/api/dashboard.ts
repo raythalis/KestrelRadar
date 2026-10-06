@@ -1,7 +1,8 @@
 import type {
   DismissIncidentResult,
+  EventListQuery,
+  EventPage,
   Incident,
-  RecentEvent,
   StatsOverview,
 } from '@kestrel/contracts'
 
@@ -13,9 +14,9 @@ export async function fetchStatsOverview(): Promise<StatsOverview> {
   return data
 }
 
-/** GET /api/events —— 最近事件（条数由后端定，按最近一次发生时间倒序） */
-export async function fetchRecentEvents(): Promise<RecentEvent[]> {
-  const { data } = await http.get<RecentEvent[]>('/events')
+/** GET /api/events —— 最近事件：24 小时窗口、按最近一次发生时间倒序，一页一页给 */
+export async function fetchRecentEvents(query: EventListQuery = {}): Promise<EventPage> {
+  const { data } = await http.get<EventPage>('/events', { params: query })
   return data
 }
 

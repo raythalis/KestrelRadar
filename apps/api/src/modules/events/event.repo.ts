@@ -34,6 +34,32 @@ export interface EventMember {
   addedAt: string
 }
 
+export interface EventPageQuery {
+  /** 窗口起点（含）：只看这个时间之后还有动静的事件 */
+  sinceIso: string
+  /** 要比上一页多要一条，好判断还有没有下一页 */
+  limit: number
+  /** 上一页最后一条的位置；不传就是第一页 */
+  cursor?: { lastItemAt: string; id: string }
+  /** 只看这个来源提到的事件 */
+  discoveryId?: string
+}
+
+/** 一个事件的一条来源：url 取这家最早那条条目的链接 */
+export interface EventSourceRow {
+  discoveryId: string
+  name: string
+  url: string | null
+  addedAt: string
+}
+
+/** 筛选弹层用的来源计数 */
+export interface SourceCount {
+  discoveryId: string
+  name: string
+  count: number
+}
+
 interface EventRow {
   id: string
   group_id: string
@@ -118,6 +144,49 @@ export function createEventRepo(db: Db) {
   const selectMemberSources = db.prepare(
     'select distinct discovery_id from event_items where event_id = ?',
   )
+  /**
+   * 窗口 + 游标（keyset）分页：按最近一次发生时间倒序。
+   * 游标是「上一页最后一条的 last_item_at + id」，翻页只取严格更旧的那些，
+   * 所以期间新事件插进来也不会重复或漏项。
+   */
+  const selectPage = db.prepare(
+    `select events.*, ${COUNTS} from events
+      where events.status <> 'archived'
+        and events.last_item_at >= ?
+        and (? is null or (events.last_item_at, events.id) < (?, ?))
+        and (? is null or exists (
+          select 1 from event_items f where f.event_id = events.id and f.discovery_id = ?
+        ))
+      order by events.last_item_at desc, events.id desc
+      limit ?`,
+  )
+  /** 这批事件各自的来源（同一来源取最早那条条目），标签与「点标签开哪家」都靠它 */
+  const selectEventSources = db.prepare(
+    `select ei.event_id, ei.discovery_id, ei.added_at, i.url, d.name as discovery_name
+       from event_items ei
+       join items i on i.id = ei.item_id
+       join discoveries d on d.id = ei.discovery_id
+      where ei.event_id in (select value from json_each(?))
+      order by ei.added_at, i.title`,
+  )
+  /** 窗口内每个来源有几个事件（筛选弹层的计数） */
+  const selectSourceCounts = db.prepare(
+    `select ei.discovery_id, d.name as discovery_name, count(distinct ei.event_id) as total
+       from event_items ei
+       join events e on e.id = ei.event_id
+       join discoveries d on d.id = ei.discovery_id
+      where e.status <> 'archived' and e.last_item_at >= ?
+      group by ei.discovery_id
+      order by total desc, d.name`,
+  )
+  /** 标已读：已经标过的不动，read_at 保持第一次看的时间（幂等） */
+  const insertRead = db.prepare(
+    `insert into event_reads (event_id, read_at, user_id) values (?, ?, ?)
+     on conflict (event_id) do nothing`,
+  )
+  const selectReads = db.prepare(
+    `select event_id, read_at from event_reads where event_id in (select value from json_each(?))`,
+  )
   const touchEvent = db.prepare('update events set last_item_at = ?, updated_at = ? where id = ?')
   const setStatus = db.prepare('update events set status = ?, updated_at = ? where id = ?')
   const setDelivered = db.prepare(
@@ -168,6 +237,81 @@ export function createEventRepo(db: Db) {
     /** 仪表盘的最近事件列表用：只给没归档的，按最近一次发生时间倒序 */
     listRecent(limit: number): Event[] {
       return (selectRecent.all(limit) as unknown as EventRow[]).map(toEvent)
+    },
+
+    /**
+     * 列表一页：窗口内、没归档的，按最近一次发生时间倒序。
+     * 带上 cursor 就接着上一页往下取；新事件插进来也不会重复或漏项。
+     */
+    listPage(query: EventPageQuery): Event[] {
+      const cursorAt = query.cursor?.lastItemAt ?? null
+      const cursorId = query.cursor?.id ?? null
+      const discoveryId = query.discoveryId ?? null
+      const rows = selectPage.all(
+        query.sinceIso,
+        cursorAt,
+        cursorAt,
+        cursorId,
+        discoveryId,
+        discoveryId,
+        query.limit,
+      ) as unknown as EventRow[]
+      return rows.map(toEvent)
+    },
+
+    /** 这批事件各自的来源，按最早提到这件事的先后排 */
+    sourcesForEvents(eventIds: string[]): Map<string, EventSourceRow[]> {
+      const result = new Map<string, EventSourceRow[]>()
+      if (eventIds.length === 0) return result
+      const rows = selectEventSources.all(JSON.stringify(eventIds)) as unknown as {
+        event_id: string
+        discovery_id: string
+        discovery_name: string
+        url: string | null
+        added_at: string
+      }[]
+      for (const row of rows) {
+        const list = result.get(row.event_id) ?? []
+        // 同一来源转了好几条只算一个来源，取最早那条的链接
+        if (list.some((source) => source.discoveryId === row.discovery_id)) continue
+        list.push({
+          discoveryId: row.discovery_id,
+          name: row.discovery_name,
+          url: row.url,
+          addedAt: row.added_at,
+        })
+        result.set(row.event_id, list)
+      }
+      return result
+    },
+
+    /** 窗口内每个来源有几个事件 */
+    sourceCountsSince(sinceIso: string): SourceCount[] {
+      const rows = selectSourceCounts.all(sinceIso) as unknown as {
+        discovery_id: string
+        discovery_name: string
+        total: number
+      }[]
+      return rows.map((row) => ({
+        discoveryId: row.discovery_id,
+        name: row.discovery_name,
+        count: row.total,
+      }))
+    },
+
+    /** 标已读；已经标过的保持不变（幂等） */
+    markRead(eventId: string, at: string, userId: string | null = null): void {
+      insertRead.run(eventId, at, userId)
+    },
+
+    /** 这批事件各自的已读时间；没看过的不在结果里 */
+    readAtForEvents(eventIds: string[]): Map<string, string> {
+      if (eventIds.length === 0) return new Map()
+      const rows = selectReads.all(JSON.stringify(eventIds)) as unknown as {
+        event_id: string
+        read_at: string
+      }[]
+      return new Map(rows.map((row) => [row.event_id, row.read_at]))
     },
 
     listByGroup(groupId: string): Event[] {

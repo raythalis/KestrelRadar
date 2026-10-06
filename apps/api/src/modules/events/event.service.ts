@@ -1,5 +1,18 @@
-import { EVENT_SOURCE_NAME_LIMIT, type RecentEvent } from '@kestrel/contracts'
+import {
+  EVENT_PAGE_SIZE,
+  EVENT_PAGE_SIZE_MAX,
+  EVENT_SOURCE_NAME_LIMIT,
+  EVENT_SOURCE_TAG_LIMIT,
+  EVENT_WINDOW_HOURS,
+  type EventListQuery,
+  type EventPage,
+  type EventReadResult,
+  type EventSourceOption,
+  type EventSourceRef,
+  type RecentEvent,
+} from '@kestrel/contracts'
 
+import { AppError } from '../../plugins/errors.ts'
 import type { DiscoveryRepo } from '../discoveries/discovery.repo.ts'
 import type { GroupRepo } from '../groups/group.repo.ts'
 import type { Item, ItemRepo } from '../items/item.repo.ts'
@@ -15,6 +28,33 @@ import {
 } from './similarity.ts'
 
 const HOUR_MS = 60 * 60 * 1000
+
+/** 一页几条：不传给默认值，超上限就截到上限，非法直接报错 */
+function resolveLimit(limit?: number): number {
+  if (limit === undefined) return EVENT_PAGE_SIZE
+  if (!Number.isInteger(limit) || limit < 1) {
+    throw AppError.validation('limit 必须是正整数')
+  }
+  return Math.min(limit, EVENT_PAGE_SIZE_MAX)
+}
+
+/** 游标：把「上一页最后一条的位置」编码成一个不透明字符串，调用方只负责原样带回来 */
+interface ListCursor {
+  lastItemAt: string
+  id: string
+}
+
+function encodeCursor(cursor: ListCursor): string {
+  return Buffer.from(`${cursor.lastItemAt}|${cursor.id}`, 'utf8').toString('base64url')
+}
+
+function parseCursor(raw?: string): ListCursor | undefined {
+  if (raw === undefined || raw === '') return undefined
+  const text = Buffer.from(raw, 'base64url').toString('utf8')
+  const split = text.lastIndexOf('|')
+  if (split <= 0 || split === text.length - 1) throw AppError.validation('cursor 不合法')
+  return { lastItemAt: text.slice(0, split), id: text.slice(split + 1) }
+}
 
 export interface EventMergeResult {
   /** 新起的事件 */
@@ -73,34 +113,93 @@ export function createEventService(deps: EventServiceDeps) {
     return hasNewVersionNumber(text) && !hasNewVersionNumber(existing)
   }
 
+  /** 窗口起点：只看这个时间之后还有动静的事件 */
+  function windowStart(now: Date): string {
+    return new Date(now.getTime() - EVENT_WINDOW_HOURS * HOUR_MS).toISOString()
+  }
+
+  /** 一条事件怎么给界面：来源标签、已读状态在这里补齐 */
+  function toRecentEvent(
+    event: Event,
+    sources: EventSourceRef[],
+    readAt: string | null,
+  ): RecentEvent {
+    const members = deps.events.listItems(event.id)
+    const names: string[] = []
+    for (const member of members) {
+      if (!names.includes(member.discoveryName)) names.push(member.discoveryName)
+    }
+    // 行首那个图标按最先提到这件事的来源类型取；来源被删掉就退回 rss
+    const kind = deps.discoveries.get(members[0]?.discoveryId ?? '')?.kind ?? 'rss'
+    return {
+      id: event.id,
+      title: event.title,
+      // 默认打开的原文＝第一个来源最早那条条目的链接（事件自己那条可能没有链接）
+      url: sources[0]?.url ?? event.url,
+      groupId: event.groupId,
+      groupName: deps.groups.get(event.groupId)?.name ?? '',
+      kind,
+      sources: sources.slice(0, EVENT_SOURCE_TAG_LIMIT),
+      sourceCount: event.sourceCount,
+      // @deprecated 阶段 3 迁到 sources 之后删掉，现在只有旧的文字标签在用
+      sourceNames: names.slice(0, EVENT_SOURCE_NAME_LIMIT),
+      itemCount: event.itemCount,
+      firstItemAt: event.firstItemAt,
+      lastItemAt: event.lastItemAt,
+      readAt,
+    }
+  }
+
   return {
     /**
-     * 仪表盘的最近事件列表：按最近一次发生时间倒序，只给界面要的字段。
-     * 来源名按发现去重（同一发现转两条只算一个来源），最多给 EVENT_SOURCE_NAME_LIMIT 个。
+     * 仪表盘的最近事件列表：窗口内（默认 24 小时）、按最近一次发生时间倒序，一页一页给。
+     * 带上 cursor 就接着上一页往下取；返回的 nextCursor 为空表示到底了。
      */
-    listRecent(limit: number): RecentEvent[] {
-      return deps.events.listRecent(limit).map((event) => {
-        const members = deps.events.listItems(event.id)
-        const names: string[] = []
-        for (const member of members) {
-          if (!names.includes(member.discoveryName)) names.push(member.discoveryName)
-        }
-        // 行首那个图标按最先提到这件事的来源类型取；来源被删掉就退回 rss
-        const kind = deps.discoveries.get(members[0]?.discoveryId ?? '')?.kind ?? 'rss'
-        return {
-          id: event.id,
-          title: event.title,
-          url: event.url,
-          groupId: event.groupId,
-          groupName: deps.groups.get(event.groupId)?.name ?? '',
-          kind,
-          sourceNames: names.slice(0, EVENT_SOURCE_NAME_LIMIT),
-          sourceCount: event.sourceCount,
-          itemCount: event.itemCount,
-          firstItemAt: event.firstItemAt,
-          lastItemAt: event.lastItemAt,
-        }
+    list(query: EventListQuery = {}, now: Date = new Date()): EventPage {
+      const limit = resolveLimit(query.limit)
+      const cursor = parseCursor(query.cursor)
+      const rows = deps.events.listPage({
+        sinceIso: windowStart(now),
+        // 多要一条：能取到就说明还有下一页
+        limit: limit + 1,
+        cursor,
+        discoveryId: query.discoveryId,
       })
+      const hasMore = rows.length > limit
+      const page = rows.slice(0, limit)
+      const ids = page.map((event) => event.id)
+      const sourceMap = deps.events.sourcesForEvents(ids)
+      const readMap = deps.events.readAtForEvents(ids)
+      const events = page.map((event) =>
+        toRecentEvent(
+          event,
+          (sourceMap.get(event.id) ?? []).map((source) => ({
+            discoveryId: source.discoveryId,
+            name: source.name,
+            url: source.url,
+          })),
+          readMap.get(event.id) ?? null,
+        ),
+      )
+      const last = page[page.length - 1]
+      return {
+        events,
+        nextCursor:
+          hasMore && last ? encodeCursor({ lastItemAt: last.lastItemAt, id: last.id }) : null,
+      }
+    },
+
+    /** 来源筛选弹层：窗口内每个来源有几个事件，多的排前面 */
+    sources(now: Date = new Date()): EventSourceOption[] {
+      return deps.events.sourceCountsSince(windowStart(now))
+    },
+
+    /** 点击查看后记已读；重复点击不改变第一次看的时间（幂等） */
+    markRead(eventId: string, now: Date = new Date()): EventReadResult {
+      if (!deps.events.get(eventId)) throw AppError.notFound('事件不存在')
+      const at = now.toISOString()
+      deps.events.markRead(eventId, at)
+      return { id: eventId, readAt: deps.events.readAtForEvents([eventId]).get(eventId) ?? at }
     },
 
     /** 把这条来源里还没并入事件的条目归并一遍（幂等，重复调用不会多出事件） */

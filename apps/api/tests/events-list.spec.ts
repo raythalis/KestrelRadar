@@ -10,7 +10,8 @@ import { createTestApp } from './helpers/test-app.ts'
 
 /**
  * 仪表盘的最近事件列表（GET /events，只读）。
- * 事件本体由归并模块维护，这里盯三件事：路由挂上了、字段够界面用、按最近一次发生时间倒序。
+ * 事件本体由归并模块维护，这里盯四件事：路由挂上了、字段够界面用、
+ * 按最近一次发生时间倒序、只给 24 小时窗口内的事。
  */
 
 let server: FeedServer
@@ -55,10 +56,11 @@ describe('最近事件列表', () => {
       // 路由挂在 API_PREFIX（/api）下
       const response = await app.app.inject({ method: 'GET', url: `${API_PREFIX}/events` })
       expect(response.statusCode).toBe(200)
-      const events = response.json()
-      expect(events.length).toBeGreaterThan(0)
+      const page = response.json()
+      expect(page.events.length).toBeGreaterThan(0)
+      expect(page.nextCursor).toBeNull()
 
-      const first = events[0]
+      const first = page.events[0]
       expect(Object.keys(first).sort()).toEqual(
         [
           'firstItemAt',
@@ -68,14 +70,20 @@ describe('最近事件列表', () => {
           'itemCount',
           'kind',
           'lastItemAt',
+          'readAt',
           'sourceCount',
           'sourceNames',
+          'sources',
           'title',
           'url',
         ].sort(),
       )
       expect(first.groupName).toBe('分组 A')
       expect(first.sourceNames).toEqual(['示例源'])
+      expect(first.sources.map((source: { name: string }) => source.name)).toEqual(['示例源'])
+      expect(first.sources[0].url).toBeTruthy()
+      // 还没点开过，所以是未读
+      expect(first.readAt).toBeNull()
       expect(first.kind).toBe('rss')
       expect(first.sourceCount).toBe(1)
       expect(first.title).toBeTruthy()
@@ -85,29 +93,38 @@ describe('最近事件列表', () => {
     }
   })
 
-  it('按最近一次发生时间倒序，条数按传入的 limit 截断', () => {
+  it('窗口内按最近一次发生时间倒序，条数按传入的 limit 截断', () => {
     const group = container.groups.create({ name: '分组 B', description: '', enabled: true })
+    const now = new Date('2026-10-04T00:00:00.000Z')
     const older = container.events.create({
       groupId: group.id,
       title: '先发生的',
       url: 'https://example.com/a',
       urlKey: 'https://example.com/a',
-      itemAt: '2026-10-01T00:00:00.000Z',
+      itemAt: '2026-10-03T20:00:00.000Z',
     })
     const newer = container.events.create({
       groupId: group.id,
       title: '后发生的',
       url: 'https://example.com/b',
       urlKey: 'https://example.com/b',
-      itemAt: '2026-10-03T00:00:00.000Z',
+      itemAt: '2026-10-03T23:00:00.000Z',
+    })
+    // 一天多以前的事已经出了 24 小时窗口
+    container.events.create({
+      groupId: group.id,
+      title: '很久以前的',
+      url: 'https://example.com/c',
+      urlKey: 'https://example.com/c',
+      itemAt: '2026-10-02T20:00:00.000Z',
     })
 
-    const list = container.merger.listRecent(10)
+    const list = container.merger.list({ limit: 10 }, now).events
     expect(list.map((event) => event.id)).toEqual([newer.id, older.id])
-    expect(container.merger.listRecent(1)).toHaveLength(1)
+    expect(container.merger.list({ limit: 1 }, now).events).toHaveLength(1)
   })
 
-  it('归档的事件不进列表', () => {
+  it('出了窗口的事件不在列表里；定时打扫把长期不动的事件归档', () => {
     const group = container.groups.create({ name: '分组 C', description: '', enabled: true })
     const event = container.events.create({
       groupId: group.id,
@@ -116,9 +133,13 @@ describe('最近事件列表', () => {
       urlKey: null,
       itemAt: '2026-01-01T00:00:00.000Z',
     })
+    const now = new Date('2026-01-20T00:00:00.000Z')
 
-    expect(container.merger.listRecent(10).map((item) => item.id)).toContain(event.id)
-    container.merger.archiveStale(new Date('2026-10-04T00:00:00.000Z'))
-    expect(container.merger.listRecent(10).map((item) => item.id)).not.toContain(event.id)
+    // 窗口只认最近 24 小时，所以两条路都看不到它
+    expect(container.merger.list({ limit: 10 }, now).events.map((item) => item.id)).not.toContain(
+      event.id,
+    )
+    expect(container.merger.archiveStale(now)).toBe(1)
+    expect(container.events.get(event.id)?.status).toBe('archived')
   })
 })

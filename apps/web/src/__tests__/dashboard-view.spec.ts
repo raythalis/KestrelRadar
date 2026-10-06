@@ -48,11 +48,13 @@ const event: RecentEvent = {
   kind: 'rss',
   groupId: 'g1',
   groupName: 'AI 与开发',
+  sources: [{ discoveryId: 'd1', name: 'Hacker News 榜单', url: 'https://example.com/a' }],
   sourceNames: ['Hacker News 榜单'],
   sourceCount: 1,
   itemCount: 2,
   firstItemAt: iso(30),
   lastItemAt: iso(12),
+  readAt: null,
 }
 
 const incident: Incident = {
@@ -92,7 +94,7 @@ describe('仪表盘页', () => {
   beforeEach(() => {
     i18n.global.locale.value = 'zh-CN'
     vi.mocked(fetchStatsOverview).mockResolvedValue(stats())
-    vi.mocked(fetchRecentEvents).mockResolvedValue([event])
+    vi.mocked(fetchRecentEvents).mockResolvedValue({ events: [event], nextCursor: null })
     vi.mocked(fetchIncidents).mockResolvedValue({ incidents: [incident], limit: 20 })
     vi.mocked(dismissIncident).mockResolvedValue({ id: 'i1', status: 'dismissed' })
   })
@@ -129,7 +131,7 @@ describe('仪表盘页', () => {
   })
 
   it('没有事件时给空状态，不摆空列表', async () => {
-    vi.mocked(fetchRecentEvents).mockResolvedValue([])
+    vi.mocked(fetchRecentEvents).mockResolvedValue({ events: [], nextCursor: null })
     // 三块一起回来的：等异常那块落地，再断言事件那块是空状态
     const wrapper = await ready('GitHub Trending')
 

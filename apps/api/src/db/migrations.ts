@@ -299,6 +299,21 @@ export const MIGRATIONS: readonly Migration[] = [
       alter table discoveries add column icon_file text;
     `,
   },
+  {
+    name: '010-event-reads',
+    sql: `
+      -- 已读记录：一行代表「用户看过这个事件」，没行就是未读（界面挂实心圆点）。
+      -- 特意不把状态写在 events 上：事件再来新条目、多一个来源、时间被推新，都不会动这张表，
+      -- 圆点的含义因此稳定可信——只表示「从没看过这件事」，不会被转载或时间刷新重新点亮。
+      -- user_id 现在不写值，留给以后多用户；单用户阶段为空。
+      create table event_reads (
+        event_id text primary key references events (id) on delete cascade,
+        read_at text not null,
+        user_id text
+      );
+      create index idx_event_reads_read_at on event_reads (read_at);
+    `,
+  },
 ]
 
 export function runMigrations(conn: DatabaseSync): void {
