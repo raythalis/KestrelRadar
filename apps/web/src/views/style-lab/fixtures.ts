@@ -524,7 +524,7 @@ export const ACTIVITY_INCIDENTS: Incident[] = [
   },
   {
     id: 'in-judge',
-    kind: 'judge',
+    kind: 'judgment',
     targetId: 'g1',
     targetName: 'AI 与开发',
     groupId: 'g1',
@@ -632,7 +632,7 @@ export const EXTRA_ACTIVITY_INCIDENTS: Incident[] = [
   },
   {
     id: 'in-judge-2',
-    kind: 'judge',
+    kind: 'judgment',
     targetId: 'g1',
     targetName: 'AI 与开发',
     groupId: 'g1',

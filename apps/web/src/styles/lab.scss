@@ -57,6 +57,14 @@
   }
 }
 
+/* 手机宽度：活跃区两栏也收成单列（生产页收得更早，≤1183 就收；样例留到 767，
+   方便在 1032 的窗口里继续并排看对照） */
+@media (max-width: 767px) {
+  .lab__cols--activity {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* 设置页：左窄分类栏 + 右宽行列表（设置行需要横向空间，不能塞进三栏） */
 .lab-setgrid {
   display: grid;
