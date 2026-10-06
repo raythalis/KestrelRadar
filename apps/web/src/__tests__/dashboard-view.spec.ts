@@ -1,13 +1,15 @@
 import type { Incident, RecentEvent, StatsOverview } from '@kestrel/contracts'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia } from 'pinia'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   dismissIncident,
+  fetchEventSources,
   fetchIncidents,
   fetchRecentEvents,
   fetchStatsOverview,
+  markEventRead,
 } from '@/api/dashboard'
 import { useToastStore } from '@/stores/toast'
 import i18n from '@/plugins/i18n'
@@ -96,7 +98,15 @@ describe('仪表盘页', () => {
     vi.mocked(fetchStatsOverview).mockResolvedValue(stats())
     vi.mocked(fetchRecentEvents).mockResolvedValue({ events: [event], nextCursor: null })
     vi.mocked(fetchIncidents).mockResolvedValue({ incidents: [incident], limit: 20 })
+    vi.mocked(fetchEventSources).mockResolvedValue([
+      { discoveryId: 'd1', name: 'Hacker News 榜单', count: 1 },
+    ])
     vi.mocked(dismissIncident).mockResolvedValue({ id: 'i1', status: 'dismissed' })
+    vi.mocked(markEventRead).mockResolvedValue({ id: 'e1', readAt: iso(1) })
+  })
+
+  afterEach(() => {
+    document.body.innerHTML = ''
   })
 
   it('八张卡：数量类给启用数与「n 个已停用」，状态类给数值与副文案', async () => {
@@ -119,15 +129,63 @@ describe('仪表盘页', () => {
     expect(text).toContain('2 分钟前探测')
   })
 
-  it('事件行点开新标签页，时间是相对时间；来源只写一次不重复', async () => {
+  it('两块活跃区是面板：标题在面板头里，页面级不再有那一对标题', async () => {
+    const wrapper = await ready('Qwen 发布原生全模态模型')
+
+    expect(wrapper.findAll('[data-test="app-panel"]')).toHaveLength(2)
+    // 迁移后页面顶部只有面板自己的头，旧的 section 标题没了
+    expect(wrapper.find('.k2-sec').exists()).toBe(false)
+    expect(wrapper.text()).toContain('24h内关注的事件动态')
+    expect(wrapper.text()).toContain('同一处异常60分钟内重复只更新时间，最多展示20条')
+  })
+
+  it('页头那句概述按时段换问候语', async () => {
+    const wrapper = await ready('Qwen 发布原生全模态模型')
+    const greeting = wrapper.get('[data-test="dashboard-greeting"]').text()
+
+    expect(greeting).toMatch(/^(早上好|中午好|下午好|晚上好)，以下是系统今天的运行概况。$/)
+  })
+
+  it('事件行点开新标签页并记已读；来源标签是真链接', async () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
     const wrapper = await ready('Qwen 发布原生全模态模型')
     const row = wrapper.get('[data-test="event-row"]')
 
-    expect(row.attributes('href')).toBe('https://example.com/a')
-    expect(row.attributes('target')).toBe('_blank')
+    // 行本身不是 <a>（里面挂着来源标签），所以没有 href，靠 role=link + 点击
+    expect(row.attributes('role')).toBe('link')
+    expect(row.attributes('href')).toBeUndefined()
     expect(row.text()).toContain('Qwen 发布原生全模态模型')
-    expect(row.text()).toContain('Hacker News 榜单')
     expect(row.text()).toContain('12 分钟前')
+    // 来源标签是真链接，点它跳的是那家来源
+    expect(row.get('a').attributes('href')).toBe('https://example.com/a')
+
+    await row.trigger('click')
+    expect(open).toHaveBeenCalledWith('https://example.com/a', '_blank', 'noopener,noreferrer')
+    await vi.waitFor(() => expect(vi.mocked(markEventRead)).toHaveBeenCalledWith('e1'))
+    open.mockRestore()
+  })
+
+  it('事件超过 6 条：面板里只摆 6 条，多的收进底栏「查看全部事件」', async () => {
+    const many = Array.from({ length: 8 }, (_, index) => ({
+      ...event,
+      id: `e${index + 1}`,
+      title: `事件 ${index + 1}`,
+    }))
+    vi.mocked(fetchRecentEvents).mockResolvedValue({ events: many, nextCursor: null })
+
+    const wrapper = await ready('事件 1')
+    expect(wrapper.findAll('[data-test="event-row"]')).toHaveLength(6)
+    expect(wrapper.get('[data-test="events-view-all-foot"]').text()).toContain('查看全部事件')
+  })
+
+  it('「查看全部」打开弹窗，弹窗里列的是后端给的那一页', async () => {
+    const wrapper = await ready('Qwen 发布原生全模态模型')
+    await wrapper.get('[data-test="events-view-all"]').trigger('click')
+    await flushPromises()
+
+    const dialog = document.querySelector('[data-test="app-event-dialog"]')
+    expect(dialog).toBeTruthy()
+    expect(dialog?.textContent).toContain('Qwen 发布原生全模态模型')
   })
 
   it('没有事件时给空状态，不摆空列表', async () => {
@@ -139,13 +197,15 @@ describe('仪表盘页', () => {
     expect(wrapper.find('[data-test="event-row"]').exists()).toBe(false)
   })
 
-  it('异常卡显示对象名、错误原文与首次时间（副标题不重复类型和分组），忽视后那一行消失', async () => {
+  it('异常卡显示对象名、错误原文与最近发生时间（底行不写「首次出现」），忽视后那一行消失', async () => {
     const wrapper = await ready('GitHub Trending')
     const row = wrapper.get('[data-test="incident-row"]')
     expect(row.text()).toContain('GitHub Trending')
     expect(row.text()).toContain('连接超时（超过 30 秒没有回应）')
-    // 副标题只留「时间 首次出现」：类型和分组行里已经有了
-    expect(row.text()).toContain('首次出现')
+    // 卡底那一行只有「时钟图标 + 最近发生时间」
+    const time = row.get('[data-test="incident-foot"] [data-test="incident-last-seen"]')
+    expect(time.find('.v-icon').exists()).toBe(true)
+    expect(row.text()).not.toContain('首次出现')
     expect(row.text()).not.toContain('AI 与开发')
 
     await row.get('[data-test="incident-dismiss"]').trigger('click')

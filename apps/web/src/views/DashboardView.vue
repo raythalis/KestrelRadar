@@ -2,11 +2,23 @@
      数据三份各拉各的（/stats/overview、/events、/incidents）：任一失败另外两块照常显示。
      八张卡不画迷你柱——后端只给窗口内的总数，没有按天的序列，编一组柱子就是假数据。 -->
 <script setup lang="ts">
-import type { Incident } from '@kestrel/contracts'
-import { computed, onMounted, watch } from 'vue'
+import {
+  EVENT_SOURCE_TAG_LIMIT,
+  type Incident,
+  type RecentEvent,
+  type EventSourceRef,
+} from '@kestrel/contracts'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { DISCOVERY_ICONS, SEMANTIC_ICONS } from '@/components/biz/icons'
+import AppEmptyState from '@/components/app/AppEmptyState.vue'
+import AppEventDialog from '@/components/app/AppEventDialog.vue'
+import AppSkeleton from '@/components/app/AppSkeleton.vue'
+import AppPanel from '@/components/app/AppPanel.vue'
+import AppSourceFilter from '@/components/app/AppSourceFilter.vue'
+import EventRow from '@/components/biz/EventRow.vue'
+import IncidentCard from '@/components/biz/IncidentCard.vue'
+import { SEMANTIC_ICONS } from '@/components/biz/icons'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useToastStore } from '@/stores/toast'
 import { formatDateTime, formatShortDateTime, timeAgo } from '@/utils/format'
@@ -181,15 +193,6 @@ const stateCards = computed<MetricCard[]>(() => {
   return stats ? cards : cards.map((card) => ({ ...card, value: '—', unit: '', sub: '' }))
 })
 
-/** 事件行的来源：第一个名字 + 还有几个；一个都没有就不占行 */
-function eventSourceLabel(sourceNames: string[], sourceCount: number): string {
-  if (sourceNames.length === 0) return ''
-  const rest = sourceCount - sourceNames.length
-  return rest > 0
-    ? `${sourceNames.join('、')} ${t('dashboard.events.moreSources', { n: rest })}`
-    : sourceNames.join('、')
-}
-
 /** 事件时间：一天内说「多久之前」，再久就写日期 */
 function eventTime(value: string): string {
   const ago = timeAgo(value)
@@ -199,16 +202,88 @@ function eventTime(value: string): string {
   return formatShortDateTime(value)
 }
 
-/** 事件行首图标的色调跟着来源类型走（和发现卡的图标记法一致） */
-function eventTone(kind: string): Tone {
-  if (kind === 'rsshub') return 'info'
-  if (kind === 'web') return 'neutral'
-  return 'primary'
+/** 面板里最多摆几条：第 7 条起收进「查看全部事件」，列表本身还是后端给的那一页 */
+const DASHBOARD_EVENT_LIMIT = 6
+
+/** 筛选项里「全部来源」那一项：值是空串（＝不筛），名字走 i18n */
+const ALL_SOURCE_ID = ''
+const allSources = computed(() => t('dashboard.events.allSources'))
+const filterId = ref(ALL_SOURCE_ID)
+const dialogOpen = ref(false)
+
+const visibleEvents = computed(() => store.events.slice(0, DASHBOARD_EVENT_LIMIT))
+/** 徽章上的条数：筛了来源就用那一项的真实条数，没筛就是已取回来的这一页 */
+const eventsCount = computed(
+  () =>
+    store.sources.find((source) => source.discoveryId === filterId.value)?.count ??
+    store.events.length,
+)
+const filterOptions = computed(() => [
+  { id: ALL_SOURCE_ID, name: allSources.value, count: store.events.length },
+  ...store.sources.map((source) => ({
+    id: source.discoveryId,
+    name: source.name,
+    count: source.count,
+  })),
+])
+/** 当前筛的是哪个来源：弹窗工具条上显示它的名字 */
+const filterLabel = computed(
+  () =>
+    filterOptions.value.find((option) => option.id === filterId.value)?.name ?? allSources.value,
+)
+
+/** 换了来源就重新取第一页（后端按来源 id 过滤，前端不做本地筛选） */
+async function applyFilter(discoveryId: string | null): Promise<void> {
+  try {
+    await store.setFilter(discoveryId)
+  } catch (error) {
+    toast.push((error as Error).message)
+  }
 }
 
-function incidentSub(incident: Incident): string {
-  // 副标题只留首次出现时间：类型和分组在行里已经能看出来，不必重复
-  return t('dashboard.incidents.firstSeen', { time: formatDateTime(incident.firstSeenAt) })
+/** 按来源 id 筛（不是按名字：两个来源同名时不会串台） */
+watch(filterId, (id) => {
+  void applyFilter(id === ALL_SOURCE_ID ? null : id)
+})
+
+function resetFilter(): void {
+  filterId.value = ALL_SOURCE_ID
+}
+
+/** 点开一条：真跳原文，同时记已读（后端幂等，前端就地更新那一行） */
+function openEvent(event: RecentEvent): void {
+  if (event.url) window.open(event.url, '_blank', 'noopener,noreferrer')
+  void store.markRead(event.id).catch((error: Error) => toast.push(error.message))
+}
+
+/** 这一件事的其余来源（接口给的是全部来源，前两个挂标签、其余进 +N 浮层） */
+function restOf(event: RecentEvent): EventSourceRef[] | undefined {
+  const rest = event.sources.slice(EVENT_SOURCE_TAG_LIMIT)
+  return rest.length > 0 ? rest : undefined
+}
+
+const timeOfEvent = (item: RecentEvent): string => eventTime(item.lastItemAt)
+
+/** 弹窗滚到底：接着上一页往下取 */
+async function onLoadMore(): Promise<void> {
+  try {
+    await store.loadMore()
+  } catch (error) {
+    toast.push((error as Error).message)
+  }
+}
+
+/** 问候语按当前时段换一个词，后面那句是固定的 */
+const greeting = computed(() =>
+  t('dashboard.greeting', { hello: t(`dashboard.hello.${timeSlot()}`) }),
+)
+
+function timeSlot(): 'morning' | 'noon' | 'afternoon' | 'evening' {
+  const hour = new Date().getHours()
+  if (hour >= 5 && hour < 11) return 'morning'
+  if (hour >= 11 && hour < 13) return 'noon'
+  if (hour >= 13 && hour < 18) return 'afternoon'
+  return 'evening'
 }
 
 /** 忽视：后端只改状态；成功就把那行去掉，失败把原因留在异常区标题下 */
@@ -226,7 +301,10 @@ const loading = computed(() => store.loading && !store.stats)
 <template>
   <div class="k2-page k2-page--wide" data-test="dashboard-page">
     <div class="k2-page__head">
-      <h1 class="k2-page__title">{{ t('nav.dashboard') }}</h1>
+      <div class="k2-page__lead">
+        <h1 class="k2-page__title">{{ t('nav.dashboard') }}</h1>
+        <p class="k2-page__note" data-test="dashboard-greeting">{{ greeting }}</p>
+      </div>
     </div>
 
     <div class="k2-grid k2-grid--4">
@@ -283,102 +361,123 @@ const loading = computed(() => store.loading && !store.stats)
       </article>
     </div>
 
-    <div class="k2-cols">
-      <section class="k2-sec">
-        <h2 class="k2-sec__title">{{ t('dashboard.events.title') }}</h2>
+    <div class="k2-cols k2-cols--activity">
+      <AppPanel class="k2-t-primary">
+        <template #head>
+          <span class="k2-panel__heading">
+            <span class="k2-panel__mark" aria-hidden="true" />
+            <span class="k2-sec__title">{{ t('dashboard.events.title') }}</span>
+            <span class="k2-panel__badge">{{ eventsCount }}</span>
+            <span class="k2-panel__sub">{{ t('dashboard.events.sub') }}</span>
+          </span>
+          <span class="k2-panel__actions">
+            <AppSourceFilter
+              v-model="filterId"
+              :options="filterOptions"
+              :title="t('dashboard.events.filterTitle')"
+              :note="t('dashboard.events.filterNote')"
+              :reset-label="t('dashboard.events.filterReset')"
+              @reset="resetFilter"
+            />
+            <button
+              type="button"
+              class="k2-panel__link"
+              data-test="events-view-all"
+              @click="dialogOpen = true"
+            >
+              {{ t('dashboard.events.viewAll') }}
+              <v-icon size="14">mdi-chevron-right</v-icon>
+            </button>
+          </span>
+        </template>
 
-        <div v-if="loading" class="k2-card k2-card--flat k2-list" data-test="dashboard-skeleton">
-          <AppSkeleton variant="list" :rows="3" leading="tile" density="compact" />
-        </div>
-
-        <div v-else-if="store.events.length === 0" class="k2-card k2-card--flat">
-          <AppEmptyState
-            data-test="events-empty"
-            :icon="SEMANTIC_ICONS.event"
-            :title="t('dashboard.events.empty')"
-            :note="t('dashboard.events.emptySub')"
-          />
-        </div>
-
-        <div v-else class="k2-card k2-card--flat k2-list k2-scroll" data-test="events-list">
-          <component
-            :is="event.url ? 'a' : 'article'"
-            v-for="event in store.events"
+        <AppSkeleton
+          v-if="loading"
+          variant="list"
+          :rows="3"
+          leading="tile"
+          density="compact"
+          data-test="dashboard-skeleton"
+        />
+        <AppEmptyState
+          v-else-if="store.events.length === 0"
+          data-test="events-empty"
+          art="events"
+          :title="t('dashboard.events.empty')"
+          :note="t('dashboard.events.emptySub')"
+        />
+        <template v-else>
+          <EventRow
+            v-for="event in visibleEvents"
             :key="event.id"
-            class="k2-row k2-row--link k2-list__row"
-            :class="`k2-t-${eventTone(event.kind)}`"
-            v-bind="
-              event.url ? { href: event.url, target: '_blank', rel: 'noopener noreferrer' } : {}
-            "
-            data-test="event-row"
-          >
-            <span class="k2-tile k2-tile--sm">
-              <v-icon size="20">{{ DISCOVERY_ICONS[event.kind] }}</v-icon>
-            </span>
-            <span class="k2-list__main">
-              <span class="k2-row__title k2-ellipsis">{{ event.title }}</span>
-              <span class="k2-row__sub k2-ellipsis">
-                {{ eventSourceLabel(event.sourceNames, event.sourceCount) }}
-              </span>
-            </span>
-            <span class="k2-list__side">
-              <span class="k2-row__sub" :title="formatDateTime(event.lastItemAt)">
-                {{ eventTime(event.lastItemAt) }}
-              </span>
-            </span>
-            <span v-if="event.url" class="k2-list__chevron">
-              <v-icon size="20">mdi-chevron-right</v-icon>
-            </span>
-          </component>
-        </div>
-      </section>
-
-      <section class="k2-sec">
-        <h2 class="k2-sec__title">{{ t('dashboard.incidents.title') }}</h2>
-        <div v-if="loading" class="k2-card k2-card--flat k2-list" data-test="dashboard-skeleton">
-          <AppSkeleton variant="list" :rows="2" leading="tile" density="compact" />
-        </div>
-
-        <div v-else-if="store.incidents.length === 0" class="k2-card k2-card--flat">
-          <AppEmptyState
-            data-test="incidents-empty"
-            :icon="SEMANTIC_ICONS.incident"
-            :title="t('dashboard.incidents.empty')"
-            :note="t('dashboard.incidents.emptySub')"
+            :event="event"
+            :time="eventTime(event.lastItemAt)"
+            :rest-sources="restOf(event)"
+            @open="openEvent"
           />
-        </div>
+        </template>
 
-        <div v-else class="k2-rows k2-scroll" data-test="incidents-list">
-          <article
+        <template v-if="!loading && store.events.length > DASHBOARD_EVENT_LIMIT" #foot>
+          <button
+            type="button"
+            class="k2-panel__more"
+            data-test="events-view-all-foot"
+            @click="dialogOpen = true"
+          >
+            {{ t('dashboard.events.viewAllFoot') }}
+            <v-icon size="14">mdi-chevron-right</v-icon>
+          </button>
+        </template>
+      </AppPanel>
+
+      <AppPanel :class="store.incidents.length ? 'k2-t-danger' : 'k2-t-success'">
+        <template #head>
+          <span class="k2-panel__heading">
+            <span class="k2-panel__mark" aria-hidden="true" />
+            <span class="k2-sec__title">{{ t('dashboard.incidents.title') }}</span>
+            <span class="k2-panel__badge">{{ store.incidents.length }}</span>
+            <span class="k2-panel__sub">{{ t('dashboard.incidents.sub') }}</span>
+          </span>
+        </template>
+
+        <AppSkeleton v-if="loading" variant="list" :rows="2" leading="tile" density="compact" />
+        <AppEmptyState
+          v-else-if="store.incidents.length === 0"
+          data-test="incidents-empty"
+          art="incidents"
+          :title="t('dashboard.incidents.empty')"
+          :note="t('dashboard.incidents.emptySub')"
+        />
+        <div v-else class="k2-rows">
+          <IncidentCard
             v-for="incident in store.incidents"
             :key="incident.id"
-            class="k2-card k2-card--sm"
-            :class="`k2-t-${incident.kind === 'delivery' ? 'warning' : 'danger'}`"
-            data-test="incident-row"
-          >
-            <div class="k2-card__head">
-              <span class="k2-tile k2-tile--sm">
-                <v-icon size="20">{{ SEMANTIC_ICONS.incident }}</v-icon>
-              </span>
-              <span class="k2-card__heading">
-                <span class="k2-row__title">{{ incident.targetName }}</span>
-                <span class="k2-row__sub">{{ incidentSub(incident) }}</span>
-              </span>
-              <button
-                type="button"
-                class="k2-iconbtn k2-iconbtn--danger-hover"
-                :aria-label="t('dashboard.incidents.dismiss')"
-                :title="t('dashboard.incidents.dismiss')"
-                data-test="incident-dismiss"
-                @click="onDismiss(incident)"
-              >
-                <v-icon size="20">mdi-close</v-icon>
-              </button>
-            </div>
-            <p class="k2-card__message">{{ incident.message }}</p>
-          </article>
+            :incident="incident"
+            :last-seen="formatDateTime(incident.createdAt)"
+            :dismiss-label="t('dashboard.incidents.dismiss')"
+            @dismiss="onDismiss"
+          />
         </div>
-      </section>
+      </AppPanel>
     </div>
+
+    <AppEventDialog
+      v-model="dialogOpen"
+      :events="store.events"
+      :has-more="store.hasMore"
+      :loading-more="store.loadingMore"
+      :title="t('dashboard.events.dialogTitle')"
+      :note="t('dashboard.events.sub')"
+      :filter-label="filterLabel"
+      :all-label="allSources"
+      :clear-label="t('dashboard.events.clearFilter')"
+      :loading-label="t('dashboard.events.loadingMore')"
+      :end-label="t('dashboard.events.dialogEnd')"
+      :time-of="timeOfEvent"
+      :rest-of="restOf"
+      @open="openEvent"
+      @clear-filter="resetFilter"
+      @load-more="onLoadMore"
+    />
   </div>
 </template>

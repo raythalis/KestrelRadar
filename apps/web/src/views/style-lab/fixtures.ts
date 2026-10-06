@@ -467,15 +467,6 @@ export const EXTRA_ACTIVITY_EVENTS: RecentEvent[] = [
 /** 外部列表最多 6 条：这一档给 10 条，用来看「6 条 + 底栏」和「查看全部列 10 条」 */
 export const MANY_ACTIVITY_EVENTS: RecentEvent[] = [...ACTIVITY_EVENTS, ...EXTRA_ACTIVITY_EVENTS]
 
-/** 事件列表上出现过的来源清单（筛选浮层的选项按它来） */
-export const ACTIVITY_SOURCE_NAMES = [
-  'IT之家',
-  '少数派',
-  'GitHub 趋势',
-  'Hacker News 榜单',
-  'RSSHub',
-]
-
 /** 一件事的「其余来源」（点 +N 时才按需取回来的那份） */
 export interface EventRestSources {
   id: string

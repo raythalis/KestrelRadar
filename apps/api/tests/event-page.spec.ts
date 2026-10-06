@@ -192,7 +192,7 @@ describe('来源筛选与来源标签', () => {
     expect(byName.get('源B')).toBe(1)
   })
 
-  it('事件行只挂前两个来源，各自带自己的原文链接', () => {
+  it('事件行给全部来源，各自带自己的原文链接', () => {
     const { groupId, sources } = seedGroup()
     seedEvent({
       groupId,
@@ -203,9 +203,11 @@ describe('来源筛选与来源标签', () => {
 
     const event = container.merger.list({}, NOW).events[0]
     expect(event?.sourceCount).toBe(3)
-    expect(event?.sources.map((source) => source.name)).toEqual(['源A', '源B'])
+    // 全给（不截到两个）：界面只把前 EVENT_SOURCE_TAG_LIMIT 个挂成标签，其余收进 +N 浮层
+    expect(event?.sources.map((source) => source.name)).toEqual(['源A', '源B', '源C'])
     expect(event?.sources[0]?.url).toContain('from=0')
     expect(event?.sources[1]?.url).toContain('from=1')
+    expect(event?.sources[2]?.url).toContain('from=2')
     // 默认打开的原文就是第一个来源那条
     expect(event?.url).toContain('from=0')
   })

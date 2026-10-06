@@ -2,6 +2,8 @@ import type {
   DismissIncidentResult,
   EventListQuery,
   EventPage,
+  EventReadResult,
+  EventSourceOption,
   Incident,
   StatsOverview,
 } from '@kestrel/contracts'
@@ -17,6 +19,18 @@ export async function fetchStatsOverview(): Promise<StatsOverview> {
 /** GET /api/events —— 最近事件：24 小时窗口、按最近一次发生时间倒序，一页一页给 */
 export async function fetchRecentEvents(query: EventListQuery = {}): Promise<EventPage> {
   const { data } = await http.get<EventPage>('/events', { params: query })
+  return data
+}
+
+/** GET /api/events/sources —— 筛选浮层的来源清单：窗口内每个来源有几个事件 */
+export async function fetchEventSources(): Promise<EventSourceOption[]> {
+  const { data } = await http.get<EventSourceOption[]>('/events/sources')
+  return data
+}
+
+/** POST /api/events/:id/read —— 点开一条就记已读（重复点不改第一次的时间） */
+export async function markEventRead(id: string): Promise<EventReadResult> {
+  const { data } = await http.post<EventReadResult>(`/events/${id}/read`)
   return data
 }
 

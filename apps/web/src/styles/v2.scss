@@ -1195,6 +1195,13 @@ body {
   align-items: start;
 }
 
+/* 活跃区两栏：左宽右窄（异常卡比事件列表窄一点），与参考稿一致；
+   窄屏收单列由下面 @media 里的 .k2-cols 规则负责（同优先级、写在后面） */
+.k2-cols--activity {
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: var(--k2-s-4);
+}
+
 .k2-ellipsis {
   overflow: hidden;
   text-overflow: ellipsis;

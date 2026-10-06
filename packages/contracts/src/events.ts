@@ -39,7 +39,10 @@ export interface RecentEvent {
   groupName: string
   /** 最先提到这件事的来源类型（界面据此取类型图标） */
   kind: DiscoveryKind
-  /** 前几个来源，最多 EVENT_SOURCE_TAG_LIMIT 个（够挂标签），按最早提到这件事的先后排 */
+  /**
+   * 提到这件事的全部来源，按最早提到这件事的先后排。
+   * 界面只把前 EVENT_SOURCE_TAG_LIMIT 个挂成标签，多出来的收进 +N 浮层（所以这里不截断）。
+   */
   sources: EventSourceRef[]
   /** 一共几个来源提到（可能多于 sources 的条数，多出来的用 +N 表示） */
   sourceCount: number

@@ -2,7 +2,6 @@ import {
   EVENT_PAGE_SIZE,
   EVENT_PAGE_SIZE_MAX,
   EVENT_SOURCE_NAME_LIMIT,
-  EVENT_SOURCE_TAG_LIMIT,
   EVENT_WINDOW_HOURS,
   type EventListQuery,
   type EventPage,
@@ -139,7 +138,8 @@ export function createEventService(deps: EventServiceDeps) {
       groupId: event.groupId,
       groupName: deps.groups.get(event.groupId)?.name ?? '',
       kind,
-      sources: sources.slice(0, EVENT_SOURCE_TAG_LIMIT),
+      // 全给：界面只挂前 EVENT_SOURCE_TAG_LIMIT 个标签，其余在 +N 浮层里列出来
+      sources,
       sourceCount: event.sourceCount,
       // @deprecated 阶段 3 迁到 sources 之后删掉，现在只有旧的文字标签在用
       sourceNames: names.slice(0, EVENT_SOURCE_NAME_LIMIT),

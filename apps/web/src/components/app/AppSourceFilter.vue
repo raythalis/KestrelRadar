@@ -3,30 +3,40 @@
      浮层挂在 body 上（VMenu teleport），不会被面板的滚动容器裁掉。
      copy 全走 props：组件本身不写死文案，由页面（或 Style Lab）给。 -->
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 export interface SourceFilterOption {
+  /** 取值：来源 id；空串是「全部来源」那一项 */
+  id: string
   name: string
   count: number
 }
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     options: SourceFilterOption[]
+    /** 选中的来源 id；空串表示全部来源 */
     modelValue: string
     /** 浮层标题与副标题 */
     title?: string
     note?: string
-    /** 「全部来源」那一项的名字 */
-    allLabel?: string
     resetLabel?: string
+    /** 还没选具体来源时，按钮上的字 */
+    filterLabel?: string
   }>(),
   {
     title: '筛选事件',
     note: '按信息来源查看',
-    allLabel: '全部来源',
     resetLabel: '重置筛选',
+    filterLabel: '筛选',
   },
+)
+
+/** 按钮上显示当前选中的来源名；没筛（空串）或对不上就显示 filterLabel */
+const selected = computed(() =>
+  props.modelValue === ''
+    ? null
+    : (props.options.find((option) => option.id === props.modelValue) ?? null),
 )
 const emit = defineEmits<{ 'update:modelValue': [value: string]; reset: [] }>()
 
@@ -48,11 +58,11 @@ const menuOpen = ref(false)
           v-bind="menuProps"
           type="button"
           class="k2-panel__quiet"
-          :class="{ 'k2-panel__quiet--on': modelValue !== allLabel }"
+          :class="{ 'k2-panel__quiet--on': modelValue !== '' }"
           data-test="app-source-filter-trigger"
         >
           <v-icon size="14">mdi-filter-variant</v-icon>
-          {{ modelValue === allLabel ? '筛选' : modelValue }}
+          {{ selected ? selected.name : filterLabel }}
         </button>
       </template>
 
@@ -75,12 +85,12 @@ const menuOpen = ref(false)
       <div class="k2-pop__options" data-test="app-source-filter-options">
         <button
           v-for="option in options"
-          :key="option.name"
+          :key="option.id"
           type="button"
           class="k2-pop__option"
-          :class="{ 'k2-pop__option--on': option.name === modelValue }"
+          :class="{ 'k2-pop__option--on': option.id === modelValue }"
           data-test="app-source-filter-option"
-          @click="emit('update:modelValue', option.name)"
+          @click="emit('update:modelValue', option.id)"
         >
           <span class="k2-pop__radio"><span /></span>
           <span class="k2-ellipsis">{{ option.name }}</span>

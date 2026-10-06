@@ -8,15 +8,15 @@ import vuetify from '@/plugins/vuetify'
 import vuetifyGlobals from '@/plugins/vuetify-globals'
 
 const OPTIONS = [
-  { name: '全部来源', count: 6 },
-  { name: '少数派', count: 2 },
+  { id: '', name: '全部来源', count: 6 },
+  { id: 'd-sspai', name: '少数派', count: 2 },
 ]
 
 const mounted: Array<{ unmount: () => void }> = []
 
 function mountFilter(props: Record<string, unknown> = {}, attach = true) {
   const wrapper = mount(AppSourceFilter, {
-    props: { options: OPTIONS, modelValue: '全部来源', ...props },
+    props: { options: OPTIONS, modelValue: '', ...props },
     attachTo: attach ? document.body : undefined,
     global: { plugins: [vuetify, vuetifyGlobals, i18n, appComponents] },
   })
@@ -39,7 +39,7 @@ describe('AppSourceFilter', () => {
   })
 
   it('选了来源后按钮显示来源名并进选中态', () => {
-    const wrapper = mountFilter({ modelValue: '少数派' }, false)
+    const wrapper = mountFilter({ modelValue: 'd-sspai' }, false)
     const trigger = wrapper.find('[data-test="app-source-filter-trigger"]')
     expect(trigger.text()).toContain('少数派')
     expect(trigger.classes()).toContain('k2-panel__quiet--on')
@@ -57,7 +57,7 @@ describe('AppSourceFilter', () => {
 
     await options[1]?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await flushPromises()
-    expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['少数派'])
+    expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['d-sspai'])
   })
 
   it('浮层里有重置', async () => {
@@ -86,7 +86,7 @@ describe('AppSourceFilter', () => {
   })
 
   it('选中项带选中态，其余不带', async () => {
-    const wrapper = mountFilter({ modelValue: '少数派' })
+    const wrapper = mountFilter({ modelValue: 'd-sspai' })
     await wrapper.find('[data-test="app-source-filter-trigger"]').trigger('click')
     await flushPromises()
     const options = [...document.querySelectorAll('[data-test="app-source-filter-option"]')]

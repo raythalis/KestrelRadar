@@ -24,7 +24,6 @@ import {
   ACTIVITY_EVENTS,
   ACTIVITY_INCIDENTS,
   ACTIVITY_REST_SOURCES,
-  ACTIVITY_SOURCE_NAMES,
   FORM_TEXT,
   LAZY_EXTRA_EVENTS,
   LAZY_FILLER_EVENTS,
@@ -54,12 +53,14 @@ const tab = ref('discoveries')
  * 所以弹窗里点开一件事记了已读，外面那一条的未读圆点会同时消失。
  */
 const ALL_SOURCES = '全部来源'
+/** 「全部来源」那一项的取值 */
+const ALL_SOURCE_ID = ''
 /** 仪表盘外部列表最多显示 6 条；超过 6 条底部才出现「查看全部事件」 */
 const DASHBOARD_EVENT_LIMIT = 6
 const events = reactive<RecentEvent[]>(ACTIVITY_EVENTS.map((event) => ({ ...event })))
 const incidents = reactive(ACTIVITY_INCIDENTS.map((incident) => ({ ...incident })))
 const dialogOpen = ref(false)
-const sourceFilter = ref(ALL_SOURCES)
+const sourceFilter = ref(ALL_SOURCE_ID)
 
 /** 圆点对照：没看过（实心）／看过之后又有新条目（空心圈）／已读（不挂）。
     用副本，点了也不改状态，保证这一组样例始终是三者对照 */
@@ -70,18 +71,32 @@ const dotSamples = reactive<RecentEvent[]>([
 ])
 
 const filteredEvents = computed(() =>
-  sourceFilter.value === ALL_SOURCES
+  sourceFilter.value === ALL_SOURCE_ID
     ? events
-    : events.filter((event) => event.sourceNames.includes(sourceFilter.value)),
+    : events.filter((event) =>
+        event.sources.some((source) => source.discoveryId === sourceFilter.value),
+      ),
 )
 const visibleEvents = computed(() => filteredEvents.value.slice(0, DASHBOARD_EVENT_LIMIT))
-const filterOptions = computed(() => [
-  { name: ALL_SOURCES, count: events.length },
-  ...ACTIVITY_SOURCE_NAMES.map((name) => ({
-    name,
-    count: events.filter((event) => event.sourceNames.includes(name)).length,
-  })),
-])
+const filterOptions = computed(() => {
+  const byId = new Map<string, { id: string; name: string; count: number }>()
+  for (const event of events) {
+    for (const source of event.sources) {
+      const item = byId.get(source.discoveryId) ?? {
+        id: source.discoveryId,
+        name: source.name,
+        count: 0,
+      }
+      item.count += 1
+      byId.set(source.discoveryId, item)
+    }
+  }
+  return [{ id: ALL_SOURCE_ID, name: ALL_SOURCES, count: events.length }, ...byId.values()]
+})
+/** 弹窗工具条上显示当前来源名（没选就是「全部来源」） */
+const filterLabel = computed(
+  () => filterOptions.value.find((option) => option.id === sourceFilter.value)?.name ?? ALL_SOURCES,
+)
 
 /** 10 条那一档：外部列表仍然最多 6 条（底栏出「还有 4 条」），「查看全部」里列全 10 条 */
 const manyEvents = reactive<RecentEvent[]>(MANY_ACTIVITY_EVENTS.map((event) => ({ ...event })))
@@ -127,7 +142,7 @@ function openEvent(event: RecentEvent): void {
 }
 
 function resetFilter(): void {
-  sourceFilter.value = ALL_SOURCES
+  sourceFilter.value = ALL_SOURCE_ID
 }
 
 const timeOfEvent = (event: RecentEvent): string => eventTime(event.lastItemAt)
@@ -237,12 +252,7 @@ function eventTime(value: string): string {
             <span class="k2-panel__sub">24h内关注的事件动态</span>
           </span>
           <span class="k2-panel__actions">
-            <AppSourceFilter
-              v-model="sourceFilter"
-              :options="filterOptions"
-              :all-label="ALL_SOURCES"
-              @reset="resetFilter"
-            />
+            <AppSourceFilter v-model="sourceFilter" :options="filterOptions" @reset="resetFilter" />
             <button type="button" class="k2-panel__link" @click="dialogOpen = true">
               查看全部
               <v-icon size="14">mdi-chevron-right</v-icon>
@@ -307,7 +317,7 @@ function eventTime(value: string): string {
     <AppEventDialog
       v-model="dialogOpen"
       :events="filteredEvents"
-      :filter-label="sourceFilter"
+      :filter-label="filterLabel"
       :all-label="ALL_SOURCES"
       :time-of="timeOfEvent"
       :rest-of="restOf"
