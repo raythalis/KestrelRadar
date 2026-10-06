@@ -2738,6 +2738,33 @@ a.k2-row--link {
   gap: var(--k2-s-2);
 }
 
+/* list 首列方块：与生产列表骨架同尺寸（图标级方块） */
+.k2-skeleton--lead {
+  flex: none;
+  inline-size: var(--k2-icon-lg);
+  block-size: var(--k2-icon-lg);
+  border-radius: var(--k2-r-md);
+}
+
+/* list 紧凑档：行距更紧，副行走短粗条 */
+.k2-skeleton-row--compact {
+  gap: var(--k2-s-2);
+  align-items: flex-start;
+}
+
+/* card 的方块组：内容行之后追加的一排方块 */
+.k2-skeleton-cells {
+  display: flex;
+  gap: var(--k2-s-3);
+}
+
+.k2-skeleton--cell {
+  flex: none;
+  inline-size: var(--k2-icon-lg);
+  block-size: var(--k2-icon-lg);
+  border-radius: var(--k2-r-md);
+}
+
 /* AppStatus：柔底 / 纯文字 / 可点 / 进行中 四种形态（语义色由 .k2-t-* 提供） */
 .k2-chip--soft {
   background: var(--c-soft);
