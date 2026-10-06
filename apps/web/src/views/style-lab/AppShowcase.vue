@@ -130,7 +130,7 @@ function eventTime(value: string): string {
       +N）；未读圆点是实心的（看过之后不会再亮）；异常卡只放首次出现、最近发生、当前状态。
     </p>
     <div class="lab__cols lab__cols--activity">
-      <AppPanel>
+      <AppPanel class="k2-t-primary">
         <template #head>
           <span class="k2-panel__mark" aria-hidden="true" />
           <span class="k2-sec__title">最近事件</span>
@@ -140,6 +140,10 @@ function eventTime(value: string): string {
               <v-icon size="13">mdi-filter-variant</v-icon>
               筛选
             </span>
+            <button type="button" class="k2-panel__link" @click="openEvent({ title: '全部事件' })">
+              查看全部
+              <v-icon size="14">mdi-chevron-right</v-icon>
+            </button>
           </span>
           <span class="k2-panel__sub">24h内关注的事件动态</span>
         </template>
@@ -163,12 +167,6 @@ function eventTime(value: string): string {
           <span class="k2-panel__mark" aria-hidden="true" />
           <span class="k2-sec__title">异常记录</span>
           <span class="k2-panel__badge">{{ ACTIVITY_INCIDENTS.length }}</span>
-          <span class="k2-panel__actions">
-            <span class="k2-chip k2-chip--soft">
-              <v-icon size="13">mdi-filter-variant</v-icon>
-              筛选
-            </span>
-          </span>
           <span class="k2-panel__sub">同一处异常60分钟内重复只更新时间，最多展示20条</span>
         </template>
         <div class="k2-rows">
@@ -178,11 +176,16 @@ function eventTime(value: string): string {
             :incident="incident"
             :first-seen="`首次出现 ${formatDateTime(incident.firstSeenAt)}`"
             :last-seen="`最近发生 ${formatDateTime(incident.createdAt)}`"
-            status="待处理"
             dismiss-label="忽视"
             @dismiss="noop"
           />
         </div>
+        <template #foot>
+          <button type="button" class="k2-panel__more">
+            向下滚动查看更多
+            <span class="k2-panel__hint">还有 {{ ACTIVITY_INCIDENTS.length }} 条</span>
+          </button>
+        </template>
       </AppPanel>
     </div>
 

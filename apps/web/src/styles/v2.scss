@@ -2744,17 +2744,38 @@ a.k2-row--link {
   background: var(--c-ink, var(--k2-c-primary));
 }
 
-/* 头部：一行标题（14）+ 一行口径说明（10），贴近参考的 77px */
+/* 头部：第一行（标记 + 标题 + 计数 + 右侧动作），第二行口径说明，贴近参考的 77px */
 .k2-panel__head {
+  flex-wrap: wrap;
   gap: var(--k2-s-1) var(--k2-s-2);
   min-block-size: 66px;
   align-content: center;
+  align-items: center;
   padding: var(--k2-s-3) var(--k2-s-4);
 }
 
 .k2-panel__head .k2-sec__title {
   font-size: var(--k2-fs-body);
+  line-height: var(--k2-lh-tight);
   letter-spacing: -0.015em;
+}
+
+/* 头部右侧的文字入口（参考里的「查看全部」） */
+.k2-panel__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k2-s-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--k2-c-primary);
+  font: inherit;
+  font-size: var(--k2-fs-micro);
+  cursor: pointer;
+}
+
+.k2-panel__link:hover {
+  color: var(--k2-c-primary-hover);
 }
 
 /* 计数徽章：跟随面板色调（异常面板自动变红） */
@@ -2821,12 +2842,26 @@ a.k2-row--link {
   background: var(--k2-c-surface3);
 }
 
+/* 底部入口里的补充信息（参考里是「还有 N 条」那种半截提示） */
+.k2-panel__hint {
+  padding-inline-start: var(--k2-s-2);
+  box-shadow: inset 1px 0 0 var(--k2-c-border-soft);
+  color: var(--k2-c-text-muted);
+}
+
 /* ---------- 事件行 ---------- */
-/* 标题 11 + 副行 10：先看到「发生了什么」，再看「谁报的、什么时候」 */
+/* 标题 11 + 副行 10：先看到「发生了什么」，再看「谁报的、什么时候」
+   行自带的左右 -8px 负边距在这里抵消掉，否则文字几乎贴住面板边缘 */
 .k2-panel__body .k2-list__row {
   gap: var(--k2-s-3);
   min-block-size: 64px;
-  padding: var(--k2-s-2) var(--k2-s-3);
+  margin-inline: 0;
+  padding: var(--k2-s-2) var(--k2-s-4);
+}
+
+/* 面板里的卡片之间留出间距（参考的异常列表是 8px） */
+.k2-panel__body .k2-rows {
+  gap: var(--k2-s-2);
 }
 
 .k2-panel__body .k2-row__title,
@@ -2888,6 +2923,11 @@ a.k2-row--link {
 }
 
 .k2-source-tags__more {
+  display: inline-flex;
+  align-items: center;
+  block-size: 16px;
+  padding-block: 0;
+  line-height: 16px;
   cursor: pointer;
 }
 

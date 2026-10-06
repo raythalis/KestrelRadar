@@ -27,7 +27,6 @@ function render(overrides: Partial<InstanceType<typeof IncidentCard>['$props']> 
       incident,
       firstSeen: '首次出现 10-07 17:00',
       lastSeen: '最近发生 10-07 19:00',
-      status: '待处理',
       dismissLabel: '忽视',
       ...overrides,
     },
@@ -36,13 +35,15 @@ function render(overrides: Partial<InstanceType<typeof IncidentCard>['$props']> 
 }
 
 describe('IncidentCard', () => {
-  it('只放已有可信字段：对象名、原文、首次出现、最近发生、当前状态', () => {
+  it('只放已有可信字段：对象名、原文、首次出现、最近发生', () => {
     const wrapper = render()
     expect(wrapper.text()).toContain('IT之家')
     expect(wrapper.text()).toContain('地址返回 404，检查订阅地址是不是变了')
     expect(wrapper.find('[data-test="incident-first-seen"]').text()).toContain('首次出现')
     expect(wrapper.find('[data-test="incident-last-seen"]').text()).toContain('最近发生')
-    expect(wrapper.find('[data-test="incident-status"]').text()).toBe('待处理')
+    // 前后端都没有「当前状态」这个功能，卡片不放状态胶囊
+    expect(wrapper.find('[data-test="incident-status"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('待处理')
   })
 
   it('没有「持续多久」也没有「立即检查」这类动作', () => {

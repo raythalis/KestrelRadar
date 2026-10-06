@@ -1,5 +1,5 @@
 <!-- IncidentCard：异常记录的一张。
-     只放已有可信字段：对象名、错误原文、首次出现、最近发生、当前状态。
+     只放已有可信字段：对象名、错误原文、首次出现、最近发生。
      不做「持续多久」这类派生字段，也不放「立即检查」这类动作按钮（按需求不引入）。
      头部右侧的 × 是「忽视」：只改状态、不删记录，由调用方落库。 -->
 <script setup lang="ts">
@@ -14,8 +14,6 @@ const props = defineProps<{
   firstSeen?: string
   /** 最近发生（已格式化） */
   lastSeen?: string
-  /** 当前状态（已本地化） */
-  status?: string
   /** 忽视按钮的无障碍名字 */
   dismissLabel?: string
 }>()
@@ -49,9 +47,6 @@ const tone = computed(() => (props.incident.kind === 'delivery' ? 'warning' : 'd
     <div class="k2-incident__foot" data-test="incident-foot">
       <span v-if="firstSeen" data-test="incident-first-seen">{{ firstSeen }}</span>
       <span v-if="lastSeen" data-test="incident-last-seen">{{ lastSeen }}</span>
-      <span v-if="status" class="k2-chip k2-chip--soft" data-test="incident-status">
-        {{ status }}
-      </span>
     </div>
   </article>
 </template>
