@@ -2538,8 +2538,10 @@ a.k2-row--link {
   }
 
   /* 弹窗＝从底部升起的一整块：贴底、左右满宽、只在上面留圆角。
-     Vuetify 给弹窗写了「宽度减 48、行内 max-width」，宽度和上限都得压过去 */
-  .k2-dialog {
+     Vuetify 给弹窗写了「宽度减 48、行内 max-width」，宽度和上限都得压过去。
+     .k2-sheet 是活跃区那个「全部事件」弹窗（.k2-modal）的外壳，待遇和其它弹窗一致 */
+  .k2-dialog,
+  .k2-sheet {
     align-self: flex-end;
     inline-size: 100% !important;
     max-inline-size: none !important;
@@ -2547,6 +2549,21 @@ a.k2-row--link {
     margin: 0;
     border-end-start-radius: 0;
     border-end-end-radius: 0;
+  }
+
+  /* 外壳满宽贴底后，卡片本身的圆角也只留上面；列表让位给头/工具条/底栏，
+     内容多了在列表里滚（不再用桌面的固定 450px） */
+  .k2-sheet .k2-modal {
+    max-block-size: 88dvh;
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+  }
+
+  .k2-sheet .k2-modal__list {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    block-size: auto;
+    max-block-size: none;
   }
 
   /* 正文自己滚：头尾固定，长表单在手机上滚得动 */
@@ -3173,8 +3190,9 @@ a.k2-row--link {
   cursor: pointer;
 }
 
-/* 视口不够高时（手机横竖屏、小窗），弹窗的固定窗口让位给头尾，别把底栏顶出屏幕 */
-@media (max-height: 800px) {
+/* 视口不够高时（小窗，窄屏另有「底部升起」那一档），弹窗的固定窗口让位给头尾，
+   别把底栏顶出屏幕 */
+@media (max-height: 800px) and (min-width: 1184px) {
   .k2-modal__list {
     block-size: auto;
     max-block-size: calc(100vh - 260px);

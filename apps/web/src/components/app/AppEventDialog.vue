@@ -79,7 +79,7 @@ watch(
 </script>
 
 <template>
-  <v-dialog v-model="open" :max-width="760" content-class="k2-modal-scrim-free">
+  <v-dialog v-model="open" :max-width="760" content-class="k2-sheet">
     <div class="k2-modal" data-test="app-event-dialog">
       <div class="k2-modal__head">
         <span class="k2-modal__icon">
