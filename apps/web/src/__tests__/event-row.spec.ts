@@ -29,13 +29,20 @@ function render(props: { event: RecentEvent; time?: string }) {
 }
 
 describe('EventRow', () => {
-  it('没看过的事件挂实心圆点，看过的不挂', () => {
+  it('圆点两态：没看过＝实心；看过之后又有新条目＝空心圈；否则不挂', () => {
     expect(render({ event: event() }).find('[data-test="event-unread"]').exists()).toBe(true)
-    expect(
-      render({ event: event({ readAt: '2026-10-07T11:30:00.000Z' }) })
-        .find('[data-test="event-unread"]')
-        .exists(),
-    ).toBe(false)
+
+    // 读在 11:30，之后（12:40）又来了一条 → 有更新
+    const updated = render({ event: event({ readAt: '2026-10-07T11:30:00.000Z' }) })
+    // lastItemAt 是 11:00，早于读过的时间 → 只算已读
+    expect(updated.find('[data-test="event-unread"]').exists()).toBe(false)
+    expect(updated.find('[data-test="event-updated"]').exists()).toBe(false)
+
+    const fresh = render({
+      event: event({ readAt: '2026-10-07T10:00:00.000Z', lastItemAt: '2026-10-07T12:40:00.000Z' }),
+    })
+    expect(fresh.find('[data-test="event-unread"]').exists()).toBe(false)
+    expect(fresh.find('[data-test="event-updated"]').exists()).toBe(true)
   })
 
   it('标题、时间、来源标签都在一行里', () => {
@@ -45,15 +52,34 @@ describe('EventRow', () => {
     expect(wrapper.find('[data-test="app-source-tags"]').text()).toContain('少数派')
   })
 
-  it('有原文就渲染成可点的链接，没有就退化成普通块', () => {
+  it('有原文的行是 role=link（不写成 <a>，免得和来源标签嵌套），没原文就退化成普通块', () => {
+    // 行里挂着来源标签（那些是真链接），行再做成 <a> 就是嵌套 <a>，点标签会被行的跳转抢走
     const linked = render({ event: event() })
-    expect(linked.element.tagName).toBe('A')
-    expect(linked.attributes('href')).toBe('https://example.com/a')
+    expect(linked.element.tagName).toBe('DIV')
+    expect(linked.attributes('role')).toBe('link')
+    expect(linked.attributes('tabindex')).toBe('0')
     expect(linked.find('.k2-list__chevron').exists()).toBe(true)
 
     const plain = render({ event: event({ url: null }) })
     expect(plain.element.tagName).toBe('ARTICLE')
+    expect(plain.attributes('role')).toBeUndefined()
     expect(plain.find('.k2-list__chevron').exists()).toBe(false)
+  })
+
+  it('键盘回车也能打开（role=link 得能用键盘）', async () => {
+    const wrapper = render({ event: event() })
+    await wrapper.trigger('keydown.enter')
+    expect(wrapper.emitted('open')).toHaveLength(1)
+  })
+
+  it('点来源标签不会触发行本身的 open', async () => {
+    const wrapper = render({ event: event() })
+    const tag = wrapper.find(
+      '[data-test="app-source-tags"] a, [data-test="app-source-tags"] .k2-chip',
+    )
+    expect(tag.exists()).toBe(true)
+    await tag.trigger('click')
+    expect(wrapper.emitted('open')).toBeUndefined()
   })
 
   it('点开一行会把事件抛给页面（页面负责记已读）', async () => {

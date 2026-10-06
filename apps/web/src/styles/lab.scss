@@ -27,8 +27,10 @@
   margin-block-start: var(--k2-s-5);
 }
 
-/* 活跃区两栏：左宽右窄、间距 16，跟参考稿一致（只作用于这一处样例） */
+/* 活跃区两栏：左宽右窄、间距 16，跟参考稿一致（只作用于这一处样例）。
+   align-items: start：两栏各自按内容取高——事件栏多出底栏时就该比异常栏高那一条（异常栏不跟涨） */
 .lab__cols--activity {
+  align-items: start;
   grid-template-columns: 1.08fr 0.92fr;
   gap: var(--k2-s-4);
 }

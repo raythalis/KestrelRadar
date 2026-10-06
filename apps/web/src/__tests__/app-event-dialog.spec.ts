@@ -66,7 +66,7 @@ describe('AppEventDialog', () => {
     const box = modal()
     expect(box).not.toBeNull()
     expect(box?.textContent).toContain('全部事件')
-    expect(box?.textContent).toContain('最多展示最近 20 条事件')
+    expect(box?.textContent).toContain('24h内关注的事件动态')
     expect(box?.querySelectorAll('[data-test="event-row"]')).toHaveLength(2)
     // 未读的那一条有圆点，已读的没有
     expect(box?.querySelectorAll('[data-test="event-unread"]')).toHaveLength(1)
@@ -96,13 +96,40 @@ describe('AppEventDialog', () => {
     expect(filtered.emitted('clear-filter')).toHaveLength(1)
   })
 
-  it('底部显示已展示条数，完成按钮关弹窗', async () => {
-    const wrapper = mountDialog()
+  it('底部只显示已展示条数，不再有完成按钮', async () => {
+    mountDialog()
     await flushPromises()
     expect(modal()?.textContent).toContain('已展示 2 条事件')
-    const footButtons = [...(modal()?.querySelectorAll('.k2-modal__foot button') ?? [])]
-    await click(footButtons.at(-1))
-    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([false])
+    expect(modal()?.querySelectorAll('.k2-modal__foot button')).toHaveLength(0)
+  })
+
+  it('右上角只有关闭按钮（行里的圆点不会飘到弹窗角上）', async () => {
+    mountDialog()
+    await flushPromises()
+    const buttons = [...(modal()?.querySelectorAll('.k2-modal__head button') ?? [])]
+    expect(buttons).toHaveLength(1)
+    expect(buttons[0].getAttribute('data-test')).toBe('app-event-dialog-close')
+  })
+
+  it('还有下一页时打开就抛 load-more（第一页没占满也得能继续填）', async () => {
+    const wrapper = mountDialog({ hasMore: true })
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.emitted('load-more')?.length).toBeGreaterThan(0)
+  })
+
+  it('正在取下一页时显示加载态，也不重复抛', async () => {
+    const wrapper = mountDialog({ hasMore: true, loadingMore: true })
+    await flushPromises()
+    await flushPromises()
+    expect(modal()?.querySelector('[data-test="app-event-dialog-loading"]')).not.toBeNull()
+    expect(wrapper.emitted('load-more')).toBeUndefined()
+  })
+
+  it('没有下一页时列表尾部给一句收尾', async () => {
+    mountDialog({ hasMore: false })
+    await flushPromises()
+    expect(modal()?.querySelector('[data-test="app-event-dialog-end"]')).not.toBeNull()
   })
 
   it('列表为空时给一句话，不是空白', async () => {

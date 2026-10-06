@@ -26,6 +26,7 @@ import {
   ACTIVITY_REST_SOURCES,
   ACTIVITY_SOURCE_NAMES,
   FORM_TEXT,
+  LAZY_EXTRA_EVENTS,
   MANY_ACTIVITY_EVENTS,
   MANY_ACTIVITY_INCIDENTS,
   MANY_SOURCES,
@@ -59,10 +60,12 @@ const incidents = reactive(ACTIVITY_INCIDENTS.map((incident) => ({ ...incident }
 const dialogOpen = ref(false)
 const sourceFilter = ref(ALL_SOURCES)
 
-/** 未读 / 已读对照：用副本，点了也不改状态，保证这一组样例始终是两者对比 */
+/** 圆点对照：没看过（实心）／看过之后又有新条目（空心圈）／已读（不挂）。
+    用副本，点了也不改状态，保证这一组样例始终是三者对照 */
 const dotSamples = reactive<RecentEvent[]>([
   { ...ACTIVITY_EVENTS[0], id: 'sample-unread', readAt: null },
-  { ...ACTIVITY_EVENTS[3], id: 'sample-read', readAt: new Date().toISOString() },
+  { ...ACTIVITY_EVENTS[1], id: 'sample-updated' },
+  { ...ACTIVITY_EVENTS[3], id: 'sample-read' },
 ])
 
 const filteredEvents = computed(() =>
@@ -86,7 +89,31 @@ const manyIncidents = reactive<Incident[]>(
 )
 const manyDialogOpen = ref(false)
 const visibleManyEvents = computed(() => manyEvents.slice(0, DASHBOARD_EVENT_LIMIT))
-const manyRestCount = computed(() => Math.max(manyEvents.length - DASHBOARD_EVENT_LIMIT, 0))
+
+/**
+ * 「查看全部」的懒加载模拟：先给一页（6 条），滚到底再补一页。
+ * 生产里这是后端 cursor 分页（前端只把 cursor 递上去、把回来的那页接在后面），
+ * 这里没有后端，就用定时器假装一次网络往返，好看清加载态和结果追加。
+ */
+const LAZY_PAGE = 6
+const LAZY_DELAY = 900
+const lazyPool = reactive<RecentEvent[]>([
+  ...manyEvents,
+  ...LAZY_EXTRA_EVENTS.map((event) => ({ ...event })),
+])
+const lazyLoaded = ref(LAZY_PAGE)
+const lazyLoading = ref(false)
+const lazyEvents = computed(() => lazyPool.slice(0, lazyLoaded.value))
+const lazyHasMore = computed(() => lazyLoaded.value < lazyPool.length)
+
+function loadMoreLazy(): void {
+  if (lazyLoading.value || !lazyHasMore.value) return
+  lazyLoading.value = true
+  window.setTimeout(() => {
+    lazyLoaded.value = Math.min(lazyLoaded.value + LAZY_PAGE, lazyPool.length)
+    lazyLoading.value = false
+  }, LAZY_DELAY)
+}
 
 /** 样例里的动作只提示，不跳转、不写库：这里展示的是组件长什么样 */
 function openEvent(event: RecentEvent): void {
@@ -195,8 +222,9 @@ function eventTime(value: string): string {
     <p class="lab__meta">
       两栏面板：头部固定、内容区自己滚；事件行挂来源标签（最多两个，多的收成
       +N，点开是浮层，完整来源列在里面，最多显示 4
-      条高度，再多在浮层里滚）；未读圆点是实心的（看过之后不会再亮）；外部列表最多 6 条，6
-      条以内不出底栏； 异常面板没有底栏，高度就减掉底栏那一条，列表窗口和「有底栏时」一样。
+      条高度，再多在浮层里滚）；未读圆点是实心的，看过之后又有新条目换空心圈；外部列表最多 6 条、6
+      条以内不出底栏；两栏的内容窗口都是「正好 6 行」那一档，所以两栏一样高，
+      异常列表超过就在卡片内滚。
     </p>
     <div class="lab__cols lab__cols--activity">
       <AppPanel class="k2-t-primary">
@@ -231,9 +259,6 @@ function eventTime(value: string): string {
         <template v-if="filteredEvents.length > DASHBOARD_EVENT_LIMIT" #foot>
           <button type="button" class="k2-panel__more" @click="dialogOpen = true">
             查看全部事件
-            <span class="k2-panel__hint">
-              还有 {{ filteredEvents.length - DASHBOARD_EVENT_LIMIT }} 条
-            </span>
             <v-icon size="14">mdi-chevron-right</v-icon>
           </button>
         </template>
@@ -261,11 +286,11 @@ function eventTime(value: string): string {
       </AppPanel>
     </div>
 
-    <!-- 未读 / 已读对照：圆点是「从没看过」这一种状态，不做第二状态 -->
-    <div class="lab__h3">事件行 · 未读与已读</div>
+    <!-- 圆点两态：实心＝没看过；空心圈＝看过之后又有新条目（不回退成未读） -->
+    <div class="lab__h3">事件行 · 未读 / 有更新 / 已读</div>
     <p class="lab__meta">
-      右上角那颗实心圆点＝这件事从没看过（接口 readAt 为空）。看过一次就不再亮：转载、来源增加、
-      时间刷新都不会让它退回未读；这里两条是固定对照，点了不会变。
+      右上角实心圆点＝这件事从没看过（readAt 为空）；空心圈＝看过之后又有新条目 （lastItemAt 晚于
+      readAt），不退回未读；都没有就不挂。三条是固定对照，点了不会变。
     </p>
     <AppPanel class="k2-t-primary" height="auto">
       <EventRow
@@ -358,7 +383,6 @@ function eventTime(value: string): string {
         <template #foot>
           <button type="button" class="k2-panel__more" @click="manyDialogOpen = true">
             查看全部事件
-            <span class="k2-panel__hint">还有 {{ manyRestCount }} 条</span>
             <v-icon size="14">mdi-chevron-right</v-icon>
           </button>
         </template>
@@ -387,10 +411,14 @@ function eventTime(value: string): string {
     </div>
     <AppEventDialog
       v-model="manyDialogOpen"
-      :events="manyEvents"
+      :events="lazyEvents"
+      :has-more="lazyHasMore"
+      :loading-more="lazyLoading"
+      :note="`24h内关注的事件动态 · 先给一页，滚到底再补一页（模拟后端的 cursor 分页）`"
       :time-of="timeOfEvent"
       :rest-of="restOf"
       @open="openManyEvent"
+      @load-more="loadMoreLazy"
     />
 
     <div class="lab__h3">来源标签组 · AppSourceTags</div>

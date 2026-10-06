@@ -32,27 +32,16 @@ describe('AppPanel', () => {
     ).not.toContain('k2-panel__body--scroll')
   })
 
-  it('高度按传入值给到面板，默认跟视口走', () => {
+  it('高度交给内容，传了就用传的（有没有底栏都一样高）', () => {
     const custom = mount(AppPanel, { props: { height: '320px' } })
     expect(custom.find('[data-test="app-panel"]').attributes('style')).toContain('320px')
 
-    const byDefault = mount(AppPanel)
-    expect(byDefault.find('[data-test="app-panel"]').attributes('style')).toContain(
-      'min(62vh, 620px)',
-    )
-  })
-
-  it('没有底栏的面板挂上 k2-panel--no-foot（内容窗口由样式封在「有底栏时」的高度）', () => {
+    // 默认不再拿视口高度去撑：面板跟内容走，内容窗口由样式封在「正好 6 行」那一档
     const withFoot = mount(AppPanel, { slots: { foot: '<button>查看全部</button>' } })
     const noFoot = mount(AppPanel)
-    expect(withFoot.find('[data-test="app-panel"]').classes()).not.toContain('k2-panel--no-foot')
-    expect(noFoot.find('[data-test="app-panel"]').classes()).toContain('k2-panel--no-foot')
-    // 两栏高度不受底栏有无影响
-    expect(noFoot.find('[data-test="app-panel"]').attributes('style')).toContain('min(62vh, 620px)')
-    expect(
-      mount(AppPanel, { props: { height: '320px' } })
-        .find('[data-test="app-panel"]')
-        .attributes('style'),
-    ).toContain('320px')
+    expect(withFoot.find('[data-test="app-panel"]').attributes('style')).toContain(
+      'block-size: auto',
+    )
+    expect(noFoot.find('[data-test="app-panel"]').attributes('style')).toContain('block-size: auto')
   })
 })

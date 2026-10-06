@@ -2717,6 +2717,10 @@ a.k2-row--link {
    注意不要写 overscroll-behavior: contain —— 内容没超出窗口时，鼠标停在列表上
    应该把滚动交给页面；只有内容真的超出（异常列表）才在卡片内滚 */
 .k2-panel__body--scroll {
+  /* 内容窗口：正好 6 行事件（行 72px）＋上下一小条间隙（--k2-s-1）。
+     列表不超过 6 行时面板就按内容高（不会多出一条空白），超过 6 行在这个窗口里滚；
+     所以面板高度跟着内容走，两栏自然一样高，不用视口高度去撑。 */
+  max-block-size: calc(6 * 72px + var(--k2-s-1) * 2);
   overflow: hidden auto;
   overscroll-behavior: auto;
   scrollbar-width: thin;
@@ -2882,12 +2886,6 @@ a.k2-row--link {
 }
 
 /* 底部入口里的补充信息（参考里是「还有 N 条」那种半截提示） */
-.k2-panel__hint {
-  padding-inline-start: var(--k2-s-2);
-  box-shadow: inset 1px 0 0 var(--k2-c-border-soft);
-  color: var(--k2-c-text-muted);
-}
-
 /* ---------- 浮层（筛选 / +N 来源）---------- */
 /* 挂在 body 上（VMenu teleport），所以不能写在 .k2-panel 作用域里 */
 .k2-pop {
@@ -3166,6 +3164,20 @@ a.k2-row--link {
   cursor: pointer;
 }
 
+.k2-modal__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--k2-s-2);
+  padding: var(--k2-s-3);
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+.k2-modal__more--end {
+  color: var(--k2-c-text-faint, var(--k2-c-text-muted));
+}
+
 .k2-modal__list {
   flex: 1;
   min-block-size: 240px;
@@ -3215,17 +3227,10 @@ a.k2-row--link {
   padding: var(--k2-s-3) var(--k2-s-2);
 }
 
-/* 没有底栏的面板：底栏那一条的高度（s-3 上下内边距 + 一行文字 + 1px 分线 = 44px）
-   在内容区底部留出来——列表窗口与「有底栏时」一样高，去掉底栏不会让列表白长高一条，
-   面板本身也不高不矮（两栏仍然同高） */
-.k2-panel--no-foot .k2-panel__body {
-  padding-block-end: 44px;
-}
-
-/* 内容区留白：顶部留一条小间隙（第一个条目不贴着头），左右留白让条目与面板边缘有间距，
-   悬停底色与分线也随之收进来。面板高度里已经把这条顶部间隙补回去了（见 AppPanel 的默认高度） */
+/* 内容区留白：上下各留一条小间隙（第一个、最后一个条目不贴边），
+   左右留白让条目与面板边缘有间距，悬停底色与分线也随之收进来 */
 .k2-panel__body {
-  padding: var(--k2-s-1) var(--k2-s-3) 0;
+  padding: var(--k2-s-1) var(--k2-s-3);
 }
 
 /* 面板里的卡片之间留出间距（参考的异常列表是 8px） */
@@ -3255,7 +3260,9 @@ a.k2-row--link {
 /* 未读圆点：行右上角，实心 + 一圈品牌浅底光晕（浅底用现成软色，不新增颜色）
    实心＝从没看过这件事；看过之后不会再因为转载、来源增加、时间刷新亮起来 */
 /* 只作用于面板里的行：生产的仪表盘行不带面板时不受影响 */
-.k2-panel__body .k2-row--link {
+.k2-panel__body .k2-row--link,
+.k2-modal__list .k2-row--link {
+  /* 行相对定位：右上角的圆点靠它定位；漏掉哪个容器，圆点就会飘到最近的可定位祖先上 */
   position: relative;
 }
 
@@ -3268,6 +3275,12 @@ a.k2-row--link {
   border-radius: var(--k2-r-full);
   background: var(--k2-c-primary);
   box-shadow: 0 0 0 3px var(--k2-c-primary-soft);
+}
+
+/* 看过之后又有新条目：空心圈（不退回未读的实心） */
+.k2-row__dot--updated {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--k2-c-primary);
 }
 
 /* ---------- 来源标签组 ---------- */
