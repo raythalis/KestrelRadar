@@ -84,6 +84,20 @@ const tab = ref('discoveries')
       <AppSkeleton variant="page" />
     </div>
 
+    <!-- 业务场景：按生产页面真实形态展示扩展能力，供以后对照（页面外壳是基础结构，骨架走真组件） -->
+    <div class="lab__h3">骨架 · 业务场景（对照生产页面）</div>
+    <div class="lab-form">
+      <!-- 仪表盘「事件 / 故障」列表：扁平卡 + 方块首列 + 紧凑短粗副条，3 行 -->
+      <div class="k2-card k2-card--flat k2-list">
+        <AppSkeleton variant="list" :rows="3" leading="tile" density="compact" />
+      </div>
+      <!-- 配置页分组卡：标题 + 一排 3 个方块（外壳用扁平卡这个基础结构；分组的头由生产页面自己持有） -->
+      <div class="k2-card k2-card--flat">
+        <div class="k2-skeleton k2-skeleton--title" style="width: 32%" />
+        <AppSkeleton variant="card" :rows="0" :blocks="3" />
+      </div>
+    </div>
+
     <div class="lab__h3">状态 · AppStatus</div>
     <div class="lab-row">
       <AppStatus tone="ok">已启用</AppStatus>
