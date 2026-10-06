@@ -2730,9 +2730,9 @@ a.k2-row--link {
 
 /* ================================================================
    活跃区（仪表盘右栏）：面板 / 事件行 / 异常卡 / 来源标签
-   只为还原参考稿的观感调整组件内部样式：
-   颜色一律取既有 token（或色调变量 --c / --c-soft / --c-ink），不新造颜色；
-   面板带 k2-t-* 时，标记条、徽章自动跟着变色调。
+   这一段的字号与密度对齐参考稿（它是 9~11px 的密集排版）：
+   micro(10) / label(11) 是本次补进 token 的通用小字档，
+   caption(12) 留给面板说明文字；颜色一律既有 token 或色调变量。
    ================================================================ */
 
 /* ---------- 面板 ---------- */
@@ -2744,21 +2744,30 @@ a.k2-row--link {
   background: var(--c-ink, var(--k2-c-primary));
 }
 
-/* 头比默认高一档：一行标题 + 一行口径说明 */
+/* 头部：一行标题（14）+ 一行口径说明（10），贴近参考的 77px */
 .k2-panel__head {
-  gap: var(--k2-s-2);
-  min-block-size: 62px;
+  gap: var(--k2-s-1) var(--k2-s-2);
+  min-block-size: 66px;
+  align-content: center;
   padding: var(--k2-s-3) var(--k2-s-4);
 }
 
+.k2-panel__head .k2-sec__title {
+  font-size: var(--k2-fs-body);
+  letter-spacing: -0.015em;
+}
+
+/* 计数徽章：跟随面板色调（异常面板自动变红） */
 .k2-panel__badge {
   flex: none;
+  min-inline-size: 22px;
   padding: 1px var(--k2-s-2);
   border-radius: var(--k2-r-full);
   background: var(--c-soft, var(--k2-c-primary-soft));
   color: var(--c-ink, var(--k2-c-primary));
-  font-size: var(--k2-fs-caption);
-  font-weight: var(--k2-fw-semibold);
+  text-align: center;
+  font-size: var(--k2-fs-micro);
+  font-weight: var(--k2-fw-bold);
   line-height: var(--k2-lh-snug);
 }
 
@@ -2773,12 +2782,14 @@ a.k2-row--link {
   display: inline-flex;
   align-items: center;
   gap: var(--k2-s-1);
+  font-size: var(--k2-fs-micro);
 }
 
 /* 说明这一栏的口径，另起一行、不抢标题 */
 .k2-panel__sub {
   flex-basis: 100%;
-  font-size: var(--k2-fs-caption);
+  margin-inline-start: var(--k2-s-3);
+  font-size: var(--k2-fs-micro);
   color: var(--k2-c-text-faint);
 }
 
@@ -2796,12 +2807,12 @@ a.k2-row--link {
   justify-content: center;
   gap: var(--k2-s-1);
   inline-size: 100%;
-  padding: var(--k2-s-2) var(--k2-s-4);
+  padding: var(--k2-s-3) var(--k2-s-4);
   border: 0;
   background: none;
   color: var(--k2-c-primary);
   font: inherit;
-  font-size: var(--k2-fs-caption);
+  font-size: var(--k2-fs-micro);
   font-weight: var(--k2-fw-semibold);
   cursor: pointer;
 }
@@ -2811,20 +2822,22 @@ a.k2-row--link {
 }
 
 /* ---------- 事件行 ---------- */
-/* 面板里的行比独立列表紧一档；标题加重，和副行（标签、时间）拉开层级 */
+/* 标题 11 + 副行 10：先看到「发生了什么」，再看「谁报的、什么时候」 */
 .k2-panel__body .k2-list__row {
   gap: var(--k2-s-3);
+  min-block-size: 64px;
   padding: var(--k2-s-2) var(--k2-s-3);
 }
 
 .k2-panel__body .k2-row__title,
 .k2-incident .k2-row__title {
+  font-size: var(--k2-fs-label);
   font-weight: var(--k2-fw-semibold);
 }
 
 .k2-panel__body .k2-list__chevron {
-  inline-size: var(--k2-icon-md);
-  block-size: var(--k2-icon-md);
+  inline-size: var(--k2-icon-sm);
+  block-size: var(--k2-icon-sm);
 }
 
 /* 时间：时钟图标 + 相对时间 */
@@ -2832,6 +2845,7 @@ a.k2-row--link {
   display: inline-flex;
   align-items: center;
   gap: var(--k2-s-1);
+  font-size: var(--k2-fs-micro);
 }
 
 /* 未读圆点：行右上角，实心 + 一圈品牌浅底光晕（浅底用现成软色，不新增颜色）
@@ -2864,6 +2878,8 @@ a.k2-row--link {
 
 .k2-source-tags .k2-chip--tag {
   padding: 0 var(--k2-s-2);
+  border-radius: var(--k2-r-xs);
+  font-size: var(--k2-fs-micro);
   text-decoration: none;
 }
 
@@ -2876,9 +2892,10 @@ a.k2-row--link {
 }
 
 /* ---------- 异常卡 ---------- */
-/* 左侧状态线跟着色调走；底部三格之间用细线分开 */
+/* 左侧状态线跟着色调走；底部几项之间用细线分开 */
 .k2-incident {
-  padding: var(--k2-s-4);
+  padding: var(--k2-s-3) var(--k2-s-3) var(--k2-s-2) var(--k2-s-4);
+  border-radius: var(--k2-r-md);
 }
 
 .k2-incident::before {
@@ -2892,8 +2909,18 @@ a.k2-row--link {
   background: var(--c-ink);
 }
 
+.k2-incident .k2-card__head {
+  gap: var(--k2-s-2);
+}
+
 .k2-incident .k2-iconbtn {
   box-shadow: inset 0 0 0 1px var(--k2-c-border-soft);
+}
+
+.k2-incident .k2-card__message {
+  margin-block: var(--k2-s-2);
+  font-size: var(--k2-fs-micro);
+  line-height: var(--k2-lh-normal);
 }
 
 .k2-incident__foot {
@@ -2901,11 +2928,17 @@ a.k2-row--link {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--k2-s-2);
-  font-size: var(--k2-fs-caption);
+  font-size: var(--k2-fs-micro);
   color: var(--k2-c-text-muted);
 }
 
 .k2-incident__foot > span + span {
   padding-inline-start: var(--k2-s-2);
   box-shadow: inset 1px 0 0 var(--k2-c-border-soft);
+}
+
+/* 状态胶囊跟着这一段的字号收一档 */
+.k2-incident .k2-chip {
+  padding-block: 0;
+  font-size: var(--k2-fs-micro);
 }

@@ -27,6 +27,12 @@
   margin-block-start: var(--k2-s-5);
 }
 
+/* 活跃区两栏：左宽右窄、间距 16，跟参考稿一致（只作用于这一处样例） */
+.lab__cols--activity {
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: var(--k2-s-4);
+}
+
 /* 两栏并排看对照（列表 / 表单类样例） */
 .lab__cols--wide {
   grid-template-columns: repeat(2, minmax(0, 1fr));

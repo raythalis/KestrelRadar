@@ -129,7 +129,7 @@ function eventTime(value: string): string {
       两栏同高的定高面板：头部固定、内容区自己滚、底部可选一条入口；事件行挂来源标签（最多两个，多的收成
       +N）；未读圆点是实心的（看过之后不会再亮）；异常卡只放首次出现、最近发生、当前状态。
     </p>
-    <div class="lab__cols">
+    <div class="lab__cols lab__cols--activity">
       <AppPanel>
         <template #head>
           <span class="k2-panel__mark" aria-hidden="true" />
