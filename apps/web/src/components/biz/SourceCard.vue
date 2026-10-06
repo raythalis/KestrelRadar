@@ -113,7 +113,7 @@ const stateLabel = computed(() => (props.enabled ? t('common.enabled') : t('comm
               type="button"
               class="k2-menu__item"
               data-test="source-test"
-              :disabled="busy || !enabled"
+              :disabled="busy"
               @click="emit('test')"
             >
               <v-icon size="18">{{ SEMANTIC_ICONS.testFetch }}</v-icon

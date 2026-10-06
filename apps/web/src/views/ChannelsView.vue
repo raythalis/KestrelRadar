@@ -7,7 +7,6 @@
 import type { Channel, ChannelType } from '@kestrel/contracts'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute, useRouter } from 'vue-router'
 
 import { readTelegramChats, testChannel } from '@/api/config'
 import ChannelCard from '@/components/biz/ChannelCard.vue'
@@ -20,8 +19,6 @@ import { useToastStore } from '@/stores/toast'
 const store = useConfigStore()
 const toast = useToastStore()
 const { t } = useI18n()
-const route = useRoute()
-const router = useRouter()
 
 type DotState = 'idle' | 'testing' | 'ok' | 'warn' | 'fail'
 
@@ -44,11 +41,6 @@ const pendingDelete = ref<Channel | null>(null)
 onMounted(() => {
   if (!store.snapshot) void store.load()
   document.addEventListener('click', closeTypeMenu)
-  // 从动作弹窗点「新建通知渠道」跳过来：直接把新建拉起来（默认 Telegram），并清掉地址里的标记
-  if (route?.query?.new === '1') {
-    openCreate('telegram')
-    void router?.replace({ name: 'channels' })
-  }
 })
 
 onBeforeUnmount(() => document.removeEventListener('click', closeTypeMenu))

@@ -57,10 +57,10 @@ const anyDialogOpen = computed(
     pendingDelete.value !== null,
 )
 
-/** 动作弹窗里点「新建通知渠道」：去通知渠道页，带上标记让那边直接把新建弹窗拉起来 */
+/** 动作弹窗里点「新建通知渠道」：只把人送到通知渠道页（类型到那儿自己选），不替他开 Telegram 弹窗 */
 function goNewChannel(): void {
   actionDialogOpen.value = false
-  void router.push({ name: 'channels', query: { new: '1' } })
+  void router.push({ name: 'channels' })
 }
 const dialogError = computed(() => store.errorMessage)
 

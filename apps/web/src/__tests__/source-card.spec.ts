@@ -66,7 +66,7 @@ describe('SourceCard', () => {
     expect(wrapper.emitted('edit')).toBeUndefined()
   })
 
-  it('抓取中：转圈且不给重复点；停用的源也不给抓', async () => {
+  it('抓取中：转圈且不给重复点；停用的源照样能试抓', async () => {
     const busy = mountCard({ busy: true })
     // 抓取中：菜单入口上出现转圈
     expect(busy.find('[data-test="source-testing"]').exists()).toBe(true)
@@ -78,8 +78,11 @@ describe('SourceCard', () => {
     await off.find('[data-test="source-menu"]').trigger('click')
     await flushPromises()
     const test = document.querySelector('[data-test="source-test"]') as HTMLButtonElement
-    expect(test.disabled).toBe(true)
-    expect(off.emitted('test')).toBeUndefined()
+    // 停用 ≠ 不能试抓：试抓是排查手段，跟启用状态无关
+    expect(test.disabled).toBe(false)
+    test.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
+    expect(off.emitted('test')).toHaveLength(1)
   })
 
   it('点卡片＝编辑；右上角 × 只删除，不误触编辑', async () => {

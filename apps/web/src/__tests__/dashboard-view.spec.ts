@@ -180,7 +180,7 @@ describe('仪表盘页', () => {
     expect(wrapper.get('.k2-panel__badge').text()).toBe('8')
   })
 
-  it('数量卡里 0 / 0 的那张写「未配置」，配了但全停用还是照旧写 0', async () => {
+  it('数量卡里 0 / 0 的那张下面小字写「未配置」，配了但全停用还是「全部停用」', async () => {
     vi.mocked(fetchStatsOverview).mockResolvedValue(
       stats({
         counts: {
@@ -195,12 +195,12 @@ describe('仪表盘页', () => {
     const wrapper = await ready('Qwen 发布原生全模态模型')
     const cards = wrapper.findAll('[data-test="metric-card"]')
     // 第一排四张是数量卡：发现 / 监控 / 动作 / 渠道
-    expect(cards[0]!.text()).toContain('未配置')
-    expect(cards[0]!.text()).not.toContain('/ 0')
-    expect(cards[1]!.text()).toContain('6')
-    expect(cards[1]!.text()).toContain('/ 6')
-    expect(cards[3]!.text()).toContain('0')
-    expect(cards[3]!.text()).toContain('/ 4')
+    // 上面照旧写 0 / 0，只有下面那行小字换成「未配置」
+    expect(cards[0]!.get('.k2-num').text()).toBe('0/ 0')
+    expect(cards[0]!.get('.k2-card__note').text()).toBe('未配置')
+    expect(cards[1]!.get('.k2-num').text()).toBe('6/ 6')
+    expect(cards[3]!.get('.k2-num').text()).toBe('0/ 4')
+    expect(cards[3]!.get('.k2-card__note').text()).toBe('全部停用')
   })
 
   it('「查看全部」打开弹窗，弹窗里列的是后端给的那一页', async () => {

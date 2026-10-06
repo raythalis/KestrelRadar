@@ -107,23 +107,13 @@ const countCards = computed<MetricCard[]>(() => {
         tone: card.tone,
       }
     }
-    // 一条都没配过（0 / 0）时「0」没有意义，直接写「未配置」
-    if (item.total === 0) {
-      return {
-        label: card.label,
-        value: t('dashboard.value.notConfigured'),
-        text: true,
-        unit: '',
-        sub: '',
-        icon: card.icon,
-        tone: card.tone,
-      }
-    }
     return {
       label: card.label,
       value: String(item.enabled),
       unit: `/ ${item.total}`,
-      sub: countSub(item.enabled, item.total),
+      // 一条都没配过（0 / 0）时，下面那行小字说「未配置」；配了但全停用还是「全部停用」
+      sub:
+        item.total === 0 ? t('dashboard.value.notConfigured') : countSub(item.enabled, item.total),
       icon: card.icon,
       tone: card.tone,
     }
@@ -344,7 +334,7 @@ const loading = computed(() => store.loading && !store.stats)
         </div>
         <div class="k2-metric">
           <div class="k2-metric__line">
-            <span class="k2-num" :class="{ 'k2-num--text': card.text }"
+            <span class="k2-num"
               >{{ card.value }}<span class="k2-unit">{{ card.unit }}</span></span
             >
           </div>
