@@ -133,6 +133,7 @@ function eventTime(value: string): string {
       <AppPanel>
         <template #head>
           <span class="k2-sec__title">最近事件</span>
+          <span class="k2-chip k2-chip--soft">{{ ACTIVITY_EVENTS.length }}</span>
         </template>
         <EventRow
           v-for="event in ACTIVITY_EVENTS"
@@ -149,6 +150,7 @@ function eventTime(value: string): string {
       <AppPanel>
         <template #head>
           <span class="k2-sec__title">异常记录</span>
+          <span class="k2-chip k2-chip--soft">{{ ACTIVITY_INCIDENTS.length }}</span>
         </template>
         <div class="k2-rows">
           <IncidentCard

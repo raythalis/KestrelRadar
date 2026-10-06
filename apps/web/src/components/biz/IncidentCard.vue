@@ -26,7 +26,7 @@ const tone = computed(() => (props.incident.kind === 'delivery' ? 'warning' : 'd
 </script>
 
 <template>
-  <article class="k2-card k2-card--sm" :class="`k2-t-${tone}`" data-test="incident-row">
+  <article class="k2-card k2-card--sm k2-incident" :class="`k2-t-${tone}`" data-test="incident-row">
     <div class="k2-card__head">
       <span class="k2-tile k2-tile--sm">
         <v-icon size="20">{{ SEMANTIC_ICONS.incident }}</v-icon>

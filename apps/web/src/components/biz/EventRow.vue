@@ -45,9 +45,12 @@ const tone = computed(() => {
       />
     </span>
     <span class="k2-list__side">
-      <span v-if="!event.readAt" class="k2-row__dot" aria-hidden="true" data-test="event-unread" />
-      <span v-if="time" class="k2-row__sub" data-test="event-time">{{ time }}</span>
+      <span v-if="time" class="k2-row__sub k2-row__time" data-test="event-time">
+        <v-icon size="13">mdi-clock-outline</v-icon>
+        <span>{{ time }}</span>
+      </span>
     </span>
+    <span v-if="!event.readAt" class="k2-row__dot" aria-hidden="true" data-test="event-unread" />
     <span v-if="event.url" class="k2-list__chevron">
       <v-icon size="20">mdi-chevron-right</v-icon>
     </span>

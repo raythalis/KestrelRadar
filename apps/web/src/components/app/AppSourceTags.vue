@@ -1,6 +1,7 @@
 <!-- AppSourceTags：事件行的来源标签组。最多挂 limit 个，多出来的收成一个「+N」。
      每个标签直接指向那一家的原文；点击不冒泡（行本身是可点开的，别抢了行的动作）。
-     「+N」只告诉调用方要展开完整来源列表，完整列表由页面按需去取。 -->
+     「+N」只告诉调用方要展开完整来源列表，完整列表由页面按需去取。
+     类名特意用 k2-source-tags：k2-tags 是排除词输入框（TagsField）的类，撞上会被套成输入框。 -->
 <script setup lang="ts">
 import { EVENT_SOURCE_TAG_LIMIT, type EventSourceRef } from '@kestrel/contracts'
 import { computed } from 'vue'
@@ -21,7 +22,7 @@ const rest = computed(() => Math.max((props.total || props.sources.length) - sho
 </script>
 
 <template>
-  <span class="k2-tags" data-test="app-source-tags">
+  <span class="k2-source-tags" data-test="app-source-tags">
     <component
       :is="source.url ? 'a' : 'span'"
       v-for="source in shown"
@@ -36,7 +37,7 @@ const rest = computed(() => Math.max((props.total || props.sources.length) - sho
     <button
       v-if="rest > 0"
       type="button"
-      class="k2-chip k2-chip--tag k2-tags__more"
+      class="k2-chip k2-chip--tag k2-source-tags__more"
       data-test="app-source-tags-more"
       @click.stop="emit('more')"
     >
