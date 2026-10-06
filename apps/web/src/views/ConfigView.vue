@@ -421,8 +421,15 @@ async function confirmDelete(): Promise<void> {
       </div>
     </div>
 
+    <!-- 加载态：沿用分组卡的两层结构（头 + 内容带）。
+         三列由页面布局（k2-group__body 的栅格）负责，骨架只提供单个形状。 -->
     <div v-if="loading" class="k2-group" data-test="config-loading">
-      <AppSkeleton variant="card" :body="false" :blocks="3" />
+      <div class="k2-group__head">
+        <span class="k2-skeleton k2-skeleton--title" style="width: 30%" />
+      </div>
+      <div class="k2-group__body">
+        <span v-for="n in 3" :key="n" class="k2-skeleton k2-skeleton--cell" />
+      </div>
     </div>
 
     <section v-else-if="store.groups.length === 0" class="k2-card k2-card--flat">
