@@ -15,7 +15,6 @@ withDefaults(
     open?: boolean
     brand?: {
       name: string
-      tagline?: string
       /** 品牌标图片地址；不给就只显示文字标 */ logo?: string
     }
     closeLabel?: string
@@ -46,7 +45,6 @@ const ui = useUiStore()
       <div v-if="brand" class="k2-nav__brand">
         <img v-if="brand.logo" class="k2-nav__logo" data-test="app-logo" :src="brand.logo" alt="" />
         <span class="k2-nav__name" data-test="app-name">{{ brand.name }}</span>
-        <span v-if="brand.tagline" class="k2-nav__tagline">{{ brand.tagline }}</span>
       </div>
 
       <nav class="k2-nav__items">

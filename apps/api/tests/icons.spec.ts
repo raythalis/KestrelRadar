@@ -40,12 +40,17 @@ function build(fetchImpl: typeof fetch): Container {
   return buildContainer(openDatabase(dbPath), { iconDir, fetchImpl })
 }
 
-function seedDiscovery(container: Container, name: string, target: string): string {
+function seedDiscovery(
+  container: Container,
+  name: string,
+  target: string,
+  kind: 'rss' | 'rsshub' = 'rss',
+): string {
   const group = container.groups.create({ name: `分组-${name}`, description: '', enabled: true })
   return container.discoveries.create({
     groupId: group.id,
     name,
-    kind: 'rss',
+    kind,
     target,
     cronExpression: '0 * * * *',
     enabled: true,
@@ -108,6 +113,50 @@ describe('图标抓取', () => {
     const id = seedDiscovery(container, 'D', 'http://192.168.5.100:1200/feed')
     expect(await container.icons?.refresh(id, { waitMs: 3000 })).toBeNull()
     expect(calls).toEqual([])
+  })
+})
+
+describe('RSSHub 相对路由：先反查源站域名，再抓图标', () => {
+  function instanceFetch(body: unknown): typeof fetch {
+    return (async (input: string | URL | Request) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+      calls.push(url)
+      if (url.includes('/api/namespace/')) {
+        return new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        })
+      }
+      if (url.startsWith('https://sspai.com/favicon.ico')) {
+        return new Response(new Uint8Array(PNG), {
+          status: 200,
+          headers: { 'content-type': 'image/png' },
+        })
+      }
+      return new Response('nope', { status: 404 })
+    }) as typeof fetch
+  }
+
+  it('元数据里有源站：反查成功并存下图标、回写地址', async () => {
+    const container = build(
+      instanceFetch({ routes: { '/matrix': { radar: [{ source: ['sspai.com/matrix'] }] } } }),
+    )
+    const id = seedDiscovery(container, 'RSSHub 源', '/sspai/matrix', 'rsshub')
+
+    const file = await container.icons?.refresh(id, { waitMs: 3000 })
+    expect(file).toMatch(/^[a-f0-9]{12}-[a-f0-9]{10}\.png$/)
+    expect(container.discoveries.get(id)?.iconUrl).toBe(`/api/icons/${file}`)
+    expect(calls[0]).toContain('/api/namespace/sspai')
+    expect(calls.some((url) => url.startsWith('https://sspai.com/'))).toBe(true)
+  })
+
+  it('路由没登记源站：只查元数据，不去抓图，地址留空', async () => {
+    const container = build(instanceFetch({ routes: { '/plain': { radar: [] } } }))
+    const id = seedDiscovery(container, '没源站', '/sspai/plain', 'rsshub')
+
+    expect(await container.icons?.refresh(id, { waitMs: 3000 })).toBeNull()
+    expect(container.discoveries.get(id)?.iconUrl).toBeNull()
+    expect(calls.every((url) => url.includes('/api/namespace/'))).toBe(true)
   })
 })
 

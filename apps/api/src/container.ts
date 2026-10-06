@@ -6,6 +6,7 @@ import { createChannelService } from './modules/channels/channel.service.ts'
 import { createCollector, type Collector } from './modules/collection/collector.ts'
 import { createRunRepo, type RunRepo } from './modules/collection/run.repo.ts'
 import { createScheduler, type Scheduler } from './modules/collection/scheduler.ts'
+import { createRsshubRoutes } from './modules/config/rsshub-routes.ts'
 import { createRsshubStatus, type RsshubStatus } from './modules/config/rsshub-status.ts'
 import { createDiscoveryRepo } from './modules/discoveries/discovery.repo.ts'
 import { createDiscoveryService } from './modules/discoveries/discovery.service.ts'
@@ -152,11 +153,15 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
 
   const templates = createTemplateService({ repo: templateRepo, builtin: builtinTemplates() })
 
+  // RSSHub 相对路由的源站反查：给图标抓取用（实例地址跟着设置走）
+  const rsshubRoutes = createRsshubRoutes({ settings, fetchImpl: options.fetchImpl })
+
   const icons = options.iconDir
     ? createIconService({
         discoveries: discoveryRepo,
         dir: options.iconDir,
         fetchImpl: options.fetchImpl,
+        rsshubHost: (target) => rsshubRoutes.resolveHost(target),
       })
     : undefined
   const rsshub = createRsshubStatus({ settings, fetchImpl: options.fetchImpl })

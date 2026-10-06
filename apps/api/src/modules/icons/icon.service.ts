@@ -16,6 +16,8 @@ export interface IconServiceDeps {
   timeoutMs?: number
   /** 单张图标大小上限（字节） */
   maxBytes?: number
+  /** RSSHub 的相对路由自己没域名：用实例元数据反查源站域名，查不到就返回 null */
+  rsshubHost?: (target: string) => Promise<string | null>
 }
 
 const DEFAULT_TIMEOUT_MS = 6000
@@ -145,13 +147,26 @@ export function createIconService(deps: IconServiceDeps) {
   }
 
   /**
+   * RSSHub 相对路由（/sspai/matrix）走实例元数据反查源站域名，
+   * 拿到域名再交给 hostOf 过一遍公网域名白名单。
+   */
+  async function resolveRsshubHost(discovery: {
+    target: string
+    kind: DiscoveryKind
+  }): Promise<string | null> {
+    if (discovery.kind !== 'rsshub' || !deps.rsshubHost) return null
+    const source = await deps.rsshubHost(discovery.target).catch(() => null)
+    return source ? hostOf(source, 'rss') : null
+  }
+
+  /**
    * 抓图标并回写到发现上。waitMs 是「最多等多久」：
    * 等不到就先返回 null（界面回落类型图标），后台继续抓，下次打开就有了。
    */
   async function refresh(id: string, options: { waitMs?: number } = {}): Promise<string | null> {
     const discovery = deps.discoveries.get(id)
     if (!discovery) return null
-    const host = hostOf(discovery.target, discovery.kind)
+    const host = hostOf(discovery.target, discovery.kind) ?? (await resolveRsshubHost(discovery))
     if (!host) {
       deps.discoveries.setIcon(id, null)
       return null

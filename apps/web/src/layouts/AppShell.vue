@@ -39,9 +39,9 @@ const navItems = computed<AppNavItem[]>(() =>
   NAV.map((item) => ({ ...item, label: t(`nav.${item.name}`) })),
 )
 
+// 版本号不放侧栏（后续挪进设置页展示），这里只出名字与品牌标
 const brand = computed(() => ({
   name: t('app.name'),
-  tagline: t('app.tagline'),
   logo: BRAND_LOGO,
 }))
 

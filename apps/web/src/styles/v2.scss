@@ -981,7 +981,7 @@
 
 .k2-nav__name {
   overflow: hidden;
-  font-size: var(--k2-fs-bodyLg);
+  font-size: var(--k2-fs-title);
   font-weight: var(--k2-fw-semibold);
   color: var(--k2-c-text);
   white-space: nowrap;
@@ -1038,19 +1038,6 @@
 /* 收起：文字让位，图标位置钉住（卡片内边距、条目内边距都不动） */
 .k2-shell--rail .k2-nav__label,
 .k2-shell--rail .k2-nav__name,
-.k2-shell--rail .k2-nav__tagline {
-  inline-size: 0;
-  opacity: 0;
-}
-
-.k2-nav__tagline {
-  overflow: hidden;
-  font-size: var(--k2-fs-caption);
-  color: var(--k2-c-text-muted);
-  white-space: nowrap;
-  transition: opacity var(--k2-motion-fast) var(--k2-motion-ease);
-}
-
 .k2-nav__foot {
   overflow: hidden;
   padding-inline: var(--k2-s-2);
@@ -2509,11 +2496,6 @@ a.k2-row--link {
 
   .k2-shell--rail .k2-nav__label,
   .k2-shell--rail .k2-nav__name,
-  .k2-shell--rail .k2-nav__tagline {
-    inline-size: auto;
-    opacity: 1;
-  }
-
   .k2-nav__handle {
     display: none;
   }
