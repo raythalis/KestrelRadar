@@ -2730,9 +2730,9 @@ a.k2-row--link {
 
 /* ================================================================
    活跃区（仪表盘右栏）：面板 / 事件行 / 异常卡 / 来源标签
-   这一段的字号与密度对齐参考稿（它是 9~11px 的密集排版）：
-   小字档 10 / 11 只属于这一段，直接写在组件样式里，不进全局字阶；
-   caption(12) 留给面板口径说明；颜色一律既有 token 或色调变量。
+   参考稿是 8.5~11px 的密集排版，这里用现有字阶里最接近的一档
+   （caption 12）近似适配，层级靠字重与颜色拉开，不写死字号、不加新 token；
+   行高、内边距这类只影响本组件的密度值留在组件内部。
    ================================================================ */
 
 /* ---------- 面板 ---------- */
@@ -2770,7 +2770,7 @@ a.k2-row--link {
   background: none;
   color: var(--k2-c-primary);
   font: inherit;
-  font-size: 10px;
+  font-size: var(--k2-fs-caption);
   cursor: pointer;
 }
 
@@ -2787,7 +2787,7 @@ a.k2-row--link {
   background: var(--c-soft, var(--k2-c-primary-soft));
   color: var(--c-ink, var(--k2-c-primary));
   text-align: center;
-  font-size: 10px;
+  font-size: var(--k2-fs-caption);
   font-weight: var(--k2-fw-bold);
   line-height: var(--k2-lh-snug);
 }
@@ -2803,14 +2803,14 @@ a.k2-row--link {
   display: inline-flex;
   align-items: center;
   gap: var(--k2-s-1);
-  font-size: 10px;
+  font-size: var(--k2-fs-caption);
 }
 
 /* 说明这一栏的口径，另起一行、不抢标题 */
 .k2-panel__sub {
   flex-basis: 100%;
   margin-inline-start: var(--k2-s-3);
-  font-size: 10px;
+  font-size: var(--k2-fs-caption);
   color: var(--k2-c-text-faint);
 }
 
@@ -2833,7 +2833,7 @@ a.k2-row--link {
   background: none;
   color: var(--k2-c-primary);
   font: inherit;
-  font-size: 10px;
+  font-size: var(--k2-fs-caption);
   font-weight: var(--k2-fw-semibold);
   cursor: pointer;
 }
@@ -2866,7 +2866,7 @@ a.k2-row--link {
 
 .k2-panel__body .k2-row__title,
 .k2-incident .k2-row__title {
-  font-size: 11px;
+  font-size: var(--k2-fs-caption);
   font-weight: var(--k2-fw-semibold);
 }
 
@@ -2880,7 +2880,7 @@ a.k2-row--link {
   display: inline-flex;
   align-items: center;
   gap: var(--k2-s-1);
-  font-size: 10px;
+  font-size: var(--k2-fs-caption);
 }
 
 /* 未读圆点：行右上角，实心 + 一圈品牌浅底光晕（浅底用现成软色，不新增颜色）
@@ -2914,7 +2914,7 @@ a.k2-row--link {
 .k2-source-tags .k2-chip--tag {
   padding: 0 var(--k2-s-2);
   border-radius: var(--k2-r-xs);
-  font-size: 10px;
+  font-size: var(--k2-fs-caption);
   text-decoration: none;
 }
 
@@ -2922,12 +2922,10 @@ a.k2-row--link {
   color: var(--k2-c-text);
 }
 
+/* +N 是个按钮，要多清掉浏览器给的 2px 默认边框，否则比旁边的标签高 4px */
 .k2-source-tags__more {
-  display: inline-flex;
-  align-items: center;
-  block-size: 16px;
-  padding-block: 0;
-  line-height: 16px;
+  border: 0;
+  font: inherit;
   cursor: pointer;
 }
 
@@ -2959,7 +2957,7 @@ a.k2-row--link {
 
 .k2-incident .k2-card__message {
   margin-block: var(--k2-s-2);
-  font-size: 10px;
+  font-size: var(--k2-fs-caption);
   line-height: var(--k2-lh-normal);
 }
 
@@ -2968,7 +2966,7 @@ a.k2-row--link {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--k2-s-2);
-  font-size: 10px;
+  font-size: var(--k2-fs-caption);
   color: var(--k2-c-text-muted);
 }
 
@@ -2980,5 +2978,5 @@ a.k2-row--link {
 /* 状态胶囊跟着这一段的字号收一档 */
 .k2-incident .k2-chip {
   padding-block: 0;
-  font-size: 10px;
+  font-size: var(--k2-fs-caption);
 }
