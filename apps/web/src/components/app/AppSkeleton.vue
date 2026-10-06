@@ -13,8 +13,10 @@ withDefaults(
     density?: 'default' | 'compact'
     /** card：内容行之后追加的方块数。0＝不渲染（保持原样） */
     blocks?: number
+    /** card：是否渲染内容区（内容行 + 底部内容块）。false 只留标题与方块，用于「标题 + 方块」型卡片 */
+    body?: boolean
   }>(),
-  { variant: 'text', rows: 3, leading: 'dot', density: 'default', blocks: 0 },
+  { variant: 'text', rows: 3, leading: 'dot', density: 'default', blocks: 0, body: true },
 )
 </script>
 
@@ -28,13 +30,15 @@ withDefaults(
 
     <template v-else-if="variant === 'card'">
       <div class="k2-skeleton k2-skeleton--title" style="width: 32%" />
-      <div
-        v-for="n in rows"
-        :key="n"
-        class="k2-skeleton k2-skeleton--line"
-        :style="{ width: `${92 - n * 8}%` }"
-      />
-      <div class="k2-skeleton k2-skeleton--block" />
+      <template v-if="body">
+        <div
+          v-for="n in rows"
+          :key="n"
+          class="k2-skeleton k2-skeleton--line"
+          :style="{ width: `${92 - n * 8}%` }"
+        />
+      </template>
+      <div v-if="body" class="k2-skeleton k2-skeleton--block" />
       <div v-if="blocks > 0" class="k2-skeleton-cells">
         <div v-for="n in blocks" :key="n" class="k2-skeleton k2-skeleton--cell" />
       </div>

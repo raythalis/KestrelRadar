@@ -62,4 +62,18 @@ describe('AppSkeleton', () => {
     expect(three.findAll('.k2-skeleton--cell')).toHaveLength(3)
     expect(three.findAll('.k2-skeleton--block')).toHaveLength(1)
   })
+
+  it('card：body=false 只留标题与方块（默认仍渲染内容区）', () => {
+    const full = mount(AppSkeleton, { props: { variant: 'card', blocks: 3 } })
+    expect(full.findAll('.k2-skeleton--block')).toHaveLength(1)
+    expect(full.findAll('.k2-skeleton--line').length).toBeGreaterThan(0)
+
+    const headOnly = mount(AppSkeleton, {
+      props: { variant: 'card', body: false, blocks: 3 },
+    })
+    expect(headOnly.findAll('.k2-skeleton--block')).toHaveLength(0)
+    expect(headOnly.findAll('.k2-skeleton--line')).toHaveLength(0)
+    expect(headOnly.findAll('.k2-skeleton--cell')).toHaveLength(3)
+    expect(headOnly.findAll('.k2-skeleton--title')).toHaveLength(1)
+  })
 })

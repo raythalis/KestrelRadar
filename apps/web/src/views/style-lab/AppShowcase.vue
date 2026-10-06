@@ -93,8 +93,7 @@ const tab = ref('discoveries')
       </div>
       <!-- 配置页分组卡：标题 + 一排 3 个方块（外壳用扁平卡这个基础结构；分组的头由生产页面自己持有） -->
       <div class="k2-card k2-card--flat">
-        <div class="k2-skeleton k2-skeleton--title" style="width: 32%" />
-        <AppSkeleton variant="card" :rows="0" :blocks="3" />
+        <AppSkeleton variant="card" :body="false" :blocks="3" />
       </div>
     </div>
 
