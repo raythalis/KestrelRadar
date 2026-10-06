@@ -381,6 +381,40 @@ export const REST_SOURCES: EventSourceRef[] = [
   { discoveryId: 'd-github', name: 'GitHub 趋势', url: 'https://example.com/sqlite-350-github' },
 ]
 
+/** 来源特别多的一档：用来看 +N 浮层「超过 4 条就滚」的样子 */
+export const MANY_SOURCES: EventSourceRef[] = [
+  { discoveryId: 'd-sspai', name: '少数派', url: 'https://example.com/a-sspai' },
+  { discoveryId: 'd-ithome', name: 'IT之家', url: 'https://example.com/a-ithome' },
+  { discoveryId: 'd-hn', name: 'Hacker News 榜单', url: 'https://example.com/a-hn' },
+  { discoveryId: 'd-github', name: 'GitHub 趋势', url: 'https://example.com/a-github' },
+  { discoveryId: 'd-rsshub', name: 'RSSHub', url: 'https://example.com/a-rsshub' },
+  { discoveryId: 'd-web', name: '某个没有链接的来源', url: null },
+]
+
+/** 事件列表上出现过的来源清单（筛选浮层的选项按它来） */
+export const ACTIVITY_SOURCE_NAMES = [
+  'IT之家',
+  '少数派',
+  'GitHub 趋势',
+  'Hacker News 榜单',
+  'RSSHub',
+]
+
+/** 一件事的「其余来源」（点 +N 时才按需取回来的那份） */
+export interface EventRestSources {
+  id: string
+  sources: EventSourceRef[]
+}
+
+/** 样例里先给全，这样 +N 浮层里能看到具体是哪几家、点得进去 */
+export const ACTIVITY_REST_SOURCES: EventRestSources[] = [
+  {
+    id: 'ev-unread',
+    sources: [{ discoveryId: 'd-sspai', name: '少数派', url: 'https://example.com/vue-36-sspai' }],
+  },
+  { id: 'ev-5', sources: REST_SOURCES },
+]
+
 export const ACTIVITY_INCIDENTS: Incident[] = [
   {
     id: 'in-collection',

@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import type { EventSourceRef, RecentEvent } from '@kestrel/contracts'
+import { computed, reactive, ref } from 'vue'
 
 import AppButton from '@/components/app/AppButton.vue'
 import AppEmptyState from '@/components/app/AppEmptyState.vue'
+import AppEventDialog from '@/components/app/AppEventDialog.vue'
 import AppHint from '@/components/app/AppHint.vue'
 import AppInput from '@/components/app/AppInput.vue'
 import AppSelect from '@/components/app/AppSelect.vue'
 import AppPanel from '@/components/app/AppPanel.vue'
 import AppSkeleton from '@/components/app/AppSkeleton.vue'
+import AppSourceFilter from '@/components/app/AppSourceFilter.vue'
 import AppSourceTags from '@/components/app/AppSourceTags.vue'
 import EventRow from '@/components/biz/EventRow.vue'
 import IncidentCard from '@/components/biz/IncidentCard.vue'
@@ -20,12 +23,13 @@ import { formatDateTime, timeAgo } from '@/utils/format'
 import {
   ACTIVITY_EVENTS,
   ACTIVITY_INCIDENTS,
+  ACTIVITY_REST_SOURCES,
+  ACTIVITY_SOURCE_NAMES,
   FORM_TEXT,
-  REST_SOURCES,
+  MANY_SOURCES,
   SELECT_ITEMS,
   TAB_ITEMS,
 } from './fixtures'
-import { SEMANTIC_ICONS } from '@/components/biz/icons'
 
 /**
  * App 组件样例 = 真组件。
@@ -41,13 +45,53 @@ const summary = ref(FORM_TEXT.summary)
 const enabled = ref(true)
 const tab = ref('discoveries')
 
+/**
+ * 活跃区样例：外部列表与「查看全部」弹窗共用同一批对象，
+ * 所以弹窗里点开一件事记了已读，外面那一条的未读圆点会同时消失。
+ */
+const ALL_SOURCES = '全部来源'
+/** 仪表盘外部列表最多显示 6 条；超过 6 条底部才出现「查看全部事件」 */
+const DASHBOARD_EVENT_LIMIT = 6
+const events = reactive<RecentEvent[]>(ACTIVITY_EVENTS.map((event) => ({ ...event })))
+const incidents = reactive(ACTIVITY_INCIDENTS.map((incident) => ({ ...incident })))
+const dialogOpen = ref(false)
+const sourceFilter = ref(ALL_SOURCES)
+
+/** 未读 / 已读对照：用副本，点了也不改状态，保证这一组样例始终是两者对比 */
+const dotSamples = reactive<RecentEvent[]>([
+  { ...ACTIVITY_EVENTS[0], id: 'sample-unread', readAt: null },
+  { ...ACTIVITY_EVENTS[3], id: 'sample-read', readAt: new Date().toISOString() },
+])
+
+const filteredEvents = computed(() =>
+  sourceFilter.value === ALL_SOURCES
+    ? events
+    : events.filter((event) => event.sourceNames.includes(sourceFilter.value)),
+)
+const visibleEvents = computed(() => filteredEvents.value.slice(0, DASHBOARD_EVENT_LIMIT))
+const filterOptions = computed(() => [
+  { name: ALL_SOURCES, count: events.length },
+  ...ACTIVITY_SOURCE_NAMES.map((name) => ({
+    name,
+    count: events.filter((event) => event.sourceNames.includes(name)).length,
+  })),
+])
+
 /** 样例里的动作只提示，不跳转、不写库：这里展示的是组件长什么样 */
-function openEvent(event: { title: string }): void {
+function openEvent(event: RecentEvent): void {
+  event.readAt = new Date().toISOString()
   window.console.info('[style-lab] 点开事件：', event.title)
 }
 
-function openSources(): void {
-  window.console.info('[style-lab] 展开完整来源列表')
+function resetFilter(): void {
+  sourceFilter.value = ALL_SOURCES
+}
+
+const timeOfEvent = (event: RecentEvent): string => eventTime(event.lastItemAt)
+
+/** 这件事的其余来源（真实实现是点 +N 时按需取的） */
+function restOf(event: RecentEvent): EventSourceRef[] | undefined {
+  return ACTIVITY_REST_SOURCES.find((item) => item.id === event.id)?.sources
 }
 
 function noop(): void {}
@@ -134,8 +178,10 @@ function eventTime(value: string): string {
     <!-- 活跃区：面板 + 事件行 + 异常卡，全是真组件（生产仪表盘就按这个形态迁） -->
     <div class="lab__h3">活跃区 · AppPanel / EventRow / IncidentCard</div>
     <p class="lab__meta">
-      两栏同高的定高面板：头部固定、内容区自己滚、底部可选一条入口；事件行挂来源标签（最多两个，多的收成
-      +N）；未读圆点是实心的（看过之后不会再亮）；异常卡只放首次出现、最近发生、当前状态。
+      两栏面板：头部固定、内容区自己滚；事件行挂来源标签（最多两个，多的收成
+      +N，点开是浮层，完整来源列在里面，最多显示 4
+      条高度，再多在浮层里滚）；未读圆点是实心的（看过之后不会再亮）；外部列表最多 6 条，6
+      条以内不出底栏； 异常面板没有底栏，高度就减掉底栏那一条，列表窗口和「有底栏时」一样。
     </p>
     <div class="lab__cols lab__cols--activity">
       <AppPanel class="k2-t-primary">
@@ -143,47 +189,52 @@ function eventTime(value: string): string {
           <span class="k2-panel__heading">
             <span class="k2-panel__mark" aria-hidden="true" />
             <span class="k2-sec__title">最近事件</span>
-            <span class="k2-panel__badge">{{ ACTIVITY_EVENTS.length }}</span>
+            <span class="k2-panel__badge">{{ filteredEvents.length }}</span>
             <span class="k2-panel__sub">24h内关注的事件动态</span>
           </span>
           <span class="k2-panel__actions">
-            <button type="button" class="k2-panel__quiet">
-              <v-icon size="14">mdi-filter-variant</v-icon>
-              筛选
-            </button>
-            <button type="button" class="k2-panel__link" @click="openEvent({ title: '全部事件' })">
+            <AppSourceFilter
+              v-model="sourceFilter"
+              :options="filterOptions"
+              :all-label="ALL_SOURCES"
+              @reset="resetFilter"
+            />
+            <button type="button" class="k2-panel__link" @click="dialogOpen = true">
               查看全部
               <v-icon size="14">mdi-chevron-right</v-icon>
             </button>
           </span>
         </template>
         <EventRow
-          v-for="event in ACTIVITY_EVENTS"
+          v-for="event in visibleEvents"
           :key="event.id"
           :event="event"
           :time="eventTime(event.lastItemAt)"
+          :rest-sources="restOf(event)"
           @open="openEvent"
-          @more="openSources"
         />
-        <template #foot>
-          <button type="button" class="k2-panel__more">
+        <template v-if="filteredEvents.length > DASHBOARD_EVENT_LIMIT" #foot>
+          <button type="button" class="k2-panel__more" @click="dialogOpen = true">
             查看全部事件
+            <span class="k2-panel__hint">
+              还有 {{ filteredEvents.length - DASHBOARD_EVENT_LIMIT }} 条
+            </span>
             <v-icon size="14">mdi-chevron-right</v-icon>
           </button>
         </template>
       </AppPanel>
-      <AppPanel class="k2-t-danger">
+      <AppPanel :class="incidents.length ? 'k2-t-danger' : 'k2-t-success'">
         <template #head>
           <span class="k2-panel__heading">
             <span class="k2-panel__mark" aria-hidden="true" />
             <span class="k2-sec__title">异常记录</span>
-            <span class="k2-panel__badge">{{ ACTIVITY_INCIDENTS.length }}</span>
+            <span class="k2-panel__badge">{{ incidents.length }}</span>
             <span class="k2-panel__sub">同一处异常60分钟内重复只更新时间，最多展示20条</span>
           </span>
         </template>
         <div class="k2-rows">
           <IncidentCard
-            v-for="incident in ACTIVITY_INCIDENTS"
+            v-for="incident in incidents"
             :key="incident.id"
             :incident="incident"
             :first-seen="`首次出现 ${formatDateTime(incident.firstSeenAt)}`"
@@ -195,9 +246,39 @@ function eventTime(value: string): string {
       </AppPanel>
     </div>
 
+    <!-- 未读 / 已读对照：圆点是「从没看过」这一种状态，不做第二状态 -->
+    <div class="lab__h3">事件行 · 未读与已读</div>
+    <p class="lab__meta">
+      右上角那颗实心圆点＝这件事从没看过（接口 readAt 为空）。看过一次就不再亮：转载、来源增加、
+      时间刷新都不会让它退回未读；这里两条是固定对照，点了不会变。
+    </p>
+    <AppPanel class="k2-t-primary" height="auto">
+      <EventRow
+        v-for="event in dotSamples"
+        :key="event.id"
+        :event="event"
+        :time="eventTime(event.lastItemAt)"
+        :rest-sources="restOf(event)"
+        @open="noop"
+      />
+    </AppPanel>
+
+    <!-- 查看全部：外部列表与弹窗共用同一批对象，弹窗里点开一条，外面的圆点会同时消失 -->
+    <AppEventDialog
+      v-model="dialogOpen"
+      :events="filteredEvents"
+      :filter-label="sourceFilter"
+      :all-label="ALL_SOURCES"
+      :time-of="timeOfEvent"
+      :rest-of="restOf"
+      @open="openEvent"
+      @clear-filter="resetFilter"
+    />
+
     <div class="lab__h3">活跃区 · 空状态（没有数据时的样子）</div>
     <p class="lab__meta">
-      两个面板都没有数据时：内容区居中放空状态（真组件 AppEmptyState），头部与底部的入口照常保留。
+      两个面板都没有数据时：内容区居中放空状态（真组件 AppEmptyState），头部入口照常保留；
+      异常面板一条都没有时头部换成绿色（有异常才是红色）。
     </p>
     <div class="lab__cols lab__cols--activity">
       <AppPanel class="k2-t-primary">
@@ -215,7 +296,7 @@ function eventTime(value: string): string {
           note="采集到条目并归并成事件后，最近 24 小时的会出现在这里"
         />
       </AppPanel>
-      <AppPanel class="k2-t-danger">
+      <AppPanel class="k2-t-success">
         <template #head>
           <span class="k2-panel__heading">
             <span class="k2-panel__mark" aria-hidden="true" />
@@ -232,11 +313,7 @@ function eventTime(value: string): string {
     <div class="lab-form">
       <AppSourceTags :sources="ACTIVITY_EVENTS[1].sources" :total="1" />
       <AppSourceTags :sources="ACTIVITY_EVENTS[0].sources" :total="2" />
-      <AppSourceTags
-        :sources="ACTIVITY_EVENTS[4].sources"
-        :total="ACTIVITY_EVENTS[4].sourceCount"
-        :rest="REST_SOURCES"
-      />
+      <AppSourceTags :sources="ACTIVITY_EVENTS[4].sources" :total="8" :rest="MANY_SOURCES" />
     </div>
 
     <div class="lab__h3">状态 · AppStatus</div>

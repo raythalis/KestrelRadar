@@ -95,6 +95,8 @@ const REQUIRED_COMPONENTS = [
   'AppEmptyState',
   'AppPanel',
   'AppSourceTags',
+  'AppSourceFilter',
+  'AppEventDialog',
   'EventRow',
   'IncidentCard',
 ]

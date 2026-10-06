@@ -3,7 +3,7 @@
      新增的只有右上角那颗未读圆点：实心＝从没看过这件事（接口的 readAt 为空）。
      行可点开时用 a 标签，点击同时把 open 抛给页面（页面负责记已读）。 -->
 <script setup lang="ts">
-import type { RecentEvent } from '@kestrel/contracts'
+import type { EventSourceRef, RecentEvent } from '@kestrel/contracts'
 import { computed } from 'vue'
 
 import AppSourceTags from '@/components/app/AppSourceTags.vue'
@@ -13,6 +13,8 @@ const props = defineProps<{
   event: RecentEvent
   /** 时间已经格式化好的样子；不传就不占位 */
   time?: string
+  /** 这一件事的其余来源（页面按需取回来的那份），透传给 +N 浮层 */
+  restSources?: EventSourceRef[]
 }>()
 const emit = defineEmits<{ open: [event: RecentEvent]; more: [event: RecentEvent] }>()
 
@@ -41,6 +43,7 @@ const tone = computed(() => {
       <AppSourceTags
         :sources="event.sources"
         :total="event.sourceCount"
+        :rest="restSources"
         @more="emit('more', event)"
       />
     </span>

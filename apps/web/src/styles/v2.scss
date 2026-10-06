@@ -2713,10 +2713,12 @@ a.k2-row--link {
   min-block-size: 0;
 }
 
-/* 面板内侧滚动：直接限在面板上会和页面的滚动打架，所以只让内容区滚 */
+/* 面板内侧滚动：直接限在面板上会和页面的滚动打架，所以只让内容区滚。
+   注意不要写 overscroll-behavior: contain —— 内容没超出窗口时，鼠标停在列表上
+   应该把滚动交给页面；只有内容真的超出（异常列表）才在卡片内滚 */
 .k2-panel__body--scroll {
   overflow: hidden auto;
-  overscroll-behavior: contain;
+  overscroll-behavior: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--k2-c-border) transparent;
 }
@@ -2789,6 +2791,13 @@ a.k2-row--link {
   color: var(--k2-c-text);
 }
 
+/* 选中了某个来源：按钮跟着变品牌色（参考稿的 active 态） */
+.k2-panel__quiet--on {
+  border-color: var(--k2-c-primary-soft);
+  background: var(--k2-c-primary-soft);
+  color: var(--k2-c-primary-ink);
+}
+
 /* 头部右侧的文字入口（参考里的「查看全部」） */
 .k2-panel__link {
   display: inline-flex;
@@ -2825,7 +2834,7 @@ a.k2-row--link {
   display: flex;
   flex: none;
   align-items: center;
-  gap: var(--k2-s-2);
+  gap: var(--k2-s-3);
   margin-inline-start: auto;
 }
 
@@ -2879,6 +2888,323 @@ a.k2-row--link {
   color: var(--k2-c-text-muted);
 }
 
+/* ---------- 浮层（筛选 / +N 来源）---------- */
+/* 挂在 body 上（VMenu teleport），所以不能写在 .k2-panel 作用域里 */
+.k2-pop {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-2);
+  inline-size: 240px;
+  padding: var(--k2-s-2);
+  border: 1px solid var(--k2-c-border);
+  border-radius: var(--k2-r-lg);
+  background: var(--k2-c-surface);
+  box-shadow: var(--k2-shadow-lg);
+}
+
+.k2-pop__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--k2-s-2);
+  padding: var(--k2-s-1) var(--k2-s-1) var(--k2-s-3) var(--k2-s-2);
+}
+
+.k2-pop__heading {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--k2-s-1);
+  min-inline-size: 0;
+}
+
+.k2-pop__title {
+  font-size: var(--k2-fs-caption);
+  font-weight: var(--k2-fw-semibold);
+  color: var(--k2-c-text);
+}
+
+.k2-pop__note {
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-faint);
+}
+
+.k2-pop__close {
+  flex: none;
+  inline-size: 24px;
+  block-size: 24px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--k2-r-xs);
+  background: var(--k2-c-surface2);
+  color: var(--k2-c-text-muted);
+  cursor: pointer;
+}
+
+.k2-pop__close:hover {
+  background: var(--k2-c-surface3);
+  color: var(--k2-c-text);
+}
+
+/* 来源列表：最多 4 条的高度（每条 34px），再多在浮层里滚 */
+.k2-pop__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-block-size: 136px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--k2-c-border) transparent;
+}
+
+.k2-pop__item {
+  display: flex;
+  flex: none; /* 不参与压缩：超过 4 条时要真的滚，而不是把每条压扁 */
+  align-items: center;
+  gap: var(--k2-s-2);
+  block-size: 34px;
+  padding-inline: var(--k2-s-2);
+  border-radius: var(--k2-r-xs);
+  color: var(--k2-c-text);
+  font-size: var(--k2-fs-caption);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.k2-pop__item:hover {
+  background: var(--k2-c-wash-hover);
+}
+
+.k2-pop__item .v-icon {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--k2-c-text-faint);
+}
+
+/* 选项（筛选）：圆点 + 名称 + 条数 */
+.k2-pop__options {
+  display: flex;
+  flex-direction: column;
+  padding-block: var(--k2-s-1);
+  border-block: 1px solid var(--k2-c-border-soft);
+}
+
+.k2-pop__option {
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  align-items: center;
+  gap: var(--k2-s-2);
+  block-size: 35px;
+  padding-inline: var(--k2-s-2);
+  border: 0;
+  border-radius: var(--k2-r-xs);
+  background: none;
+  color: var(--k2-c-text-muted);
+  font: inherit;
+  font-size: var(--k2-fs-caption);
+  text-align: start;
+  cursor: pointer;
+}
+
+.k2-pop__option:hover {
+  background: var(--k2-c-wash-hover);
+}
+
+.k2-pop__option--on {
+  background: var(--k2-c-primary-soft);
+  color: var(--k2-c-primary-ink);
+  font-weight: var(--k2-fw-semibold);
+}
+
+.k2-pop__radio {
+  inline-size: 14px;
+  block-size: 14px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--k2-c-border);
+  border-radius: var(--k2-r-full);
+}
+
+.k2-pop__option--on .k2-pop__radio {
+  border-color: var(--k2-c-primary);
+}
+
+.k2-pop__radio > span {
+  inline-size: 7px;
+  block-size: 7px;
+  border-radius: var(--k2-r-full);
+}
+
+.k2-pop__option--on .k2-pop__radio > span {
+  background: var(--k2-c-primary);
+}
+
+.k2-pop__count {
+  color: var(--k2-c-text-faint);
+  font-size: var(--k2-fs-caption);
+  font-weight: var(--k2-fw-medium);
+}
+
+.k2-pop__reset {
+  block-size: 31px;
+  border: 0;
+  border-radius: var(--k2-r-xs);
+  background: none;
+  color: var(--k2-c-text-muted);
+  font: inherit;
+  font-size: var(--k2-fs-caption);
+  cursor: pointer;
+}
+
+.k2-pop__reset:hover {
+  background: var(--k2-c-wash-hover);
+}
+
+/* ---------- 「查看全部事件」弹窗 ---------- */
+.k2-modal {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--k2-c-border-soft);
+  border-radius: var(--k2-r-xl);
+  background: var(--k2-c-surface);
+  box-shadow: var(--k2-shadow-lg);
+}
+
+.k2-modal__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--k2-s-3);
+  padding: var(--k2-s-4) var(--k2-s-5) var(--k2-s-3);
+}
+
+.k2-modal__icon {
+  flex: none;
+  inline-size: 31px;
+  block-size: 31px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--k2-r-sm);
+  background: var(--k2-c-primary-soft);
+  color: var(--k2-c-primary-ink);
+}
+
+.k2-modal__title-line {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+}
+
+.k2-modal__title {
+  font-size: var(--k2-fs-bodyLg);
+  font-weight: var(--k2-fw-regular);
+  letter-spacing: -0.02em;
+  color: var(--k2-c-text);
+}
+
+.k2-modal__count {
+  min-inline-size: 23px;
+  padding: 2px var(--k2-s-2);
+  border-radius: var(--k2-r-sm);
+  background: var(--k2-c-primary-soft);
+  color: var(--k2-c-primary-ink);
+  font-size: var(--k2-fs-caption);
+  font-weight: var(--k2-fw-bold);
+  text-align: center;
+}
+
+.k2-modal__close {
+  flex: none;
+  inline-size: 31px;
+  block-size: 31px;
+  display: grid;
+  place-items: center;
+  margin-inline-start: auto;
+  border: 0;
+  border-radius: var(--k2-r-xs);
+  background: var(--k2-c-surface2);
+  color: var(--k2-c-text-muted);
+  cursor: pointer;
+}
+
+.k2-modal__close:hover {
+  background: var(--k2-c-surface3);
+  color: var(--k2-c-text);
+}
+
+.k2-modal__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-block-size: 42px;
+  padding-inline: var(--k2-s-5);
+  border-block: 1px solid var(--k2-c-border-soft);
+  background: var(--k2-c-surface2);
+}
+
+.k2-modal__filter {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-1);
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+.k2-modal__filter strong {
+  color: var(--k2-c-text);
+  font-weight: var(--k2-fw-semibold);
+}
+
+.k2-modal__clear {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--k2-c-primary);
+  font: inherit;
+  font-size: var(--k2-fs-caption);
+  cursor: pointer;
+}
+
+.k2-modal__list {
+  flex: 1;
+  min-block-size: 240px;
+  max-block-size: min(62vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: auto;
+  padding: var(--k2-s-1) var(--k2-s-3) var(--k2-s-2);
+  scrollbar-width: thin;
+  scrollbar-color: var(--k2-c-border) transparent;
+}
+
+.k2-modal__list .k2-list__row {
+  min-block-size: 64px;
+  margin-inline: 0;
+  padding: var(--k2-s-3) var(--k2-s-2);
+}
+
+.k2-modal__empty {
+  padding: var(--k2-s-6) var(--k2-s-4);
+  text-align: center;
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-faint);
+}
+
+.k2-modal__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--k2-s-3);
+  min-block-size: 54px;
+  padding-inline: var(--k2-s-5);
+  border-block-start: 1px solid var(--k2-c-border-soft);
+}
+
+.k2-modal__stat {
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-faint);
+}
+
 /* ---------- 事件行 ---------- */
 /* 行比参考（67px）再松一点；行自带的左右 -8px 负边距在这里抵消掉，
    留白由面板内容区的内边距 + 行自己的内边距一起给 */
@@ -2889,9 +3215,10 @@ a.k2-row--link {
   padding: var(--k2-s-3) var(--k2-s-2);
 }
 
-/* 内容区左右留白：条目与面板边缘有间距，悬停底色与分线也随之收进来 */
+/* 内容区留白：顶部留一条小间隙（第一个条目不贴着头），左右留白让条目与面板边缘有间距，
+   悬停底色与分线也随之收进来。面板高度里已经把这条顶部间隙补回去了（见 AppPanel 的默认高度） */
 .k2-panel__body {
-  padding-inline: var(--k2-s-3);
+  padding: var(--k2-s-1) var(--k2-s-3) 0;
 }
 
 /* 面板里的卡片之间留出间距（参考的异常列表是 8px） */
