@@ -38,6 +38,7 @@ declare module 'vue' {
     GroupDialog: typeof import('./components/biz/GroupDialog.vue')['default']
     GroupPanel: typeof import('./components/biz/GroupPanel.vue')['default']
     IncidentCard: typeof import('./components/biz/IncidentCard.vue')['default']
+    LlmPlusTag: typeof import('./components/biz/LlmPlusTag.vue')['default']
     MonitorCard: typeof import('./components/biz/MonitorCard.vue')['default']
     MonitorDialog: typeof import('./components/biz/MonitorDialog.vue')['default']
     ProviderDialog: typeof import('./components/biz/ProviderDialog.vue')['default']

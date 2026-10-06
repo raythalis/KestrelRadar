@@ -82,7 +82,6 @@ const lastPushText = computed(() => {
         {{ lastPushText }}
       </span>
       <button
-        v-if="enabled"
         type="button"
         class="k2-btn k2-btn--ghost k2-btn--sm k2-chan__test"
         :class="`k2-chan__probe--${probe}`"

@@ -10,6 +10,7 @@ import { useI18n } from 'vue-i18n'
 
 import AppInput from '@/components/app/AppInput.vue'
 import FormDialog from '@/components/biz/FormDialog.vue'
+import LlmPlusTag from '@/components/biz/LlmPlusTag.vue'
 import TagsField from '@/components/biz/TagsField.vue'
 import type { MonitorDialogValues } from '@/components/biz/types'
 
@@ -184,7 +185,10 @@ function submit(): void {
               :aria-label="t('monitor.modeLabel')"
               data-test="monitor-dialog-mode"
             >
-              <span>{{ t(`monitor.mode.${mode}`) }}</span>
+              <span class="k2-mode-line">
+                <LlmPlusTag v-if="mode === 'algorithm_llm'" />
+                <template v-else>{{ t(`monitor.mode.${mode}`) }}</template>
+              </span>
               <v-icon size="18" class="k2-select__caret">mdi-chevron-down</v-icon>
             </button>
           </template>
@@ -198,7 +202,8 @@ function submit(): void {
             <v-icon size="18">
               {{ value === mode ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank' }}
             </v-icon>
-            {{ t(`monitor.mode.${value}`) }}
+            <LlmPlusTag v-if="value === 'algorithm_llm'" />
+            <template v-else>{{ t(`monitor.mode.${value}`) }}</template>
           </button>
         </v-menu>
       </div>

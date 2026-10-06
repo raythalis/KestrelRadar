@@ -302,12 +302,22 @@ describe('配置管理页', { timeout: 20000 }, () => {
     expect(text).toContain('未选择渠道')
   })
 
-  it('监听卡把跟随全局当前生效的模式写出来', async () => {
-    const w = await mountLoaded()
+  it('监听卡把跟随全局当前生效的模式写出来：全局是 LLM+ 就写 LLM+', async () => {
+    vi.mocked(cardStatsApi.fetchCardStats).mockResolvedValue(
+      new Proxy({}, { get: () => ({}) }) as never,
+    )
+    vi.mocked(api.fetchConfig).mockResolvedValue({
+      ...snapshot,
+      settings: { ...SETTINGS_DEFAULTS, judgeMode: 'algorithm_llm' },
+      monitors: [{ ...snapshot.monitors[0]!, mode: 'follow_global' }],
+    } as never)
+    const w = mountView()
+    await flushPromises()
     await expandFirst(w)
-    const cards = w.findAll('[data-test="monitor-card"]')
-    expect(cards.length).toBeGreaterThanOrEqual(1)
-    expect(cards[0]!.text().length).toBeGreaterThan(0)
+
+    const mode = w.findAll('[data-test="monitor-card"]')[0]!.find('[data-test="monitor-mode"]')
+    expect(mode.text()).toBe('跟随全局 · LLM+')
+    expect(mode.find('[data-test="llm-plus"]').exists()).toBe(true)
   })
 
   it('加载中显示骨架，加载完消失', async () => {

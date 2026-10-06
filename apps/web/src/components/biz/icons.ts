@@ -13,6 +13,9 @@ import type { ChannelType, DiscoveryKind, MonitorMode } from '@kestrel/contracts
  */
 
 /** 渠道类型 → 图标 */
+/** 「LLM+」模式名前面那颗星芒（LlmPlusTag 用，图标字体子集里必须有这个名字） */
+export const LLM_PLUS_ICON = 'mdi-shimmer'
+
 export const CHANNEL_ICONS: Record<ChannelType, string> = {
   telegram: 'mdi-send',
   webhook: 'mdi-webhook',

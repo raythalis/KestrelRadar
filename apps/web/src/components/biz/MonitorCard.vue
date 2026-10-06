@@ -10,12 +10,15 @@ import { useI18n } from 'vue-i18n'
 
 import { cardStatView } from '@/components/biz/card-stat'
 import { SEMANTIC_ICONS } from '@/components/biz/icons'
+import LlmPlusTag from '@/components/biz/LlmPlusTag.vue'
 
 const props = withDefaults(
   defineProps<{
     name: string
-    /** 判定模式文案（跟随全局 / 自带算法 / 算法 + LLM） */
+    /** 判定模式文案（跟随全局 / 自带算法）；LLM+ 那档只给空串，名字与图标由 llmPlus 渲染 */
     modeLabel: string
+    /** 这一条实际生效的模式是 LLM+（跟随全局时看全局那一档） */
+    llmPlus?: boolean
     /** 图标（mdi-xxx），按判定模式给 */
     icon?: string
     /** 命中关键词；空数组＝全部通过 */
@@ -39,6 +42,7 @@ const props = withDefaults(
     icon: 'mdi-magnify',
     keywords: () => [],
     matchLabel: '',
+    llmPlus: false,
     intentText: '',
     stat: null,
     windowDays: 7,
@@ -145,7 +149,10 @@ const stateLabel = computed(() => (props.enabled ? t('common.enabled') : t('comm
           </span>
           <span class="k2-card__heading">
             <span class="k2-card__title" data-test="monitor-name">{{ name }}</span>
-            <span class="k2-card__sub" data-test="monitor-mode">{{ modeLabel }}</span>
+            <span class="k2-card__sub" data-test="monitor-mode">
+              <span v-if="modeLabel">{{ modeLabel }}</span>
+              <LlmPlusTag v-if="llmPlus" />
+            </span>
           </span>
           <v-menu v-model="menuOpen" :close-on-content-click="true" content-class="k2-menu">
             <template #activator="{ props: menuProps }">

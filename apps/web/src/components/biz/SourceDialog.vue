@@ -46,7 +46,6 @@ const props = withDefaults(
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   submit: [values: SourceDialogValues]
-  configureRsshub: []
   cancel: []
 }>()
 
@@ -74,37 +73,22 @@ watch(
   { immediate: true },
 )
 
-const rsshubConfigured = computed(() => props.rsshubBaseUrl.trim().length > 0)
-/** 前缀去掉末尾斜杠后展示；后端拼地址时也这么处理 */
+/** 前缀去掉末尾斜杠后展示；后端拼地址时也这么处理（实例地址有默认值，不会是空的） */
 const rsshubPrefix = computed(() => props.rsshubBaseUrl.trim().replace(/\/+$/, ''))
 
 function kindLabel(value: Kind): string {
   return t(`discovery.kind.${value}`)
 }
 
-/** RSSHub 没配时点这一项＝去配置，不选类型 */
-function pickKind(value: Kind): void {
-  if (value === 'rsshub' && !rsshubConfigured.value) {
-    emit('configureRsshub')
-    return
-  }
-  kind.value = value
-}
-
-/** 只有配了实例、且目标填了，才拿得到完整地址 */
-const prefix = computed(() =>
-  kind.value === 'rsshub' && rsshubConfigured.value ? rsshubPrefix.value : '',
-)
+/** 前后缀只在 RSSHub 路由这一档显示（实例地址走全局设置，有默认值） */
+const prefix = computed(() => (kind.value === 'rsshub' ? rsshubPrefix.value : ''))
 
 const title = computed(() => (props.name ? t('discovery.editSource') : t('discovery.addSource')))
 
-const submitDisabled = computed(() => {
-  const targetReady =
-    kind.value === 'rsshub'
-      ? rsshubConfigured.value && target.value.trim().length > 0
-      : target.value.trim().length > 0
-  return !name.value.trim() || !targetReady || !checkCron(cron.value).ok
-})
+// 实例地址走全局设置（有默认值），这里只要地址栏填了就算就绪
+const submitDisabled = computed(
+  () => !name.value.trim() || !target.value.trim() || !checkCron(cron.value).ok,
+)
 
 function submit(): void {
   emit('submit', {
@@ -176,17 +160,13 @@ function submit(): void {
           :key="value"
           type="button"
           class="k2-menu__item"
-          :class="{ 'k2-menu__item--muted': value === 'rsshub' && !rsshubConfigured }"
           data-test="source-dialog-kind-item"
-          @click="pickKind(value)"
+          @click="kind = value"
         >
           <v-icon size="18">
             {{ value === kind ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank' }}
           </v-icon>
           {{ kindLabel(value) }}
-          <span v-if="value === 'rsshub' && !rsshubConfigured" class="k2-menu__hint">
-            {{ t('discovery.goConfigure') }}
-          </span>
         </button>
       </v-menu>
     </div>

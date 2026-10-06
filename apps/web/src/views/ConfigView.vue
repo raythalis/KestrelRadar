@@ -15,6 +15,7 @@ import ConfirmDialog from '@/components/biz/ConfirmDialog.vue'
 import GroupDialog from '@/components/biz/GroupDialog.vue'
 import GroupPanel from '@/components/biz/GroupPanel.vue'
 import MonitorCard from '@/components/biz/MonitorCard.vue'
+import { monitorModeView } from '@/components/biz/monitor-mode'
 import MonitorDialog from '@/components/biz/MonitorDialog.vue'
 import { CHANNEL_ICONS, DISCOVERY_ICONS, MONITOR_ICONS } from '@/components/biz/icons'
 import SourceCard from '@/components/biz/SourceCard.vue'
@@ -179,10 +180,11 @@ function sourceProps(discovery: Discovery): InstanceType<typeof SourceCard>['$pr
 }
 
 function monitorProps(monitor: Monitor): InstanceType<typeof MonitorCard>['$props'] {
+  const mode = monitorModeView(monitor.mode, store.settings.judgeMode, t)
   return {
     name: monitor.name,
-    // 跟随全局就写「跟随全局」，不再缀当前生效的模式
-    modeLabel: t(`monitor.mode.${monitor.mode}`),
+    modeLabel: mode.label,
+    llmPlus: mode.llmPlus,
     icon: MONITOR_ICONS[monitor.mode],
     keywords: monitor.includeKeywords,
     matchLabel: monitor.includeKeywords.length ? t(`monitor.matchMode.${monitor.matchMode}`) : '',

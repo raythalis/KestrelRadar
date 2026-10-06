@@ -129,7 +129,7 @@ describe('MonitorDialog', () => {
     expect(q('monitor-dialog-sensitivity')?.textContent).toContain('标准')
 
     await openMenu('monitor-dialog-mode')
-    for (const text of ['跟随全局', '自带算法', '算法 + LLM']) {
+    for (const text of ['跟随全局', '自带算法', 'LLM+']) {
       expect(document.body.textContent).toContain(text)
     }
 

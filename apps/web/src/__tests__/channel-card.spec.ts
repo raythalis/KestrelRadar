@@ -100,13 +100,16 @@ describe('ChannelCard', () => {
     expect(testing.emitted('test')).toBeUndefined()
   })
 
-  it('停用只是变淡：还能点进编辑，但不给测试圆点', async () => {
+  it('停用只淡卡头：卡脚那行与两个按钮都在，测试照样能点', async () => {
     const off = mountCard({ enabled: false })
     expect(off.classes()).toContain('is-off')
     await off.trigger('click')
     expect(off.emitted('edit')).toHaveLength(1)
 
-    // 停用就该去编辑里启用，留着个点不能点没意义
-    expect(off.find('[data-test="channel-test"]').exists()).toBe(false)
+    // 结构不变：淡的只有卡头（图标/名称/类型），测试按钮留着
+    expect(off.find('[data-test="channel-test"]').exists()).toBe(true)
+    expect(off.find('[data-test="channel-delete"]').exists()).toBe(true)
+    await off.find('[data-test="channel-test"]').trigger('click')
+    expect(off.emitted('test')).toHaveLength(1)
   })
 })

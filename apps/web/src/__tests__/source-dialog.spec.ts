@@ -86,24 +86,19 @@ describe('SourceDialog', () => {
     })
     await flushPromises()
     await openMenu('source-dialog-kind')
-    // 当前产品能力：RSSHub 未配置时该项弱化 + 行内提示；选中它会请求去配置（不再单挂按钮）
-    const rsshubItem = document.querySelector(
-      '[data-test="source-dialog-kind-item"]',
-    ) as HTMLElement
-    expect(rsshubItem).not.toBeNull()
-    expect(rsshubItem.className).toContain('muted')
+    // 实例地址有后端默认值：这一项不再弱化，也没有「前往配置」
+    const items = Array.from(
+      document.querySelectorAll('[data-test="source-dialog-kind-item"]'),
+    ) as HTMLElement[]
+    const rsshubItem = items.find((el) => el.textContent?.includes('RSSHub')) as HTMLElement
+    expect(rsshubItem).not.toBeUndefined()
+    expect(rsshubItem.className).not.toContain('muted')
+    expect(rsshubItem.textContent).not.toContain('前往配置')
 
-    // 选非 RSSHub 的类型仍可保存，类型不被强制切换
-    const items = Array.from(document.querySelectorAll('[data-test="source-dialog-kind-item"]'))
-    const rssOne = items.find(
-      (el) => el.textContent?.includes('订阅地址') || el.textContent?.includes('RSS'),
-    ) as HTMLElement
-    if (rssOne) {
-      rssOne.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-      await flushPromises()
-    }
+    rsshubItem.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
     await click(submit())
-    expect((wrapper.emitted('submit')![0]![0] as { kind: string }).kind).toBe('rss')
+    expect((wrapper.emitted('submit')![0]![0] as { kind: string }).kind).toBe('rsshub')
   })
 
   it('RSSHub 配好了：这一项可选，也不出现「前往配置」', async () => {
@@ -195,7 +190,7 @@ describe('SourceDialog', () => {
     expect(submit().disabled).toBe(false)
   })
 
-  it('RSSHub 没配实例时，光有路由也保存不了', async () => {
+  it('RSSHub 路由填了就能保存：实例地址走全局默认值', async () => {
     mountDialog({
       name: '有名字',
       target: '/github/trending/daily',
@@ -203,7 +198,7 @@ describe('SourceDialog', () => {
       rsshubBaseUrl: '',
     })
     await flushPromises()
-    expect(submit().disabled).toBe(true)
+    expect(submit().disabled).toBe(false)
   })
 
   it('停用的数据源：开关关掉后提交带着 enabled=false', async () => {

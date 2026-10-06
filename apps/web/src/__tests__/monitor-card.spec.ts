@@ -54,10 +54,20 @@ describe('MonitorCard', () => {
     expect(wrapper.emitted('edit')).toBeUndefined()
   })
 
-  it('名称与判定模式都在卡头', () => {
-    const wrapper = mountCard({ modeLabel: '算法 + LLM' })
+  it('名称与判定模式都在卡头；跟着全局开 LLM+ 时把生效那档也写出来', () => {
+    const wrapper = mountCard({ modeLabel: '跟随全局 · ', llmPlus: true })
     expect(wrapper.find('[data-test="monitor-name"]').text()).toBe('舞蹈相关')
-    expect(wrapper.find('[data-test="monitor-mode"]').text()).toBe('算法 + LLM')
+    expect(wrapper.find('[data-test="monitor-mode"]').text()).toBe('跟随全局 · LLM+')
+
+    const tag = wrapper.find('[data-test="monitor-mode"] [data-test="llm-plus"]')
+    expect(tag.exists()).toBe(true)
+    expect(tag.find('.mdi').classes()).toContain('mdi-shimmer')
+  })
+
+  it('自带算法那档只写文字，不出 LLM+ 标签', () => {
+    const wrapper = mountCard({ modeLabel: '跟随全局 · 自带算法' })
+    expect(wrapper.find('[data-test="monitor-mode"]').text()).toBe('跟随全局 · 自带算法')
+    expect(wrapper.find('[data-test="llm-plus"]').exists()).toBe(false)
   })
 
   it('匹配方式写在最前；关键词按卡片宽度自适应，放不下的合成 +N', () => {

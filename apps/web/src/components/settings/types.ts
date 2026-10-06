@@ -23,7 +23,8 @@ export interface SettingsField {
   lowKey?: SettingKey
   min?: number
   max?: number
-  options?: { value: string; title: string }[]
+  /** 选项；title 是文字，llmPlus 的那档由 LlmPlusTag 画名字与图标 */
+  options?: { value: string; title: string; llmPlus?: boolean }[]
 }
 
 /** 一张设置卡：同一件事的设置放一起，改动即自动保存 */

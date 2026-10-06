@@ -20,6 +20,7 @@ const judgeModeOptions = computed(() =>
   (['algorithm', 'algorithm_llm'] as const).map((value) => ({
     value,
     title: t(`monitor.mode.${value}`),
+    llmPlus: value === 'algorithm_llm',
   })),
 )
 /** 消息语言：只影响固定文案（标记与来源分隔符），正文仍是模板那套 */

@@ -245,8 +245,10 @@ describe('设置页', () => {
       checkedAt: '2026-10-05T00:00:00.000Z',
     })
     const wrapper = await mountLoaded('collection')
-    // 地址没填时按钮不可点
-    expect(wrapper.get('[data-test="setting-rsshubTest"]').attributes('disabled')).toBeDefined()
+    // 实例地址有默认值（本机 1200），没配过也能直接测
+    const address = wrapper.get('[data-test="setting-rsshubBaseUrl"]').element as HTMLInputElement
+    expect(address.value).toBe('http://localhost:1200')
+    expect(wrapper.get('[data-test="setting-rsshubTest"]').attributes('disabled')).toBeUndefined()
 
     await wrapper.get('[data-test="setting-rsshubBaseUrl"]').setValue('http://192.168.5.100:1200')
     await flushPromises()

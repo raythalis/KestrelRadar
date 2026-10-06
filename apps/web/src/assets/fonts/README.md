@@ -7,7 +7,7 @@
 | ------------------------------------- | ------ | ----------------------------------------- | -------------------------------------------------------------------- |
 | `inter-variable-latin.woff2`          | 48 KB  | 普通界面：英文、数字、符号                | SIL OFL 1.1（`LICENSE-Inter.txt`）                                   |
 | `jetbrains-mono-variable-latin.woff2` | 40 KB  | 代码、日志、IP、技术串（`--k-font-mono`） | SIL OFL 1.1（`LICENSE-JetBrainsMono.txt`）                           |
-| `materialdesignicons-subset.woff2`    | 5.0 KB | 图标（`@mdi/font` 的裁剪版，92 个图标）   | Apache-2.0 / Pictogrammers Free（`LICENSE-MaterialDesignIcons.txt`） |
+| `materialdesignicons-subset.woff2`    | 5.2 KB | 图标（`@mdi/font` 的裁剪版，96 个图标）   | Apache-2.0 / Pictogrammers Free（`LICENSE-MaterialDesignIcons.txt`） |
 
 两份文本字体都是**可变字体**（一份文件覆盖 400–900 字重），只含 `latin` 字符集；
 `@font-face` 写在 `src/styles/fonts.scss`，字体族接在 `src/design/tokens/foundation.ts` 的
@@ -15,8 +15,8 @@
 
 ## 为什么是裁剪版图标字体
 
-全量 `@mdi/font` 是 7448 个图标：woff2 394 KB + CSS 408 KB，而项目实际只用到 92 个。
-裁剪后字体 5.0 KB、CSS 几 KB。图标清单 = 前端源码里出现的 `mdi-*` ∪ Vuetify 内置 mdi 图标集
+全量 `@mdi/font` 是 7448 个图标：woff2 394 KB + CSS 408 KB，而项目实际只用到 96 个。
+裁剪后字体 5.2 KB、CSS 几 KB。图标清单 = 前端源码里出现的 `mdi-*` ∪ Vuetify 内置 mdi 图标集
 （`node_modules/vuetify/lib/iconsets/mdi.js`：选择框箭头、弹窗关闭、复选框、分页这些由 Vuetify 内部渲染，
 源码里搜不到名字，不能漏）。
 

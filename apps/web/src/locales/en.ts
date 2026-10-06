@@ -106,7 +106,6 @@ export default {
     itemCount: '{n} items collected',
     baseline: 'Baseline set: {n} historical items, not pushed',
     addSource: 'New source',
-    goConfigure: 'Set up',
     editSource: 'Edit source',
     targetHint: {
       rsshub: 'e.g. /bilibili/ranking/all',
@@ -148,7 +147,7 @@ export default {
     mode: {
       follow_global: 'Follow global',
       algorithm: 'Algorithm only',
-      algorithm_llm: 'Algorithm + LLM',
+      algorithm_llm: 'LLM+',
     },
     intent: 'Intent',
     intentHint: 'One plain sentence, e.g. "new movies with that actress"',
@@ -203,8 +202,7 @@ export default {
     probeRunning: 'Sending…',
     probeOk: 'Reachable',
     probeFail: 'Cannot send',
-    subtitle:
-      'Where messages go out. Telegram needs a bot token plus a chat; Webhook needs a URL and an optional secret.',
+    subtitle: 'Where messages are sent from',
     add: 'New channel',
     addTyped: 'New {type} channel',
     edit: 'Edit channel',

@@ -31,7 +31,7 @@ function seed(): string {
 }
 
 describe('仪表盘汇总', () => {
-  it('空库：数量全 0，比例是 null，RSSHub 没配', async () => {
+  it('空库：数量全 0，比例是 null，RSSHub 走默认地址但探测不通', async () => {
     const overview = await container.stats.overview()
     expect(overview.counts.discoveries).toEqual({ enabled: 0, total: 0 })
     expect(overview.counts.monitors).toEqual({ enabled: 0, total: 0 })
@@ -42,8 +42,8 @@ describe('仪表盘汇总', () => {
     expect(overview.collection.rounds).toBe(0)
     expect(overview.collection.rate).toBeNull()
     expect(overview.collection.windowDays).toBe(7)
-    expect(overview.rsshub.configured).toBe(false)
-    expect(overview.rsshub.ok).toBe(false)
+    // 实例地址有后端默认值（本机 1200），所以默认就算「配了」；探不探得通取决于跑测试的机器，不在这断
+    expect(overview.rsshub.configured).toBe(true)
   })
 
   it('数量卡数的是启用数 / 总数', async () => {

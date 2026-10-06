@@ -6,6 +6,7 @@ import ActionCard from '@/components/biz/ActionCard.vue'
 import ChannelCard from '@/components/biz/ChannelCard.vue'
 import GroupPanel from '@/components/biz/GroupPanel.vue'
 import MonitorCard from '@/components/biz/MonitorCard.vue'
+import { monitorModeView } from '@/components/biz/monitor-mode'
 import SourceCard from '@/components/biz/SourceCard.vue'
 import {
   ACTION_FIXTURES,
@@ -19,6 +20,9 @@ import {
   type MonitorFixture,
   type SourceFixture,
 } from './fixtures'
+
+/** 样例里全局判定档位：跟「跟随全局」的那张卡一起演示 LLM+ */
+const GLOBAL_MODE = 'algorithm_llm' as const
 
 /**
  * 卡片样例 = 真实 Biz Card + 真实所在容器。
@@ -49,9 +53,11 @@ function sourceProps(item: SourceFixture) {
 }
 
 function monitorProps(item: MonitorFixture) {
+  const mode = monitorModeView(item.mode, GLOBAL_MODE, t)
   return {
     name: item.name,
-    modeLabel: t(`monitor.mode.${item.mode}`),
+    modeLabel: mode.label,
+    llmPlus: mode.llmPlus,
     icon: item.icon,
     keywords: item.keywords,
     matchLabel:

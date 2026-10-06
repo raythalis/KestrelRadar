@@ -107,7 +107,6 @@ export default {
     itemCount: '已收 {n} 条',
     baseline: '已建立基线：收入 {n} 条历史内容，不计入推送',
     addSource: '新建数据源',
-    goConfigure: '前往配置',
     editSource: '编辑数据源',
     targetHint: {
       rsshub: '例如 /bilibili/ranking/all',
@@ -149,7 +148,7 @@ export default {
     mode: {
       follow_global: '跟随全局',
       algorithm: '自带算法',
-      algorithm_llm: '算法 + LLM',
+      algorithm_llm: 'LLM+',
     },
     intent: '意图描述',
     intentHint: '用人话写一句，例如「杨幂的新电影」',
@@ -204,7 +203,7 @@ export default {
     probeRunning: '发送中…',
     probeOk: '连通正常',
     probeFail: '发不出去',
-    subtitle: '消息从哪儿发出去。Telegram 用 bot token 加会话，Webhook 用地址加可选密钥。',
+    subtitle: '消息从何处发出去',
     add: '新建渠道',
     addTyped: '新建 {type} 渠道',
     edit: '编辑渠道',

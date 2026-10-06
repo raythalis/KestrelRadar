@@ -1,4 +1,4 @@
-// 图标字体：Material Design Icons 的**裁剪版**，只保留项目真正会用到的 95 个图标。
+// 图标字体：Material Design Icons 的**裁剪版**，只保留项目真正会用到的 96 个图标。
 // 全量是 7448 个图标（woff2 394 KB + CSS 408 KB）；裁剪后字体 5.3 KB，
 // CSS 只剩下面这些规则。图标清单 = 前端源码里出现的 mdi-* ∪ Vuetify 内置 mdi 图标集
 // （后者写在 vuetify/lib/iconsets/mdi.js，选择框箭头、弹窗关闭、复选框、分页这些是 Vuetify 内部渲染的，
@@ -328,6 +328,9 @@
 
 .mdi-shield-outline:before {
   content: '\F0499';
+}
+.mdi-shimmer:before {
+  content: '\F1545';
 }
 
 .mdi-star:before {

@@ -177,7 +177,6 @@ function submit(): void {
         <AppInput
           v-model="url"
           mono
-          placeholder="https://"
           :label="t('channel.url')"
           required
           data-test="channel-dialog-url"

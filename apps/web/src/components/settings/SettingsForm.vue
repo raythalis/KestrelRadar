@@ -10,6 +10,7 @@ import { useI18n } from 'vue-i18n'
 
 import { probeRsshub } from '@/api/config'
 import ScoreBandField from '@/components/settings/ScoreBandField.vue'
+import LlmPlusTag from '@/components/biz/LlmPlusTag.vue'
 import TagsField from '@/components/biz/TagsField.vue'
 import type { SettingsCard, SettingsField } from '@/components/settings/types'
 import { useConfigStore } from '@/stores/config'
@@ -228,6 +229,12 @@ function titleOf(field: SettingsField): string {
   return field.options?.find((option) => option.value === current)?.title ?? current
 }
 
+/** 当前选的是不是「LLM+」那一档（那档的名字与星芒图标由 LlmPlusTag 画） */
+function llmPlusOf(field: SettingsField): boolean {
+  const current = valueOf(field)
+  return Boolean(field.options?.find((option) => option.value === current)?.llmPlus)
+}
+
 function pick(field: SettingsField, value: string): void {
   draft.value[field.key] = value
   clearFieldError(field)
@@ -303,7 +310,10 @@ function asStringArray(value: unknown): string[] {
                   v-bind="menuProps"
                   :data-test="`setting-${field.id ?? field.key}`"
                 >
-                  <span>{{ titleOf(field) }}</span>
+                  <span class="k2-mode-line">
+                    <LlmPlusTag v-if="llmPlusOf(field)" />
+                    <template v-else>{{ titleOf(field) }}</template>
+                  </span>
                   <i class="mdi mdi-chevron-down k2-select__caret" />
                 </button>
               </template>
@@ -320,7 +330,8 @@ function asStringArray(value: unknown): string[] {
                       option.value === valueOf(field) ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'
                     }}
                   </v-icon>
-                  {{ option.title }}
+                  <LlmPlusTag v-if="option.llmPlus" />
+                  <template v-else>{{ option.title }}</template>
                 </button>
               </div>
             </v-menu>
