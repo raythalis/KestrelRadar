@@ -25,4 +25,17 @@ describe('AppEmptyState', () => {
     expect(mountEmpty({ icon: 'mdi-inbox-outline' }).find('.k2-empty__icon').exists()).toBe(true)
     expect(mountEmpty({ title: 'x' }).find('.k2-empty__icon').exists()).toBe(false)
   })
+
+  it('art：活跃区那两张插图，事件一张、异常一张', () => {
+    const events = mountEmpty({ art: 'events' })
+    expect(events.find('.k2-empty-art--events').exists()).toBe(true)
+    expect(events.find('.k2-empty-art__ring').exists()).toBe(true)
+    expect(events.find('.k2-empty-art__icon .mdi-inbox-outline').exists()).toBe(true)
+    // 有插图时不再渲染单图标，避免两个图标同时出现
+    expect(events.find('.k2-empty__icon').exists()).toBe(false)
+
+    const incidents = mountEmpty({ art: 'incidents' })
+    expect(incidents.find('.k2-empty-art--incidents').exists()).toBe(true)
+    expect(incidents.find('.k2-empty-art__icon .mdi-check-circle-outline').exists()).toBe(true)
+  })
 })

@@ -17,7 +17,14 @@ import AppTabs from '@/components/app/AppTabs.vue'
 import AppTextarea from '@/components/app/AppTextarea.vue'
 import { formatDateTime, timeAgo } from '@/utils/format'
 
-import { ACTIVITY_EVENTS, ACTIVITY_INCIDENTS, FORM_TEXT, SELECT_ITEMS, TAB_ITEMS } from './fixtures'
+import {
+  ACTIVITY_EVENTS,
+  ACTIVITY_INCIDENTS,
+  FORM_TEXT,
+  REST_SOURCES,
+  SELECT_ITEMS,
+  TAB_ITEMS,
+} from './fixtures'
 import { SEMANTIC_ICONS } from '@/components/biz/icons'
 
 /**
@@ -140,10 +147,10 @@ function eventTime(value: string): string {
             <span class="k2-panel__sub">24h内关注的事件动态</span>
           </span>
           <span class="k2-panel__actions">
-            <span class="k2-chip k2-chip--soft">
-              <v-icon size="13">mdi-filter-variant</v-icon>
+            <button type="button" class="k2-panel__quiet">
+              <v-icon size="14">mdi-filter-variant</v-icon>
               筛选
-            </span>
+            </button>
             <button type="button" class="k2-panel__link" @click="openEvent({ title: '全部事件' })">
               查看全部
               <v-icon size="14">mdi-chevron-right</v-icon>
@@ -185,12 +192,6 @@ function eventTime(value: string): string {
             @dismiss="noop"
           />
         </div>
-        <template #foot>
-          <button type="button" class="k2-panel__more">
-            向下滚动查看更多
-            <span class="k2-panel__hint">还有 {{ ACTIVITY_INCIDENTS.length }} 条</span>
-          </button>
-        </template>
       </AppPanel>
     </div>
 
@@ -209,7 +210,7 @@ function eventTime(value: string): string {
           </span>
         </template>
         <AppEmptyState
-          :icon="SEMANTIC_ICONS.event"
+          art="events"
           title="还没有事件"
           note="采集到条目并归并成事件后，最近 24 小时的会出现在这里"
         />
@@ -223,11 +224,7 @@ function eventTime(value: string): string {
             <span class="k2-panel__sub">同一处异常60分钟内重复只更新时间，最多展示20条</span>
           </span>
         </template>
-        <AppEmptyState
-          :icon="SEMANTIC_ICONS.incident"
-          title="没有异常"
-          note="采集、判定、推送出错时会记在这里"
-        />
+        <AppEmptyState art="incidents" title="没有异常" note="采集、判定、推送出错时会记在这里" />
       </AppPanel>
     </div>
 
@@ -235,7 +232,11 @@ function eventTime(value: string): string {
     <div class="lab-form">
       <AppSourceTags :sources="ACTIVITY_EVENTS[1].sources" :total="1" />
       <AppSourceTags :sources="ACTIVITY_EVENTS[0].sources" :total="2" />
-      <AppSourceTags :sources="ACTIVITY_EVENTS[0].sources" :total="4" @more="openSources" />
+      <AppSourceTags
+        :sources="ACTIVITY_EVENTS[4].sources"
+        :total="ACTIVITY_EVENTS[4].sourceCount"
+        :rest="REST_SOURCES"
+      />
     </div>
 
     <div class="lab__h3">状态 · AppStatus</div>

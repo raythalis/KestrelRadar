@@ -2748,8 +2748,8 @@ a.k2-row--link {
 .k2-panel__head {
   align-items: center;
   gap: var(--k2-s-4);
-  min-block-size: 77px;
-  padding: var(--k2-s-4) var(--k2-s-4) var(--k2-s-3);
+  min-block-size: 84px;
+  padding: var(--k2-s-5) var(--k2-s-4) var(--k2-s-3);
 }
 
 .k2-panel__heading {
@@ -2757,7 +2757,7 @@ a.k2-row--link {
   flex: 1 1 auto;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--k2-s-1) var(--k2-s-2);
+  gap: var(--k2-s-2);
   min-inline-size: 0;
 }
 
@@ -2766,6 +2766,27 @@ a.k2-row--link {
   font-weight: var(--k2-fw-regular);
   line-height: var(--k2-lh-tight);
   letter-spacing: -0.015em;
+}
+
+/* 头部右侧的安静按钮（参考里的「筛选」：白底、浅描边、圆角 8） */
+.k2-panel__quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k2-s-1);
+  block-size: 29px;
+  padding: 0 var(--k2-s-3);
+  border: 1px solid var(--k2-c-border);
+  border-radius: var(--k2-r-xs);
+  background: var(--k2-c-surface);
+  color: var(--k2-c-text-muted);
+  font: inherit;
+  font-size: var(--k2-fs-caption);
+  cursor: pointer;
+}
+
+.k2-panel__quiet:hover {
+  background: var(--k2-c-surface2);
+  color: var(--k2-c-text);
 }
 
 /* 头部右侧的文字入口（参考里的「查看全部」） */
@@ -2993,4 +3014,74 @@ a.k2-row--link {
 .k2-incident .k2-chip {
   padding-block: 0;
   font-size: var(--k2-fs-caption);
+}
+
+/* ---------- 空状态插图（参考稿那两张）---------- */
+/* 事件＝紫环 + 收件箱；异常＝绿环 + 对勾。颜色全部取自语义 token */
+.k2-empty-art {
+  position: relative;
+  inline-size: 92px;
+  block-size: 82px;
+  margin-block-end: var(--k2-s-4);
+  display: grid;
+  place-items: center;
+}
+
+.k2-empty-art__ring {
+  position: absolute;
+  inline-size: 76px;
+  block-size: 76px;
+  border-radius: var(--k2-r-full);
+  background: var(--k2-c-primary-soft);
+  box-shadow: inset 0 0 0 13px color-mix(in srgb, var(--k2-c-primary-soft) 55%, var(--k2-c-surface));
+}
+
+.k2-empty-art__icon {
+  position: relative;
+  z-index: 1;
+  inline-size: 42px;
+  block-size: 42px;
+  border-radius: var(--k2-r-md);
+  color: var(--k2-c-primary-ink);
+  background: var(--k2-c-surface);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--k2-shadow-sm);
+}
+
+.k2-empty-art__spark {
+  position: absolute;
+  z-index: 2;
+  inline-size: 5px;
+  block-size: 5px;
+  border-radius: var(--k2-r-full);
+  background: var(--k2-c-primary);
+  opacity: 0.5;
+}
+
+.k2-empty-art__spark--one {
+  inset-block-start: 8px;
+  inset-inline-end: 6px;
+}
+
+.k2-empty-art__spark--two {
+  inset-block-end: 12px;
+  inset-inline-start: 4px;
+  inline-size: 4px;
+  block-size: 4px;
+  opacity: 0.35;
+}
+
+/* 异常那一张换成绿色（成功语义） */
+.k2-empty-art--incidents .k2-empty-art__ring {
+  background: var(--k2-c-success-soft);
+  box-shadow: inset 0 0 0 13px color-mix(in srgb, var(--k2-c-success-soft) 55%, var(--k2-c-surface));
+}
+
+.k2-empty-art--incidents .k2-empty-art__icon {
+  color: var(--k2-c-success-ink);
+}
+
+.k2-empty-art--incidents .k2-empty-art__spark {
+  background: var(--k2-c-success);
 }

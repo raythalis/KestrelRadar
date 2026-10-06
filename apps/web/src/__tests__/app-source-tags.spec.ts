@@ -30,6 +30,19 @@ describe('AppSourceTags', () => {
     expect(wrapper.emitted('more')).toHaveLength(1)
   })
 
+  it('给了完整来源列表时，点 +N 就地展开，不抛 more', async () => {
+    const rest = [source(3), source(4)]
+    const wrapper = mount(AppSourceTags, {
+      props: { sources: [source(1), source(2)], total: 4, rest },
+    })
+    expect(wrapper.findAll('.k2-chip--tag')).toHaveLength(3)
+    await wrapper.find('[data-test="app-source-tags-more"]').trigger('click')
+    expect(wrapper.findAll('.k2-chip--tag')).toHaveLength(4)
+    expect(wrapper.text()).toContain('来源3')
+    expect(wrapper.find('[data-test="app-source-tags-more"]').exists()).toBe(false)
+    expect(wrapper.emitted('more')).toBeUndefined()
+  })
+
   it('来源没有链接时挂成不可点的标签', () => {
     const wrapper = mount(AppSourceTags, { props: { sources: [source(1, null)], total: 1 } })
     const tag = wrapper.find('.k2-chip--tag')

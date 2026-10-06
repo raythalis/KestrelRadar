@@ -1,4 +1,10 @@
-import type { CardStat, ChannelType, Incident, RecentEvent } from '@kestrel/contracts'
+import type {
+  CardStat,
+  ChannelType,
+  EventSourceRef,
+  Incident,
+  RecentEvent,
+} from '@kestrel/contracts'
 
 import { CHANNEL_ICONS, DISCOVERY_ICONS, MONITOR_ICONS } from '@/components/biz/icons'
 import type { Group } from '@kestrel/contracts'
@@ -367,6 +373,12 @@ export const ACTIVITY_EVENTS: RecentEvent[] = [
     lastItemAt: minutesAgo(720),
     readAt: minutesAgo(700),
   },
+]
+
+/** 「+N」展开时补上的其余来源（接口按需取回来的那一份） */
+export const REST_SOURCES: EventSourceRef[] = [
+  { discoveryId: 'd-rsshub', name: 'RSSHub', url: 'https://example.com/sqlite-350-rsshub' },
+  { discoveryId: 'd-github', name: 'GitHub 趋势', url: 'https://example.com/sqlite-350-github' },
 ]
 
 export const ACTIVITY_INCIDENTS: Incident[] = [
