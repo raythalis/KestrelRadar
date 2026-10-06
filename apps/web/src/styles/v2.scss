@@ -770,13 +770,6 @@
   background: var(--k2-c-wash-hover);
 }
 
-.k2-preset--on {
-  border-color: var(--k2-c-primary);
-  background: var(--k2-c-primary-soft);
-  color: var(--k2-c-text);
-  font-weight: var(--k2-fw-semibold);
-}
-
 /* ---------- 栅格 ---------- */
 .k2-grid {
   display: grid;
@@ -834,13 +827,6 @@
 .k2-input:disabled,
 .k2-textarea:disabled,
 .k2-select:disabled,
-.k2-tags--disabled {
-  background: var(--k2-c-disabled-bg);
-  border-color: transparent;
-  color: var(--k2-c-disabled-text);
-  box-shadow: none;
-}
-
 /* ---------- 加载骨架：底色 + 一道扫光 ---------- */
 .k2-skeleton {
   position: relative;
@@ -851,12 +837,6 @@
 
 .k2-skeleton--line {
   block-size: var(--k2-s-3);
-}
-
-.k2-skeleton--tile {
-  inline-size: var(--k2-tile);
-  block-size: var(--k2-tile);
-  border-radius: var(--k2-r-md);
 }
 
 .k2-skeleton::after {
@@ -909,10 +889,6 @@
 }
 
 /* ---------- 遮罩（弹窗底）---------- */
-.k2-overlay {
-  background: var(--k2-c-overlay);
-}
-
 /* ---------- 图标尺寸三档 ---------- */
 .k2-icon--sm {
   font-size: var(--k2-icon-sm);
@@ -1295,12 +1271,6 @@ body {
 }
 
 /* 骨架条：一块配图形（方块）、两块配文字（标题粗短、副文案细长） */
-.k2-skeleton--tile {
-  inline-size: var(--k2-icon-lg);
-  block-size: var(--k2-icon-lg);
-  border-radius: var(--k2-r-md);
-}
-
 .k2-skeleton--title {
   inline-size: 60%;
   block-size: var(--k2-fs-body);
@@ -1421,22 +1391,6 @@ a.k2-row--link {
 
 /* 长列表（如全球时区）在面板内侧限高滚动：直接限在面板上会和 Vuetify 的开合动画冲突，面板会渲染成一条 */
 /* 重置那一块：危险按钮 + 就地结果 */
-.k2-reset {
-  display: flex;
-  align-items: center;
-  gap: var(--k2-s-3);
-  flex-wrap: wrap;
-}
-
-.k2-reset__note {
-  color: var(--k2-c-text-muted);
-  font-size: var(--k2-fs-caption);
-}
-
-.k2-reset__note--bad {
-  color: var(--k2-c-danger-ink);
-}
-
 .k2-menu__scroll {
   display: flex;
   flex-direction: column;
@@ -1912,32 +1866,6 @@ a.k2-row--link {
   margin-block-end: var(--k2-s-5);
   /* 跟正文让出的那 5px 对齐：标题和字段的左边缘还是一条线 */
   padding-inline: 5px;
-}
-
-.k2-picker {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--k2-s-3);
-}
-
-.k2-picker__item {
-  display: flex;
-  align-items: center;
-  gap: var(--k2-s-3);
-  padding: var(--k2-s-3);
-  background: var(--k2-c-surface2);
-  border: 1px solid var(--k2-c-border-soft);
-  border-radius: var(--k2-r-lg);
-  color: var(--k2-c-text);
-  font-family: inherit;
-  font-size: var(--k2-fs-body);
-  text-align: start;
-  cursor: pointer;
-}
-
-.k2-picker__item:hover {
-  border-color: var(--k2-c-primary);
-  background: var(--k2-c-primary-soft);
 }
 
 /* ---------- 空状态 ---------- */
@@ -2477,52 +2405,6 @@ a.k2-row--link {
 /* ---------- 翻卡背面：一组「标签 + 值」 ----------
    两列并排（竖排会把卡片撑高一大截）；一句话说明这类长文本用 --wide 跨满整行，
    并且最多两行——卡片高度因此有上限，不会被一条长报错顶起来 */
-.k2-back {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--k2-s-3) var(--k2-s-4);
-  min-inline-size: 0;
-}
-
-.k2-back__item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-inline-size: 0;
-}
-
-.k2-back__label {
-  font-size: var(--k2-fs-caption);
-  color: var(--k2-c-text-faint);
-}
-
-.k2-back__value {
-  overflow: hidden;
-  font-size: var(--k2-fs-body);
-  color: var(--k2-c-text);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.k2-back__note {
-  display: -webkit-box;
-  overflow: hidden;
-  font-size: var(--k2-fs-caption);
-  color: var(--k2-c-text-muted);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.k2-back__note--wide {
-  grid-column: 1 / -1;
-}
-
-.k2-back__flags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--k2-s-1);
-}
-
 /* 空列：新增入口同时兼作空状态（标题 + 一句提示） */
 .k2-col__add--empty {
   /* 空列时它就是这一列的内容，紧贴列头；否则会被 auto 推到列底、上面空一大片 */
