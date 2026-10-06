@@ -1271,11 +1271,6 @@ body {
 }
 
 /* 骨架条：一块配图形（方块）、两块配文字（标题粗短、副文案细长） */
-.k2-skeleton--title {
-  inline-size: 60%;
-  block-size: var(--k2-fs-body);
-}
-
 .k2-skeleton--sub {
   inline-size: 38%;
   block-size: var(--k2-fs-caption);
