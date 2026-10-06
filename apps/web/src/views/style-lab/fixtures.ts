@@ -1,4 +1,4 @@
-import type { CardStat, ChannelType } from '@kestrel/contracts'
+import type { CardStat, ChannelType, Incident, RecentEvent } from '@kestrel/contracts'
 
 import { CHANNEL_ICONS, DISCOVERY_ICONS, MONITOR_ICONS } from '@/components/biz/icons'
 import type { Group } from '@kestrel/contracts'
@@ -264,4 +264,92 @@ export const TAB_ITEMS = [
   { value: 'discoveries', label: '发现', count: 3, icon: 'mdi-rss' },
   { value: 'monitors', label: '监听', count: 2, icon: 'mdi-bell-outline' },
   { value: 'actions', label: '动作', count: 1, icon: 'mdi-send-outline' },
+]
+
+/* ---------- 活跃区（最近事件 / 异常记录）样例数据：字段与接口一一对应 ---------- */
+
+export const ACTIVITY_EVENTS: RecentEvent[] = [
+  {
+    id: 'ev-unread',
+    title: 'Vue 3.6 正式版发布，响应式性能提升约 40%',
+    url: 'https://example.com/vue-36',
+    groupId: 'g1',
+    groupName: 'AI 与开发',
+    kind: 'rsshub',
+    sources: [
+      { discoveryId: 'd-github', name: 'GitHub 趋势', url: 'https://example.com/vue-36' },
+      { discoveryId: 'd-ithome', name: 'IT之家', url: 'https://example.com/vue-36-ithome' },
+    ],
+    sourceCount: 3,
+    sourceNames: ['GitHub 趋势', 'IT之家', '少数派'],
+    itemCount: 3,
+    firstItemAt: minutesAgo(180),
+    lastItemAt: minutesAgo(20),
+    readAt: null,
+  },
+  {
+    id: 'ev-read',
+    title: 'Fastify v6 路线图公开：默认 ESM、Node 22 起',
+    url: 'https://example.com/fastify-v6',
+    groupId: 'g1',
+    groupName: 'AI 与开发',
+    kind: 'rss',
+    sources: [
+      { discoveryId: 'd-hn', name: 'Hacker News 榜单', url: 'https://example.com/fastify-v6' },
+    ],
+    sourceCount: 1,
+    sourceNames: ['Hacker News 榜单'],
+    itemCount: 1,
+    firstItemAt: minutesAgo(420),
+    lastItemAt: minutesAgo(240),
+    readAt: minutesAgo(200),
+  },
+  {
+    id: 'ev-no-url',
+    title: '某源这次只抓到标题，没有原文链接',
+    url: null,
+    groupId: 'g1',
+    groupName: 'AI 与开发',
+    kind: 'web',
+    sources: [{ discoveryId: 'd-sspai', name: '少数派', url: null }],
+    sourceCount: 1,
+    sourceNames: ['少数派'],
+    itemCount: 1,
+    firstItemAt: minutesAgo(300),
+    lastItemAt: minutesAgo(300),
+    readAt: null,
+  },
+]
+
+export const ACTIVITY_INCIDENTS: Incident[] = [
+  {
+    id: 'in-collection',
+    kind: 'collection',
+    targetId: 'd-ithome',
+    targetName: 'IT之家',
+    groupId: 'g1',
+    groupName: 'AI 与开发',
+    code: 'fetch.http404',
+    message: '地址返回 404，检查订阅地址是不是变了',
+    detail: null,
+    status: 'open',
+    dismissedAt: null,
+    firstSeenAt: minutesAgo(180),
+    createdAt: minutesAgo(12),
+  },
+  {
+    id: 'in-delivery',
+    kind: 'delivery',
+    targetId: 'c-tg',
+    targetName: 'Telegram · 主账号',
+    groupId: 'g1',
+    groupName: 'AI 与开发',
+    code: 'delivery.telegramTimeout',
+    message: 'Telegram 超时',
+    detail: null,
+    status: 'open',
+    dismissedAt: null,
+    firstSeenAt: minutesAgo(90),
+    createdAt: minutesAgo(45),
+  },
 ]

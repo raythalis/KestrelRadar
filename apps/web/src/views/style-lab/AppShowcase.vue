@@ -6,12 +6,18 @@ import AppEmptyState from '@/components/app/AppEmptyState.vue'
 import AppHint from '@/components/app/AppHint.vue'
 import AppInput from '@/components/app/AppInput.vue'
 import AppSelect from '@/components/app/AppSelect.vue'
+import AppPanel from '@/components/app/AppPanel.vue'
 import AppSkeleton from '@/components/app/AppSkeleton.vue'
+import AppSourceTags from '@/components/app/AppSourceTags.vue'
+import EventRow from '@/components/biz/EventRow.vue'
+import IncidentCard from '@/components/biz/IncidentCard.vue'
 import AppStatus from '@/components/app/AppStatus.vue'
 import AppSwitch from '@/components/app/AppSwitch.vue'
 import AppTabs from '@/components/app/AppTabs.vue'
 import AppTextarea from '@/components/app/AppTextarea.vue'
-import { FORM_TEXT, SELECT_ITEMS, TAB_ITEMS } from './fixtures'
+import { formatDateTime, timeAgo } from '@/utils/format'
+
+import { ACTIVITY_EVENTS, ACTIVITY_INCIDENTS, FORM_TEXT, SELECT_ITEMS, TAB_ITEMS } from './fixtures'
 
 /**
  * App 组件样例 = 真组件。
@@ -26,6 +32,26 @@ const channel = ref<string | null>(FORM_TEXT.channel)
 const summary = ref(FORM_TEXT.summary)
 const enabled = ref(true)
 const tab = ref('discoveries')
+
+/** 样例里的动作只提示，不跳转、不写库：这里展示的是组件长什么样 */
+function openEvent(event: { title: string }): void {
+  window.console.info('[style-lab] 点开事件：', event.title)
+}
+
+function openSources(): void {
+  window.console.info('[style-lab] 展开完整来源列表')
+}
+
+function noop(): void {}
+
+/** 事件行的时间文案：和仪表盘同一套口径 */
+function eventTime(value: string): string {
+  const ago = timeAgo(value)
+  if (ago?.unit === 'now') return '刚刚'
+  if (ago?.unit === 'minute') return `${ago.value} 分钟前`
+  if (ago?.unit === 'hour') return `${ago.value} 小时前`
+  return formatDateTime(value)
+}
 </script>
 
 <template>
@@ -95,6 +121,55 @@ const tab = ref('discoveries')
       <div class="k2-card k2-card--flat">
         <AppSkeleton variant="card" :body="false" :blocks="3" />
       </div>
+    </div>
+
+    <!-- 活跃区：面板 + 事件行 + 异常卡，全是真组件（生产仪表盘就按这个形态迁） -->
+    <div class="lab__h3">活跃区 · AppPanel / EventRow / IncidentCard</div>
+    <p class="lab__meta">
+      两栏同高的定高面板：头部固定、内容区自己滚、底部可选一条入口；事件行挂来源标签（最多两个，多的收成
+      +N）；未读圆点是实心的（看过之后不会再亮）；异常卡只放首次出现、最近发生、当前状态。
+    </p>
+    <div class="lab__cols">
+      <AppPanel>
+        <template #head>
+          <span class="k2-sec__title">最近事件</span>
+        </template>
+        <EventRow
+          v-for="event in ACTIVITY_EVENTS"
+          :key="event.id"
+          :event="event"
+          :time="eventTime(event.lastItemAt)"
+          @open="openEvent"
+          @more="openSources"
+        />
+        <template #foot>
+          <button type="button" class="k2-chip k2-chip--soft">查看全部事件</button>
+        </template>
+      </AppPanel>
+      <AppPanel>
+        <template #head>
+          <span class="k2-sec__title">异常记录</span>
+        </template>
+        <div class="k2-rows">
+          <IncidentCard
+            v-for="incident in ACTIVITY_INCIDENTS"
+            :key="incident.id"
+            :incident="incident"
+            :first-seen="`首次出现 ${formatDateTime(incident.firstSeenAt)}`"
+            :last-seen="`最近发生 ${formatDateTime(incident.createdAt)}`"
+            status="待处理"
+            dismiss-label="忽视"
+            @dismiss="noop"
+          />
+        </div>
+      </AppPanel>
+    </div>
+
+    <div class="lab__h3">来源标签组 · AppSourceTags</div>
+    <div class="lab-form">
+      <AppSourceTags :sources="ACTIVITY_EVENTS[1].sources" :total="1" />
+      <AppSourceTags :sources="ACTIVITY_EVENTS[0].sources" :total="2" />
+      <AppSourceTags :sources="ACTIVITY_EVENTS[0].sources" :total="4" @more="openSources" />
     </div>
 
     <div class="lab__h3">状态 · AppStatus</div>

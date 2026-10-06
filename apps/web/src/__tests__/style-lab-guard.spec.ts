@@ -93,6 +93,10 @@ const REQUIRED_COMPONENTS = [
   'GroupDialog',
   'GroupPanel',
   'AppEmptyState',
+  'AppPanel',
+  'AppSourceTags',
+  'EventRow',
+  'IncidentCard',
 ]
 
 function labFiles(): string[] {
