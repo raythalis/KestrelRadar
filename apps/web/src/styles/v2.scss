@@ -1506,7 +1506,8 @@ a.k2-row--link {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--c-ink);
+  /* 与 success 本色一致（同 .k2-chan__test 的通过态） */
+  color: var(--k2-c-success);
   font-weight: var(--k2-fw-medium);
   white-space: nowrap;
 }
