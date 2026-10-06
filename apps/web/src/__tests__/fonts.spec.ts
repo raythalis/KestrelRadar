@@ -50,8 +50,6 @@ describe('自托管字体', () => {
 
   it('字号 / 行高 / 字重档位是 v2 那一套（正式体系）', () => {
     expect(V2_TYPE).toEqual({
-      micro: '10px',
-      label: '11px',
       caption: '12px',
       body: '14px',
       bodyLg: '16px',
