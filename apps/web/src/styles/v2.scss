@@ -63,6 +63,14 @@
   font-size: var(--k2-fs-subtitle);
 }
 
+/* 网站图标（后端抓回来的图）撑满图标位：外站 favicon 有的给到 512px，
+   不限定尺寸会把整块图标位撑成一张大图 */
+.k2-tile__img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
 .k2-tile--sm {
   inline-size: var(--k2-tile-sm);
   block-size: var(--k2-tile-sm);

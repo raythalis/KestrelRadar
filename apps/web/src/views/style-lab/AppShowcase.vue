@@ -65,9 +65,9 @@ const sourceFilter = ref(ALL_SOURCE_ID)
 /** 圆点对照：没看过（实心）／看过之后又有新条目（空心圈）／已读（不挂）。
     用副本，点了也不改状态，保证这一组样例始终是三者对照 */
 const dotSamples = reactive<RecentEvent[]>([
-  { ...ACTIVITY_EVENTS[0], id: 'sample-unread', readAt: null },
-  { ...ACTIVITY_EVENTS[1], id: 'sample-updated' },
-  { ...ACTIVITY_EVENTS[3], id: 'sample-read' },
+  { ...ACTIVITY_EVENTS[0]!, id: 'sample-unread', readAt: null },
+  { ...ACTIVITY_EVENTS[1]!, id: 'sample-updated' },
+  { ...ACTIVITY_EVENTS[3]!, id: 'sample-read' },
 ])
 
 const filteredEvents = computed(() =>
@@ -432,9 +432,9 @@ function eventTime(value: string): string {
 
     <div class="lab__h3">来源标签组 · AppSourceTags</div>
     <div class="lab-form">
-      <AppSourceTags :sources="ACTIVITY_EVENTS[1].sources" :total="1" />
-      <AppSourceTags :sources="ACTIVITY_EVENTS[0].sources" :total="2" />
-      <AppSourceTags :sources="ACTIVITY_EVENTS[4].sources" :total="8" :rest="MANY_SOURCES" />
+      <AppSourceTags :sources="ACTIVITY_EVENTS[1]?.sources ?? []" :total="1" />
+      <AppSourceTags :sources="ACTIVITY_EVENTS[0]?.sources ?? []" :total="2" />
+      <AppSourceTags :sources="ACTIVITY_EVENTS[4]?.sources ?? []" :total="8" :rest="MANY_SOURCES" />
     </div>
 
     <div class="lab__h3">状态 · AppStatus</div>

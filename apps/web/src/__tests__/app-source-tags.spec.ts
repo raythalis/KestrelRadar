@@ -18,7 +18,15 @@ function source(
 /** 浮层会被 teleport 到 body，断言去 document.body 里找；要挂到页面上才有这个行为 */
 const mounted: Array<{ unmount: () => void }> = []
 
-function mountTags(props: Record<string, unknown>, attach = true) {
+/** 组件实际收的 props（照 <script setup> 的声明写，别用宽泛的 Record） */
+type TagsProps = {
+  sources: EventSourceRef[]
+  total?: number
+  limit?: number
+  rest?: EventSourceRef[]
+}
+
+function mountTags(props: TagsProps, attach = true) {
   const wrapper = mount(AppSourceTags, {
     props,
     attachTo: attach ? document.body : undefined,
@@ -38,8 +46,8 @@ describe('AppSourceTags', () => {
     const wrapper = mountTags({ sources: [source(1), source(2)], total: 2 }, false)
     const tags = wrapper.findAll('.k2-chip--tag')
     expect(tags).toHaveLength(2)
-    expect(tags[0].attributes('href')).toBe('https://example.com/1')
-    expect(tags[0].attributes('target')).toBe('_blank')
+    expect(tags[0]?.attributes('href')).toBe('https://example.com/1')
+    expect(tags[0]?.attributes('target')).toBe('_blank')
     expect(wrapper.find('[data-test="app-source-tags-more"]').exists()).toBe(false)
   })
 

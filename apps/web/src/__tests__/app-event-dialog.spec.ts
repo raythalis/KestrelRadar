@@ -43,9 +43,9 @@ function mountDialog(props: Record<string, unknown> = {}) {
   return wrapper
 }
 
-function click(el: Element | null | undefined): Promise<void> {
+async function click(el: Element | null | undefined): Promise<void> {
   el?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-  return flushPromises()
+  await flushPromises()
 }
 
 afterEach(() => {
@@ -108,7 +108,7 @@ describe('AppEventDialog', () => {
     await flushPromises()
     const buttons = [...(modal()?.querySelectorAll('.k2-modal__head button') ?? [])]
     expect(buttons).toHaveLength(1)
-    expect(buttons[0].getAttribute('data-test')).toBe('app-event-dialog-close')
+    expect(buttons[0]?.getAttribute('data-test')).toBe('app-event-dialog-close')
   })
 
   it('还有下一页时打开就抛 load-more（第一页没占满也得能继续填）', async () => {
