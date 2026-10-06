@@ -27,4 +27,16 @@ describe('checkCron', () => {
       expect(checkCron(expression)).toEqual({ ok: false, reason: 'syntax' })
     }
   })
+
+  it('段数对但超出取值范围，也算读不出来', () => {
+    for (const expression of [
+      '99 99 * * *',
+      '0 24 * * *',
+      '0 8 32 * *',
+      '0 8 * 13 *',
+      '0 8 * * 9',
+    ]) {
+      expect(checkCron(expression)).toEqual({ ok: false, reason: 'syntax' })
+    }
+  })
 })

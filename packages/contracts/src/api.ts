@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { trimmedText } from './validation.ts'
+
 import {
   actionSchema,
   channelSchema,
@@ -57,8 +59,8 @@ export type TelegramChat = z.infer<typeof telegramChatSchema>
 /** 读会话时给 token，或者给一个已保存的渠道 id（用库里那份 token） */
 export const telegramChatsInputSchema = z
   .object({
-    token: z.string().max(200).optional(),
-    channelId: z.string().max(120).optional(),
+    token: trimmedText(200).optional(),
+    channelId: trimmedText(120).optional(),
   })
   .refine((value) => Boolean(value.token?.trim()) || Boolean(value.channelId), {
     message: '要么给 bot token，要么给一个渠道 id',

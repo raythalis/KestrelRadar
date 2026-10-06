@@ -187,4 +187,17 @@ describe('ChannelDialog', () => {
     await flushPromises()
     expect(input('channel-dialog-name').value).toBe('TG')
   })
+
+  it('Webhook 地址不是 http(s)：就地报红，保存点不动', async () => {
+    mountDialog({ name: '钩子', type: 'webhook', url: 'a.example/hook' })
+    await flushPromises()
+    expect(document.body.textContent).toContain('http://')
+    expect(submit().disabled).toBe(true)
+  })
+
+  it('Webhook 地址合法就能点保存', async () => {
+    mountDialog({ name: '钩子', type: 'webhook', url: 'https://a.example/hook' })
+    await flushPromises()
+    expect(submit().disabled).toBe(false)
+  })
 })

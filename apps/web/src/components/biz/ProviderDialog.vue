@@ -5,7 +5,7 @@
      校验没过或保存中都点不动。只出事件：组装好的值交给页面拼 create/update 入参；
      组件不碰 store、不发请求。 -->
 <script setup lang="ts">
-import type { ModelProvider } from '@kestrel/contracts'
+import { isHttpUrl, type ModelProvider } from '@kestrel/contracts'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -56,7 +56,10 @@ const kindItems = computed(() =>
     title: t(`model.kind.${value}`),
   })),
 )
-const valid = computed(() => name.value.trim().length > 0 && baseUrl.value.trim().length > 0)
+const baseUrlInvalid = computed(() => baseUrl.value.trim() !== '' && !isHttpUrl(baseUrl.value))
+const valid = computed(
+  () => name.value.trim().length > 0 && baseUrl.value.trim().length > 0 && !baseUrlInvalid.value,
+)
 
 function submit(): void {
   if (!valid.value) return
@@ -101,7 +104,9 @@ function submit(): void {
         v-model="baseUrl"
         mono
         :label="t('model.baseUrl')"
-        :hint="t('model.baseUrlHint')"
+        :hint="baseUrlInvalid ? t('model.baseUrlInvalid') : t('model.baseUrlHint')"
+        :error="baseUrlInvalid ? t('model.baseUrlInvalid') : undefined"
+        :maxlength="500"
         required
         data-test="provider-base-url-input"
       />
@@ -112,6 +117,7 @@ function submit(): void {
         autocomplete="off"
         :label="t('model.apiKey')"
         :hint="provider?.hasApiKey ? t('channel.secretKept') : t('model.apiKeyHint')"
+        :maxlength="500"
         data-test="provider-api-key-input"
       />
     </div>

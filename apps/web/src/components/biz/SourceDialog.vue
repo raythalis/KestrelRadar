@@ -5,6 +5,7 @@
        · 配了 → 把它当地址前缀挂在路由输入框前面；前缀只展示，保存的还是路由本身（后端拼前缀）。
      只出事件，不碰 store、不发请求。 -->
 <script setup lang="ts">
+import { isValidDiscoveryTarget } from '@kestrel/contracts'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -60,6 +61,11 @@ const enabled = ref(props.enabled)
 /** 类型面板开着没有；选项本身不进状态 */
 const kindOpen = ref(false)
 
+/** 目标形状：rss / web 必须是 http(s) 地址，rsshub 还允许相对路由 */
+const targetInvalid = computed(
+  () => target.value.trim() !== '' && !isValidDiscoveryTarget(target.value, kind.value),
+)
+
 watch(
   () => props.modelValue,
   (open) => {
@@ -87,7 +93,8 @@ const title = computed(() => (props.name ? t('discovery.editSource') : t('discov
 
 // 实例地址走全局设置（有默认值），这里只要地址栏填了就算就绪
 const submitDisabled = computed(
-  () => !name.value.trim() || !target.value.trim() || !checkCron(cron.value).ok,
+  () =>
+    !name.value.trim() || !target.value.trim() || targetInvalid.value || !checkCron(cron.value).ok,
 )
 
 function submit(): void {
@@ -174,7 +181,8 @@ function submit(): void {
     <AppInput
       v-model="target"
       :label="t(`discovery.targetLabel.${kind}`)"
-      :hint="t(`discovery.targetHint.${kind}`)"
+      :hint="targetInvalid ? t('discovery.targetInvalid') : t(`discovery.targetHint.${kind}`)"
+      :error="targetInvalid ? t('discovery.targetInvalid') : undefined"
       :prefix="prefix"
       mono
       :maxlength="1000"

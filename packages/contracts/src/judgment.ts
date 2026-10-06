@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { textList, trimmedText } from './validation.ts'
+
 import {
   judgmentBandSchema,
   judgmentDecisionSchema,
@@ -32,9 +34,9 @@ export const previewRulesSchema = z.object({
   mode: monitorModeSchema.optional(),
   sensitivity: sensitivitySchema.optional(),
   matchMode: matchModeSchema.optional(),
-  intentText: z.string().max(500).optional(),
-  includeKeywords: z.array(z.string().min(1).max(100)).max(200).optional(),
-  excludeKeywords: z.array(z.string().min(1).max(100)).max(200).optional(),
+  intentText: trimmedText(500).optional(),
+  includeKeywords: textList(100, 200).optional(),
+  excludeKeywords: textList(100, 200).optional(),
   useGlobalExcludes: z.boolean().optional(),
 })
 

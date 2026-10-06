@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  isHttpUrl,
   SETTINGS_DEFAULTS,
   SETTINGS_KEYS,
   type SettingKey,
@@ -111,6 +112,19 @@ function onNumberInput(field: SettingsField, event: Event): void {
   if (raw === '') draft.value[field.key] = SETTINGS_DEFAULTS[field.key]
   else draft.value[field.key] = Number.isNaN(Number(raw)) ? raw : Number(raw)
   clearFieldError(field)
+  showLiveError(field)
+}
+
+/** 文本输入（RSSHub 地址这类）：形状不对当场说，不用等保存 */
+function onTextInput(field: SettingsField): void {
+  clearFieldError(field)
+  showLiveError(field)
+}
+
+/** 即时校验：有问题就先把那句话挂上，没问题就保持干净 */
+function showLiveError(field: SettingsField): void {
+  const message = validateField(field)
+  if (message) fieldErrors.value[fieldId(field)] = message
 }
 
 /** 保存前校验：数值别越界，区间低线别顶到高线上 */
@@ -127,6 +141,13 @@ function validateField(field: SettingsField): string | null {
     }
     if (field.max !== undefined && value > field.max) {
       return t('settings.error.range', { min: field.min, max: field.max })
+    }
+  }
+
+  if (field.kind === 'text') {
+    const raw = String(draft.value[field.key] ?? '').trim()
+    if (field.key === 'rsshubBaseUrl' && raw !== '' && !isHttpUrl(raw)) {
+      return t('settings.error.url')
     }
   }
 
@@ -191,6 +212,7 @@ function setBand(field: SettingsField, which: 'high' | 'low', value: number): vo
   const key = which === 'high' ? field.key : (field.lowKey ?? 'scoreLowLine')
   draft.value[key] = value
   clearFieldError(field)
+  showLiveError(field)
 }
 
 /** RSSHub 连通测试：拿输入框里当前这串地址去探，结果只放内存，不写设置 */
@@ -271,6 +293,9 @@ function asStringArray(value: unknown): string[] {
           <span v-if="field.kind === 'number' && field.min !== undefined" class="k2-field__hint">
             {{ t('settings.range', { min: field.min, max: field.max }) }}
           </span>
+          <span v-if="field.kind === 'scoreBands'" class="k2-field__hint">
+            {{ t('settings.band.range') }}
+          </span>
         </div>
 
         <div class="k2-set__control">
@@ -290,8 +315,9 @@ function asStringArray(value: unknown): string[] {
             v-else-if="field.kind === 'text'"
             v-model="draft[field.key]"
             class="k2-input"
+            :maxlength="field.max"
             :data-test="`setting-${field.id ?? field.key}`"
-            @input="clearFieldError(field)"
+            @input="onTextInput(field)"
           />
 
           <span v-else-if="field.kind === 'select' || field.kind === 'locale'" class="k2-inputwrap">

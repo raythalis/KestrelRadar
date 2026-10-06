@@ -199,6 +199,7 @@ async function confirmDelete(): Promise<void> {
               <AppInput
                 v-model="drafts[provider.id]"
                 :label="t('model.addModel')"
+                :maxlength="200"
                 :data-test="`model-draft-${provider.id}`"
                 @keyup.enter="addModel(provider.id)"
               />

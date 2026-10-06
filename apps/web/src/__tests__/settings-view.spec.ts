@@ -301,4 +301,20 @@ describe('设置页', () => {
     await flushPromises()
     expect(api.removeTemplate).toHaveBeenCalledWith('t1')
   })
+
+  it('区间控件的取值范围写在旁边', async () => {
+    const wrapper = await mountLoaded('judge')
+    expect(wrapper.text()).toContain('低线 0')
+    expect(wrapper.text()).toContain('高线 5')
+  })
+
+  it('数值超出范围：当场就报，不用等保存', async () => {
+    const wrapper = await mountLoaded('collection')
+    const input = wrapper.get('[data-test="setting-concurrency"]')
+    // 旁边那条是取值范围说明；报错那句在它后面多一句「之间的整数」
+    expect(wrapper.text()).not.toContain('之间的整数')
+    await input.setValue('99')
+    await flushPromises()
+    expect(wrapper.text()).toContain('之间的整数')
+  })
 })

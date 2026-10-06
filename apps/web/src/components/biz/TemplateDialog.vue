@@ -48,7 +48,7 @@ async function submit(): Promise<void> {
   if (!valid.value || busy.value) return
   busy.value = true
   error.value = ''
-  const payload = { name: name.value.trim(), content: content.value }
+  const payload = { name: name.value.trim(), content: content.value.trim() }
   const ok = props.template
     ? await store.saveTemplate(props.template.id, payload)
     : await store.createTemplate(payload)
@@ -91,6 +91,7 @@ async function submit(): Promise<void> {
         v-model="content"
         class="k2-textarea k2-textarea--mono"
         rows="8"
+        :maxlength="4000"
         data-test="template-content-input"
       />
       <span class="k2-field__hint">{{ t('settings.template.variablesHint') }}</span>

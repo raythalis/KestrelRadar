@@ -230,4 +230,24 @@ describe('SourceDialog', () => {
     await flushPromises()
     expect(input('source-dialog-name').value).toBe('B 站排行')
   })
+
+  it('目标写不成地址时就地报红，保存点不动', async () => {
+    mountDialog({ kind: 'rss', name: '源', target: 'example.com/feed.xml', cron: '0 * * * *' })
+    await flushPromises()
+    expect(document.body.textContent).toContain('http://')
+    expect(submit().disabled).toBe(true)
+  })
+
+  it('RSSHub 的相对路由不算错，照常能保存', async () => {
+    const wrapper = mountDialog({
+      name: '少数派',
+      kind: 'rsshub',
+      target: '/sspai/matrix',
+      cron: '*/30 * * * *',
+    })
+    await flushPromises()
+    expect(submit().disabled).toBe(false)
+    await click(submit())
+    expect(wrapper.emitted('submit')).toBeTruthy()
+  })
 })

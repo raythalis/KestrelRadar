@@ -97,10 +97,22 @@ const matchOpen = ref(false)
 const sensitivityOpen = ref(false)
 const actionsOpen = ref(false)
 
+/** 一个监听最多绑这么多动作（与后端上限一致，避免无限 payload） */
+const MAX_ACTIONS = 50
+const actionNotice = ref('')
+
 function toggleAction(id: string): void {
-  actionIds.value = actionIds.value.includes(id)
-    ? actionIds.value.filter((value) => value !== id)
-    : [...actionIds.value, id]
+  if (actionIds.value.includes(id)) {
+    actionIds.value = actionIds.value.filter((value) => value !== id)
+    actionNotice.value = ''
+    return
+  }
+  if (actionIds.value.length >= MAX_ACTIONS) {
+    actionNotice.value = t('monitor.actionsFull', { max: MAX_ACTIONS })
+    return
+  }
+  actionIds.value = [...actionIds.value, id]
+  actionNotice.value = ''
 }
 
 /** 已选动作的名字，给触发按钮当摘要 */
@@ -356,6 +368,9 @@ function submit(): void {
           >
             <v-icon size="16">mdi-close-circle</v-icon>
           </button>
+        </span>
+        <span v-if="actionNotice" class="k2-field__error" data-test="monitor-actions-notice">
+          {{ actionNotice }}
         </span>
       </div>
     </div>

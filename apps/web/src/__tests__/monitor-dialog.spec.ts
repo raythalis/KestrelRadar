@@ -202,4 +202,22 @@ describe('MonitorDialog', () => {
     ])
       expect(isWide(test), `成对字段 ${test}`).toBe(false)
   })
+
+  it('绑定的动作到上限就停手，并说一句', async () => {
+    const actions = Array.from({ length: 51 }, (_, index) => ({
+      id: `a${index}`,
+      name: `动作${index}`,
+    }))
+    mountDialog({ actions, actionIds: actions.slice(0, 50).map((action) => action.id) })
+    await flushPromises()
+
+    q('monitor-dialog-actions')?.click()
+    await flushPromises()
+    const items = Array.from(document.querySelectorAll('.k2-menu__item')) as HTMLElement[]
+    expect(items).toHaveLength(51)
+    items[items.length - 1]?.click()
+    await flushPromises()
+
+    expect(q('monitor-actions-notice')?.textContent).toContain('50')
+  })
 })

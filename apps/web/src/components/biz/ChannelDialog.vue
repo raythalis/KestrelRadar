@@ -8,6 +8,8 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppButton from '@/components/app/AppButton.vue'
+import { isHttpUrl } from '@kestrel/contracts'
+
 import AppInput from '@/components/app/AppInput.vue'
 import AppSwitch from '@/components/app/AppSwitch.vue'
 import FormDialog from '@/components/biz/FormDialog.vue'
@@ -87,13 +89,15 @@ const title = computed(() =>
   t(props.name ? 'channel.editTyped' : 'channel.addTyped', { type: typeName.value }),
 )
 
+const urlInvalid = computed(() => url.value.trim() !== '' && !isHttpUrl(url.value))
+
 const submitDisabled = computed(() => {
   if (!name.value.trim()) return true
   if (props.type === 'telegram') {
     const hasToken = props.hasSecret || botToken.value.trim().length > 0
     return !hasToken || !chatId.value.trim()
   }
-  return !url.value.trim()
+  return !isHttpUrl(url.value)
 })
 
 function submit(): void {
@@ -141,6 +145,7 @@ function submit(): void {
           :label="t('channel.botToken')"
           :placeholder="hasSecret ? t('channel.secretKept') : undefined"
           :hint="hasSecret ? undefined : t('channel.botTokenHint')"
+          :maxlength="200"
           required
           data-test="channel-dialog-bot-token"
         />
@@ -152,6 +157,7 @@ function submit(): void {
           :error="chatsError"
           :action-label="t('channel.readChats')"
           :action-loading="chatsLoading"
+          :maxlength="120"
           required
           data-test="channel-dialog-chat-id"
           @action="emit('readChats', botToken)"
@@ -178,6 +184,9 @@ function submit(): void {
           v-model="url"
           mono
           :label="t('channel.url')"
+          :hint="t('channel.urlHint')"
+          :error="urlInvalid ? t('channel.urlInvalid') : undefined"
+          :maxlength="500"
           required
           data-test="channel-dialog-url"
         />
@@ -188,6 +197,7 @@ function submit(): void {
           :label="t('channel.secret')"
           :placeholder="hasSecret ? t('channel.secretKept') : undefined"
           :hint="t('channel.secretHint')"
+          :maxlength="500"
           data-test="channel-dialog-secret"
         />
       </template>

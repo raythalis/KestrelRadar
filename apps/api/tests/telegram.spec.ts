@@ -181,7 +181,7 @@ describe('读取会话走服务层', () => {
     const created = await container.channels.create({
       name: 'my tg',
       type: 'telegram',
-      config: {},
+      config: { chatId: '42' },
       secret: '999:xyz',
       enabled: true,
     })

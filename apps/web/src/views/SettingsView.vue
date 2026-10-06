@@ -138,8 +138,8 @@ const cardsByTab = computed<Record<string, SettingsCard[]>>(() => ({
       titleKey: 'settings.card.rsshub',
       noteKey: 'settings.cardNote.rsshub',
       fields: [
-        { key: 'rsshubBaseUrl', kind: 'text' },
-        { key: 'rsshubAccessKey', kind: 'text' },
+        { key: 'rsshubBaseUrl', kind: 'text', max: 500 },
+        { key: 'rsshubAccessKey', kind: 'text', max: 200 },
         {
           key: 'rsshubBaseUrl',
           id: 'rsshubTest',

@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { trimmedRequired } from './validation.ts'
+
 /** 系统内置模板的 id：内容固定在代码里，不可改不可删 */
 export const BUILTIN_TEMPLATE_ID = 'builtin:default'
 
@@ -18,8 +20,8 @@ export const messageTemplateSchema = z.object({
 export type MessageTemplate = z.infer<typeof messageTemplateSchema>
 
 export const createMessageTemplateInputSchema = z.object({
-  name: z.string().min(1).max(60),
-  content: z.string().min(1).max(4000),
+  name: trimmedRequired(60),
+  content: trimmedRequired(4000),
 })
 export const updateMessageTemplateInputSchema = createMessageTemplateInputSchema.partial()
 export type CreateMessageTemplateInput = z.infer<typeof createMessageTemplateInputSchema>

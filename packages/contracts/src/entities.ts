@@ -1,5 +1,13 @@
 import { z } from 'zod'
 
+import { cronExpressionSchema, optionalCronSchema } from './cron.ts'
+import {
+  httpUrl,
+  isValidDiscoveryTarget,
+  textList,
+  trimmedRequired,
+  trimmedText,
+} from './validation.ts'
 import {
   actionTriggerSchema,
   channelTypeSchema,
@@ -11,6 +19,23 @@ import {
 } from './enums.ts'
 
 const idSchema = z.string().min(1)
+
+/** 渠道 config 里属于用户输入的键与长度上限；其它键不设限（不粗暴限制整个 record） */
+const CHANNEL_CONFIG_MAX: Record<string, number> = { url: 500, chatId: 120 }
+
+const channelConfigSchema = z
+  .record(z.string(), z.string())
+  .superRefine((value, ctx) => {
+    for (const [key, item] of Object.entries(value)) {
+      const max = CHANNEL_CONFIG_MAX[key]
+      if (max !== undefined && item.trim().length > max) {
+        ctx.addIssue({ code: 'custom', message: `${key} 最长 ${max} 个字符` })
+      }
+    }
+  })
+  .transform((value) =>
+    Object.fromEntries(Object.entries(value).map(([key, item]) => [key, item.trim()])),
+  )
 const timestampSchema = z.string()
 const commonRead = {
   id: idSchema,
@@ -27,13 +52,16 @@ export const groupSchema = z.object({
 })
 export type Group = z.infer<typeof groupSchema>
 
-export const createGroupInputSchema = groupSchema.pick({ name: true }).extend({
-  description: z.string().max(500).default(''),
+export const createGroupInputSchema = z.object({
+  name: trimmedRequired(60),
+  description: trimmedText(500).default(''),
   enabled: z.boolean().default(true),
 })
-export const updateGroupInputSchema = groupSchema
-  .pick({ name: true, description: true, enabled: true })
-  .partial()
+export const updateGroupInputSchema = z.object({
+  name: trimmedRequired(60).optional(),
+  description: trimmedText(500).optional(),
+  enabled: z.boolean().optional(),
+})
 export type CreateGroupInput = z.infer<typeof createGroupInputSchema>
 export type UpdateGroupInput = z.infer<typeof updateGroupInputSchema>
 
@@ -76,17 +104,17 @@ export type DiscoveryTestResult = z.infer<typeof discoveryTestResultSchema>
 
 export const createDiscoveryInputSchema = z.object({
   groupId: idSchema,
-  name: z.string().min(1).max(60),
+  name: trimmedRequired(60),
   kind: discoveryKindSchema,
-  target: z.string().min(1).max(1000),
-  cronExpression: z.string().min(1).max(120),
+  target: trimmedRequired(1000),
+  cronExpression: cronExpressionSchema(),
   enabled: z.boolean().default(true),
 })
 export const updateDiscoveryInputSchema = z.object({
-  name: z.string().min(1).max(60).optional(),
+  name: trimmedRequired(60).optional(),
   kind: discoveryKindSchema.optional(),
-  target: z.string().min(1).max(1000).optional(),
-  cronExpression: z.string().min(1).max(120).optional(),
+  target: trimmedRequired(1000).optional(),
+  cronExpression: cronExpressionSchema().optional(),
   enabled: z.boolean().optional(),
 })
 export type CreateDiscoveryInput = z.infer<typeof createDiscoveryInputSchema>
@@ -114,16 +142,16 @@ export type Monitor = z.infer<typeof monitorSchema>
 
 export const createMonitorInputSchema = z.object({
   groupId: idSchema,
-  name: z.string().min(1).max(60),
+  name: trimmedRequired(60),
   mode: monitorModeSchema.default('follow_global'),
   sensitivity: sensitivitySchema.default('medium'),
   matchMode: matchModeSchema.default('any'),
-  intentText: z.string().max(500).default(''),
-  includeKeywords: z.array(z.string().min(1).max(100)).max(200).default([]),
-  excludeKeywords: z.array(z.string().min(1).max(100)).max(200).default([]),
+  intentText: trimmedText(500).default(''),
+  includeKeywords: textList(100, 200).default([]),
+  excludeKeywords: textList(100, 200).default([]),
   useGlobalExcludes: z.boolean().default(true),
   enabled: z.boolean().default(true),
-  actionIds: z.array(idSchema).default([]),
+  actionIds: z.array(trimmedRequired(120)).max(50).default([]),
 })
 export const updateMonitorInputSchema = createMonitorInputSchema.omit({ groupId: true }).partial()
 export type CreateMonitorInput = z.infer<typeof createMonitorInputSchema>
@@ -150,11 +178,11 @@ export type Action = z.infer<typeof actionSchema>
 
 export const createActionInputSchema = z.object({
   groupId: idSchema,
-  name: z.string().min(1).max(60),
+  name: trimmedRequired(60),
   triggerType: actionTriggerSchema.default('instant'),
   channelId: idSchema,
-  cronExpression: z.string().max(120).nullable().default(null),
-  templateId: z.string().max(120).nullable().default(null),
+  cronExpression: optionalCronSchema().default(null),
+  templateId: trimmedText(120).nullable().default(null),
   includeDelivered: z.boolean().default(false),
   mergeMessages: z.boolean().default(true),
   enabled: z.boolean().default(true),
@@ -178,18 +206,18 @@ export const channelSchema = z.object({
 export type Channel = z.infer<typeof channelSchema>
 
 export const createChannelInputSchema = z.object({
-  name: z.string().min(1).max(60),
+  name: trimmedRequired(60),
   type: channelTypeSchema,
-  config: z.record(z.string(), z.string()).default({}),
-  secret: z.string().max(500).optional(),
+  config: channelConfigSchema.default({}),
+  secret: trimmedText(500).optional(),
   enabled: z.boolean().default(true),
 })
 export const updateChannelInputSchema = z.object({
-  name: z.string().min(1).max(60).optional(),
+  name: trimmedRequired(60).optional(),
   type: channelTypeSchema.optional(),
-  config: z.record(z.string(), z.string()).optional(),
+  config: channelConfigSchema.optional(),
   /** 传字符串 = 覆盖，传 null = 清空，不传 = 不动 */
-  secret: z.string().max(500).nullable().optional(),
+  secret: trimmedText(500).nullable().optional(),
   enabled: z.boolean().optional(),
 })
 export type CreateChannelInput = z.infer<typeof createChannelInputSchema>
@@ -208,19 +236,19 @@ export const modelProviderSchema = z.object({
 export type ModelProvider = z.infer<typeof modelProviderSchema>
 
 export const createModelProviderInputSchema = z.object({
-  name: z.string().min(1).max(60),
+  name: trimmedRequired(60),
   kind: providerKindSchema,
-  baseUrl: z.string().min(1).max(500),
-  apiKey: z.string().max(500).optional(),
+  baseUrl: httpUrl(500),
+  apiKey: trimmedText(500).optional(),
   enabled: z.boolean().default(true),
   sortOrder: z.number().int().default(0),
 })
 export const updateModelProviderInputSchema = z.object({
-  name: z.string().min(1).max(60).optional(),
+  name: trimmedRequired(60).optional(),
   kind: providerKindSchema.optional(),
-  baseUrl: z.string().min(1).max(500).optional(),
+  baseUrl: httpUrl(500).optional(),
   /** 传字符串 = 覆盖，传 null = 清空，不传 = 不动 */
-  apiKey: z.string().max(500).nullable().optional(),
+  apiKey: trimmedText(500).nullable().optional(),
   enabled: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
 })
@@ -237,7 +265,7 @@ export const modelSchema = z.object({
 export type Model = z.infer<typeof modelSchema>
 
 export const createModelInputSchema = z.object({
-  modelName: z.string().min(1).max(200),
+  modelName: trimmedRequired(200),
   enabled: z.boolean().default(true),
   sortOrder: z.number().int().default(0),
 })

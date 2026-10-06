@@ -9,6 +9,11 @@ export default {
     name: 'Kestrel',
     tagline: 'v0.1',
   },
+  tags: {
+    meta: '{count}/{max}',
+    tooLong: '单个最多 {max} 个字符',
+    full: '最多 {max} 个',
+  },
   nav: {
     sectionMain: '主导航',
     openMenu: '打开菜单',
@@ -108,6 +113,7 @@ export default {
     baseline: '已建立基线：收入 {n} 条历史内容，不计入推送',
     addSource: '新建数据源',
     editSource: '编辑数据源',
+    targetInvalid: '目标要带 http:// 或 https://；RSSHub 路由可以写成 /命名空间/路由',
     targetHint: {
       rsshub: '例如 /bilibili/ranking/all',
       rss: '例如 https://example.com/feed.xml',
@@ -164,6 +170,7 @@ export default {
     onlyActionsLabel: '指定关联动作',
     onlyActionsHint: '留空＝跟随分组',
     followGroup: '留空则执行全部动作',
+    actionsFull: '最多只能绑 {max} 个动作',
   },
   action: {
     add: '添加动作',
@@ -217,6 +224,8 @@ export default {
       webhook: 'Webhook',
     },
     url: 'Webhook 地址',
+    urlHint: 'http:// 或 https:// 开头，消息就发到这里',
+    urlInvalid: '要填 http:// 或 https:// 开头的地址',
     secret: '密钥（可留空）',
     secretHint: '请求头 Authorization: Bearer',
     neverPushed: '从未推送过',
@@ -252,6 +261,7 @@ export default {
     },
     baseUrl: '接口地址',
     baseUrlHint: '不含最后的 /v1，程序自己拼',
+    baseUrlInvalid: '接口地址要带 http:// 或 https://',
     apiKey: 'API Key',
     apiKeyHint: '本地 Ollama 一般不用填',
     hasApiKey: '已配 Key',
@@ -267,6 +277,7 @@ export default {
       system: '系统（跟随服务器）',
     },
     band: {
+      range: '低线 0–95、高线 5–100，两条线至少差 5 分',
       aria: '分档区间，可左右拖动两条分线',
       lowAria: '低分线：低于它直接丢弃，可用方向键调',
       highAria: '高分线：高于它直接命中，可用方向键调',
@@ -315,6 +326,7 @@ export default {
       integer: '请填整数',
       range: '可填 {min} – {max} 之间的整数',
       band: '低分线要低于高分线',
+      url: '地址要带 http:// 或 https://',
       save: '保存失败',
     },
     tab: {

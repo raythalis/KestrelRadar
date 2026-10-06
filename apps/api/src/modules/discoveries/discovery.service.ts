@@ -1,7 +1,13 @@
-import type { CreateDiscoveryInput, Discovery, UpdateDiscoveryInput } from '@kestrel/contracts'
+import {
+  CRON_MESSAGE,
+  isValidCronExpression,
+  isValidDiscoveryTarget,
+  type CreateDiscoveryInput,
+  type Discovery,
+  type UpdateDiscoveryInput,
+} from '@kestrel/contracts'
 
 import { AppError } from '../../plugins/errors.ts'
-import { isValidCron } from '../collection/scheduler.ts'
 import type { GroupGate } from '../groups/group-gate.ts'
 import type { GroupRepo } from '../groups/group.repo.ts'
 import type { DiscoveryRepo } from './discovery.repo.ts'
@@ -28,8 +34,15 @@ export function createDiscoveryService(
   }
 
   function assertCron(cronExpression: string): void {
-    if (!isValidCron(cronExpression)) {
-      throw AppError.validation('定时表达式不合法，例如「0 * * * *」表示每小时整点看一次')
+    if (!isValidCronExpression(cronExpression)) throw AppError.validation(CRON_MESSAGE)
+  }
+
+  /** 目标形状：rss / web 必须是 http(s) 地址，rsshub 还允许相对路由 */
+  function assertTarget(target: string, kind: Discovery['kind']): void {
+    if (!isValidDiscoveryTarget(target, kind)) {
+      throw AppError.validation(
+        '目标要写成 http:// 或 https:// 开头的地址；RSSHub 路由可以写成 /命名空间/路由',
+      )
     }
   }
 
@@ -45,14 +58,18 @@ export function createDiscoveryService(
     create: (input: CreateDiscoveryInput): Discovery => {
       mustGroup(input.groupId)
       assertCron(input.cronExpression)
+      assertTarget(input.target, input.kind)
       const created = repo.create(input)
       gate.inheritOnCreate(created.groupId, { kind: 'discovery', id: created.id })
       return withSchedule(mustGet(created.id))
     },
 
     update: (id: string, patch: UpdateDiscoveryInput): Discovery => {
-      mustGet(id)
+      const current = mustGet(id)
       if (patch.cronExpression !== undefined) assertCron(patch.cronExpression)
+      if (patch.target !== undefined || patch.kind !== undefined) {
+        assertTarget(patch.target ?? current.target, patch.kind ?? current.kind)
+      }
       const updated = repo.update(id, patch)
       if (!updated) throw AppError.notFound('发现不存在')
       if (patch.enabled !== undefined) gate.syncFromChildren(updated.groupId)

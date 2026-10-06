@@ -9,6 +9,11 @@ export default {
     name: 'Kestrel',
     tagline: 'v0.1',
   },
+  tags: {
+    meta: '{count}/{max}',
+    tooLong: 'Up to {max} characters each',
+    full: 'At most {max} items',
+  },
   nav: {
     sectionMain: 'Main',
     openMenu: 'Open menu',
@@ -107,6 +112,8 @@ export default {
     baseline: 'Baseline set: {n} historical items, not pushed',
     addSource: 'New source',
     editSource: 'Edit source',
+    targetInvalid:
+      'Use an http:// or https:// address; an RSSHub route reads like /namespace/route',
     targetHint: {
       rsshub: 'e.g. /bilibili/ranking/all',
       rss: 'e.g. https://example.com/feed.xml',
@@ -163,6 +170,7 @@ export default {
     onlyActionsLabel: 'Actions to use',
     onlyActionsHint: 'Empty means follow the group',
     followGroup: 'Empty runs all actions',
+    actionsFull: 'At most {max} actions can be bound',
   },
   action: {
     add: 'Add action',
@@ -216,6 +224,8 @@ export default {
       webhook: 'Webhook',
     },
     url: 'Webhook URL',
+    urlHint: 'Starts with http:// or https://; messages are posted here',
+    urlInvalid: 'Enter an address starting with http:// or https://',
     secret: 'Secret (optional)',
     secretHint: 'Request header Authorization: Bearer',
     neverPushed: 'never sent',
@@ -253,6 +263,7 @@ export default {
     },
     baseUrl: 'Base URL',
     baseUrlHint: 'Without the trailing /v1; the app adds it',
+    baseUrlInvalid: 'Enter an address starting with http:// or https://',
     apiKey: 'API key',
     apiKeyHint: 'Usually empty for local Ollama',
     hasApiKey: 'key set',
@@ -268,6 +279,7 @@ export default {
       system: 'System (server time)',
     },
     band: {
+      range: 'Low 0-95, high 5-100; keep them at least 5 points apart',
       aria: 'Score bands; drag either line',
       lowAria: 'Low line: below it items are dropped; arrow keys adjust it',
       highAria: 'High line: above it items pass; arrow keys adjust it',
@@ -318,6 +330,7 @@ export default {
       integer: 'Enter a whole number',
       range: 'Enter a whole number between {min} and {max}',
       band: 'The low line must sit below the high line',
+      url: 'Enter an address starting with http:// or https://',
       save: 'Save failed',
     },
     tab: {

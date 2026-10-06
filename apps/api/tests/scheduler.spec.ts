@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildContainer, type Container } from '../src/container.ts'
 import { openDatabase } from '../src/db/index.ts'
+import { createDiscoveryRepo } from '../src/modules/discoveries/discovery.repo.ts'
 import { isValidCron, nextRunAt } from '../src/modules/collection/scheduler.ts'
 import { RSS_TWO_ITEMS } from './helpers/feed-fixtures.ts'
 import { startFeedServer, type FeedServer } from './helpers/feed-server.ts'
@@ -9,12 +10,14 @@ import { createTempDb } from './helpers/temp-db.ts'
 
 let server: FeedServer
 let container: Container
+let connection: ReturnType<typeof openDatabase>
 let cleanupDb: () => void
 
 beforeEach(async () => {
   const db = createTempDb()
   cleanupDb = db.cleanup
-  container = buildContainer(openDatabase(db.path))
+  connection = openDatabase(db.path)
+  container = buildContainer(connection)
   server = await startFeedServer({ '/rss': { body: RSS_TWO_ITEMS } })
   container.settings.update({
     rsshubBaseUrl: server.baseUrl,
@@ -38,6 +41,20 @@ function addDiscovery(overrides: Record<string, unknown> = {}, groupEnabled = tr
     kind: 'rss',
     target: `${server.baseUrl}/rss`,
     cronExpression: '0 * * * *',
+    enabled: true,
+    ...overrides,
+  })
+}
+
+/** 秒级 cron 只有调度器认（写接口只收 5 段），这几条用例直接进库，免得为等一分钟把测试拖垮 */
+function addFastDiscovery(overrides: Record<string, unknown> = {}) {
+  const group = container.groups.create({ name: 'G', description: '', enabled: true })
+  return createDiscoveryRepo(connection).create({
+    groupId: group.id,
+    name: '快源',
+    kind: 'rss',
+    target: `${server.baseUrl}/rss`,
+    cronExpression: '* * * * * *',
     enabled: true,
     ...overrides,
   })
@@ -108,12 +125,11 @@ describe('调度：每个发现一个 cron 任务', () => {
   })
 
   it('到点自动采集：条目入库，坏源只影响自己', async () => {
-    const good = addDiscovery({ name: '好源', cronExpression: '* * * * * *' })
+    const good = addFastDiscovery({ name: '好源' })
     // 假源上没有这个地址，必定 404
-    const bad = addDiscovery({
+    const bad = addFastDiscovery({
       name: '坏源',
       target: `${server.baseUrl}/broken`,
-      cronExpression: '* * * * * *',
     })
 
     container.scheduler.start()
@@ -130,8 +146,8 @@ describe('调度：每个发现一个 cron 任务', () => {
   it('全局并发上限真的起作用', async () => {
     container.settings.update({ concurrency: 1 })
     server.setDelay('/rss', 400)
-    addDiscovery({ name: '源一', cronExpression: '* * * * * *' })
-    addDiscovery({ name: '源二', cronExpression: '* * * * * *' })
+    addFastDiscovery({ name: '源一' })
+    addFastDiscovery({ name: '源二' })
 
     container.scheduler.start()
     // 等两轮触发：两个源会在同一秒开跑，并发上限必须把它们排成一队

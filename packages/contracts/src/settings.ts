@@ -1,11 +1,13 @@
 import { z } from 'zod'
 
+import { optionalHttpUrl, textList, trimmedRequired, trimmedText } from './validation.ts'
+
 /** 全局设置：默认值写在这里，库里只存被改过的项（删掉改动即恢复默认） */
 export const settingsSchema = z.object({
   /** RSSHub 实例地址（单实例），发现里写相对路由时用它拼 */
-  rsshubBaseUrl: z.string().max(500),
+  rsshubBaseUrl: optionalHttpUrl(500),
   /** RSSHub 实例的访问密钥，跟实例地址一起配（有些实例带 token），可为空 */
-  rsshubAccessKey: z.string().max(200),
+  rsshubAccessKey: trimmedText(200),
   /** 全局判断模式：纯算法 或 算法 + LLM */
   judgeMode: z.enum(['algorithm', 'algorithm_llm']),
   /** 同时抓几个源 */
@@ -31,7 +33,7 @@ export const settingsSchema = z.object({
   /** 模型不通时怎么办：fallback = 降级到纯算法，error = 这次不判（等下次再判） */
   llmFallbackMode: z.enum(['fallback', 'error']),
   /** 全局排除词 */
-  globalExcludeKeywords: z.array(z.string().min(1).max(100)).max(200),
+  globalExcludeKeywords: textList(100, 200),
   /** 每天最多投递几条，0 表示不限（默认不限） */
   dailyDeliveryLimit: z.number().int().min(0).max(1000),
   /** 单次抓取超时（秒） */
@@ -47,7 +49,7 @@ export const settingsSchema = z.object({
   /** 模型请求级重试次数 */
   llmMaxRetries: z.number().int().min(0).max(5),
   /** 时区：system 表示跟随系统 */
-  timezone: z.string().min(1).max(60),
+  timezone: trimmedRequired(60),
 })
 export type Settings = z.infer<typeof settingsSchema>
 export type SettingKey = keyof Settings
