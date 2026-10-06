@@ -422,12 +422,7 @@ async function confirmDelete(): Promise<void> {
     </div>
 
     <div v-if="loading" class="k2-group" data-test="config-loading">
-      <div class="k2-group__head">
-        <span class="k2-skeleton k2-skeleton--title" />
-      </div>
-      <div class="k2-group__body">
-        <span v-for="n in 3" :key="n" class="k2-skeleton k2-skeleton--tile" />
-      </div>
+      <AppSkeleton variant="card" :body="false" :blocks="3" />
     </div>
 
     <section v-else-if="store.groups.length === 0" class="k2-card k2-card--flat">

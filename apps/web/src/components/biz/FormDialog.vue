@@ -89,9 +89,7 @@ function submit(): void {
       <p v-if="error" class="k2-alert k2-t-danger" data-test="app-dialog-error">{{ error }}</p>
 
       <template v-if="loading">
-        <span class="k2-skeleton k2-skeleton--line" />
-        <span class="k2-skeleton k2-skeleton--line" />
-        <span class="k2-skeleton k2-skeleton--line" />
+        <AppSkeleton variant="text" :rows="3" />
       </template>
       <slot v-else />
     </div>

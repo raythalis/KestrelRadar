@@ -288,13 +288,7 @@ const loading = computed(() => store.loading && !store.stats)
         <h2 class="k2-sec__title">{{ t('dashboard.events.title') }}</h2>
 
         <div v-if="loading" class="k2-card k2-card--flat k2-list" data-test="dashboard-skeleton">
-          <div v-for="row in 3" :key="row" class="k2-list__row k2-list__skeleton">
-            <span class="k2-skeleton k2-skeleton--tile" />
-            <span class="k2-list__main">
-              <span class="k2-skeleton k2-skeleton--title" />
-              <span class="k2-skeleton k2-skeleton--sub" />
-            </span>
-          </div>
+          <AppSkeleton variant="list" :rows="3" leading="tile" density="compact" />
         </div>
 
         <div v-else-if="store.events.length === 0" class="k2-card k2-card--flat">
@@ -342,13 +336,7 @@ const loading = computed(() => store.loading && !store.stats)
       <section class="k2-sec">
         <h2 class="k2-sec__title">{{ t('dashboard.incidents.title') }}</h2>
         <div v-if="loading" class="k2-card k2-card--flat k2-list" data-test="dashboard-skeleton">
-          <div v-for="row in 2" :key="row" class="k2-list__row k2-list__skeleton">
-            <span class="k2-skeleton k2-skeleton--tile" />
-            <span class="k2-list__main">
-              <span class="k2-skeleton k2-skeleton--title" />
-              <span class="k2-skeleton k2-skeleton--sub" />
-            </span>
-          </div>
+          <AppSkeleton variant="list" :rows="2" leading="tile" density="compact" />
         </div>
 
         <div v-else-if="store.incidents.length === 0" class="k2-card k2-card--flat">
