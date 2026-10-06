@@ -110,10 +110,7 @@ async function confirmDelete(): Promise<void> {
     </div>
 
     <section v-if="store.providers.length === 0" class="k2-card k2-card--flat">
-      <div class="k2-empty" data-test="models-empty">
-        <i class="mdi mdi-brain" />
-        <span class="k2-empty__title">{{ t('model.empty') }}</span>
-      </div>
+      <AppEmptyState data-test="models-empty" icon="mdi-brain" :title="t('model.empty')" />
     </section>
 
     <div v-else class="k2-grid">

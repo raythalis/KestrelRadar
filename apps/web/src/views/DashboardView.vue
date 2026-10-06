@@ -298,13 +298,12 @@ const loading = computed(() => store.loading && !store.stats)
         </div>
 
         <div v-else-if="store.events.length === 0" class="k2-card k2-card--flat">
-          <div class="k2-empty" data-test="events-empty">
-            <span class="k2-tile k2-t-neutral"
-              ><v-icon size="24">{{ SEMANTIC_ICONS.event }}</v-icon></span
-            >
-            <span class="k2-empty__title">{{ t('dashboard.events.empty') }}</span>
-            <span class="k2-empty__sub">{{ t('dashboard.events.emptySub') }}</span>
-          </div>
+          <AppEmptyState
+            data-test="events-empty"
+            :icon="SEMANTIC_ICONS.event"
+            :title="t('dashboard.events.empty')"
+            :note="t('dashboard.events.emptySub')"
+          />
         </div>
 
         <div v-else class="k2-card k2-card--flat k2-list" data-test="events-list">
@@ -353,13 +352,12 @@ const loading = computed(() => store.loading && !store.stats)
         </div>
 
         <div v-else-if="store.incidents.length === 0" class="k2-card k2-card--flat">
-          <div class="k2-empty" data-test="incidents-empty">
-            <span class="k2-tile k2-t-neutral">
-              <v-icon size="24">{{ SEMANTIC_ICONS.incident }}</v-icon>
-            </span>
-            <span class="k2-empty__title">{{ t('dashboard.incidents.empty') }}</span>
-            <span class="k2-empty__sub">{{ t('dashboard.incidents.emptySub') }}</span>
-          </div>
+          <AppEmptyState
+            data-test="incidents-empty"
+            :icon="SEMANTIC_ICONS.incident"
+            :title="t('dashboard.incidents.empty')"
+            :note="t('dashboard.incidents.emptySub')"
+          />
         </div>
 
         <div v-else class="k2-rows" data-test="incidents-list">

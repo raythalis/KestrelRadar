@@ -431,18 +431,11 @@ async function confirmDelete(): Promise<void> {
     </div>
 
     <section v-else-if="store.groups.length === 0" class="k2-card k2-card--flat">
-      <div class="k2-empty" data-test="config-empty">
-        <v-icon size="28">mdi-folder-outline</v-icon>
-        <span class="k2-empty__title">{{ t('config.empty') }}</span>
-        <button
-          type="button"
-          class="k2-btn k2-btn--primary"
-          data-test="new-group-empty"
-          @click="openGroupDialog(null)"
-        >
-          {{ t('config.newGroup') }}
-        </button>
-      </div>
+      <AppEmptyState
+        data-test="config-empty"
+        icon="mdi-folder-outline"
+        :title="t('config.empty')"
+      />
     </section>
 
     <template v-else>

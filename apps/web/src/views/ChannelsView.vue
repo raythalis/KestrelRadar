@@ -179,10 +179,11 @@ watch(
     </div>
 
     <section v-if="store.channels.length === 0" class="k2-card k2-card--flat">
-      <div class="k2-empty" data-test="channels-empty">
-        <i class="mdi mdi-bell-outline" />
-        <span class="k2-empty__title">{{ t('channel.empty') }}</span>
-      </div>
+      <AppEmptyState
+        data-test="channels-empty"
+        icon="mdi-bell-outline"
+        :title="t('channel.empty')"
+      />
     </section>
 
     <div v-else class="k2-grid" data-test="channels-list">
