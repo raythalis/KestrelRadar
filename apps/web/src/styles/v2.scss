@@ -2717,12 +2717,12 @@ a.k2-row--link {
    注意不要写 overscroll-behavior: contain —— 内容没超出窗口时，鼠标停在列表上
    应该把滚动交给页面；只有内容真的超出（异常列表）才在卡片内滚 */
 .k2-panel__body--scroll {
-  /* 内容窗口固定高度 550px：最近事件与异常记录两个面板都用这一档
-     （最近事件的那 550 不含底栏，有底栏时底栏加在下面）。
+  /* 内容窗口固定高度 450px：最近事件与异常记录两个面板都用这一档
+     （最近事件的那 450 不含底栏，有底栏时底栏加在下面）。
      列表不到就留白、超过就在卡片内滚；面板高度跟着内容走，两栏一样高，不用视口高度去撑。
      flex: none：高度是定值，不参与拉伸（否则 flex:1 会把 block-size 顶掉，又变回按内容走） */
   flex: none;
-  block-size: 550px;
+  block-size: 450px;
   overflow: hidden auto;
   overscroll-behavior: auto;
   scrollbar-width: thin;
@@ -3196,9 +3196,9 @@ a.k2-row--link {
 }
 
 .k2-modal__list {
-  /* 弹窗内容也是固定高度 550px（跟活动区面板同一个窗口），翻页时弹窗不会忽高忽低 */
+  /* 弹窗内容也是固定高度 450px（跟活动区面板同一个窗口），翻页时弹窗不会忽高忽低 */
   flex: none;
-  block-size: 550px;
+  block-size: 450px;
   overflow-y: auto;
   overscroll-behavior: auto;
   padding: var(--k2-s-1) var(--k2-s-3) var(--k2-s-2);

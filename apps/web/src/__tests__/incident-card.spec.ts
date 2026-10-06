@@ -46,6 +46,14 @@ describe('IncidentCard', () => {
     expect(wrapper.text()).not.toContain('待处理')
   })
 
+  it('异常一律走危险色：采集 / 判定 / 推送都是红的', () => {
+    for (const kind of ['collection', 'judgment', 'delivery'] as const) {
+      const wrapper = render({ incident: { ...incident, kind } })
+      expect(wrapper.find('[data-test="incident-row"]').classes()).toContain('k2-t-danger')
+      expect(wrapper.find('[data-test="incident-row"]').classes()).not.toContain('k2-t-warning')
+    }
+  })
+
   it('没有「持续多久」也没有「立即检查」这类动作', () => {
     const wrapper = render()
     expect(wrapper.text()).not.toContain('持续')

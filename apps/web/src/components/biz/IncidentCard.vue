@@ -1,14 +1,14 @@
 <!-- IncidentCard：异常记录的一张。
      只放已有可信字段：对象名、错误原文、首次出现、最近发生。
      不做「持续多久」这类派生字段，也不放「立即检查」这类动作按钮（按需求不引入）。
-     头部右侧的 × 是「忽视」：只改状态、不删记录，由调用方落库。 -->
+     头部右侧的 × 是「忽视」：只改状态、不删记录，由调用方落库。
+     配色：异常一律走危险色（红）——采集 / 判定 / 推送都一样，不按类别分色。 -->
 <script setup lang="ts">
 import type { Incident } from '@kestrel/contracts'
-import { computed } from 'vue'
 
 import { SEMANTIC_ICONS } from '@/components/biz/icons'
 
-const props = defineProps<{
+defineProps<{
   incident: Incident
   /** 首次出现（已格式化） */
   firstSeen?: string
@@ -18,13 +18,10 @@ const props = defineProps<{
   dismissLabel?: string
 }>()
 const emit = defineEmits<{ dismiss: [incident: Incident] }>()
-
-/** 投递类异常用警示色，其余（采集、判定）用危险色——和卡片配色表一致 */
-const tone = computed(() => (props.incident.kind === 'delivery' ? 'warning' : 'danger'))
 </script>
 
 <template>
-  <article class="k2-card k2-card--sm k2-incident" :class="`k2-t-${tone}`" data-test="incident-row">
+  <article class="k2-card k2-card--sm k2-incident k2-t-danger" data-test="incident-row">
     <div class="k2-card__head">
       <span class="k2-tile k2-tile--sm">
         <v-icon size="20">{{ SEMANTIC_ICONS.incident }}</v-icon>
