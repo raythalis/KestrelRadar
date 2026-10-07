@@ -8,7 +8,6 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppButton from '@/components/app/AppButton.vue'
-import AppSelect from '@/components/app/AppSelect.vue'
 
 /** 一行一个模型；空行用 null */
 export type ModelOrderRow = string | null
@@ -40,21 +39,40 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
+/** 「供应商 id:模型名」里的供应商 id（模型名自己可能带冒号，只在第一个冒号处切） */
+function providerIdOf(row: string): string {
+  return row.slice(0, row.indexOf(':'))
+}
+
+/** 显示成「供应商名:模型名」；供应商找不到就退回原样 */
+function titleOf(row: string): string {
+  const provider = props.providers.find((item) => item.id === providerIdOf(row))
+  return `${provider?.name ?? providerIdOf(row)}:${row.slice(row.indexOf(':') + 1)}`
+}
+
 /** 下拉选项：一行一个模型，显示成「供应商:模型」 */
-const options = computed(() =>
-  props.providers.flatMap((provider) =>
+const options = computed(() => {
+  const listed = props.providers.flatMap((provider) =>
     provider.models.map((model) => ({
       title: `${provider.name}:${model}`,
       value: `${provider.id}:${model}`,
     })),
-  ),
-)
+  )
+  // 供应商的清单还没回来（或它已经不报这个模型了）时，已选中的那行也得先显示成人能看懂的名字，
+  // 不能露出「id:模型」这种原始值——所以补进选项里。
+  const known = new Set(listed.map((item) => item.value))
+  const pending = props.value
+    .filter((row): row is string => row !== null && !known.has(row))
+    .map((row) => ({ title: titleOf(row), value: row }))
+  return [...listed, ...pending]
+})
 
-/** 值里已经不在选项中的（供应商被删 / 模型没了）整行去掉；空行留着（用户自己加的也算），
-    末尾至少保留一行空的。 */
+/** 行的去留看「供应商还在不在」——清单没回来不代表这一行没了；空行留着，末尾至少保留一行空的。 */
 const rows = computed<ModelOrderRow[]>(() => {
-  const known = new Set(options.value.map((item) => String(item.value)))
-  const next = props.value.filter((row) => row === null || known.has(row)).slice(0, props.max)
+  const alive = new Set(props.providers.map((provider) => provider.id))
+  const next = props.value
+    .filter((row) => row === null || alive.has(providerIdOf(row)))
+    .slice(0, props.max)
   while (next.length === 0) next.push(null)
   return next
 })
@@ -84,6 +102,9 @@ function removeRow(index: number): void {
 }
 
 /* ---------- 拖拽排序：抓着行首的抓手上下拖 ---------- */
+
+/** 打开的是哪一行的下拉（同时只开一个） */
+const openIndex = ref<number | null>(null)
 
 const dragIndex = ref<number | null>(null)
 const overIndex = ref<number | null>(null)
@@ -124,12 +145,14 @@ function onDragEnd(): void {
 <template>
   <div class="k2-order" data-test="model-order">
     <div class="k2-order__head">
-      <span class="k2-order__title">{{ t('model.order.title') }}</span>
-      <span class="k2-order__sub">{{ t('model.order.sub') }}</span>
+      <span class="k2-order__headtext">
+        <span class="k2-field__label">{{ t('model.order.title') }}</span>
+        <span class="k2-order__sub">{{ t('model.order.sub') }}</span>
+      </span>
       <span class="app-spacer" />
       <button
         type="button"
-        class="k2-iconbtn"
+        class="k2-iconbtn k2-iconbtn--primary"
         :disabled="!canAdd"
         :aria-label="t('model.order.add')"
         :title="t('model.order.add')"
@@ -161,13 +184,46 @@ function onDragEnd(): void {
         />
         <span class="k2-order__no" data-test="model-order-no">{{ index + 1 }}</span>
         <span class="k2-order__main">
-          <AppSelect
-            :model-value="row"
-            :items="options"
-            :placeholder="t('model.order.placeholder')"
-            :data-test="`model-order-select-${index}`"
-            @update:model-value="setRow(index, $event)"
-          />
+          <!-- 下拉用全站同一套外观（.k2-select + .k2-menu）：与设置页、各弹窗里的下拉一致 -->
+          <v-menu
+            :model-value="openIndex === index"
+            :close-on-content-click="true"
+            :disabled="options.length === 0"
+            content-class="k2-menu"
+            @update:model-value="(open: boolean) => (openIndex = open ? index : null)"
+          >
+            <template #activator="{ props: menuProps }">
+              <button
+                v-bind="menuProps"
+                type="button"
+                class="k2-select"
+                :aria-label="t('model.order.placeholder')"
+                :data-test="`model-order-select-${index}`"
+              >
+                <span v-if="row === null" class="k2-select__ph">
+                  {{ t('model.order.placeholder') }}
+                </span>
+                <span v-else class="k2-order__pick">{{ titleOf(row) }}</span>
+                <i class="mdi mdi-chevron-down k2-select__caret" />
+              </button>
+            </template>
+            <div class="k2-menu__scroll">
+              <button
+                v-for="option in options"
+                :key="option.value"
+                type="button"
+                class="k2-menu__item"
+                :data-test="`model-order-option-${index}`"
+                @click="setRow(index, option.value)"
+              >
+                <i
+                  class="mdi"
+                  :class="option.value === row ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'"
+                />
+                <span>{{ option.title }}</span>
+              </button>
+            </div>
+          </v-menu>
         </span>
         <button
           v-if="canRemove"
@@ -185,7 +241,12 @@ function onDragEnd(): void {
     <div class="k2-order__foot">
       <span class="k2-order__hint">{{ t('model.order.hint') }}</span>
       <span class="app-spacer" />
-      <AppButton :disabled="busy" data-test="model-order-save" @click="emit('save')">
+      <AppButton
+        variant="primary"
+        :disabled="busy"
+        data-test="model-order-save"
+        @click="emit('save')"
+      >
         {{ t('model.order.save') }}
       </AppButton>
     </div>

@@ -104,8 +104,9 @@ async function saveProvider(values: ProviderDialogValues): Promise<void> {
 async function saveOrder(): Promise<void> {
   savingOrder.value = true
   const values = order.value.filter((row): row is string => row !== null)
-  await store.saveSettings({ judgeModelOrder: values })
+  const ok = await store.saveSettings({ judgeModelOrder: values })
   savingOrder.value = false
+  if (ok) toast.push(t('model.order.saved'), 'success')
 }
 
 async function confirmDelete(): Promise<void> {

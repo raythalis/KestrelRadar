@@ -3526,25 +3526,17 @@ a.k2-row--link {
   padding-block-end: var(--k2-s-3);
 }
 
-.k2-order__title {
-  font-size: var(--k2-fs-body);
-  font-weight: var(--k2-fw-medium);
+.k2-order__headtext {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
 }
 
 .k2-order__sub {
   font-size: var(--k2-fs-caption);
   color: var(--k2-c-text-muted);
   min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* 窄屏放不下标题 + 这句说明，就只留标题（下面还有一行提示） */
-@media (max-width: 600px) {
-  .k2-order__sub {
-    display: none;
-  }
 }
 
 .k2-order__list {
@@ -3597,6 +3589,13 @@ a.k2-row--link {
 .k2-order__main {
   flex: 1 1 auto;
   min-inline-size: 0;
+}
+
+/* 选中的模型名可能很长：给省略号，别把行撑破 */
+.k2-order__pick {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .k2-order__foot {

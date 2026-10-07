@@ -157,7 +157,7 @@ export default {
       algorithm_llm: 'LLM+',
     },
     intent: '意图描述',
-    intentHint: '用人话写一句，例如「杨幂的新电影」',
+    intentHint: '例如 「诺兰的最新电影预告」',
     intentGlobalHint:
       '这条监听跟随全局，全局现在是纯算法，所以不用写意图描述。全局（或这条监听）开了 LLM，这里就会出现意图描述。',
     sensitivityLabel: '灵敏度',
@@ -270,8 +270,9 @@ export default {
       add: '加一行',
       drag: '拖动排序',
       placeholder: '选一个模型',
-      hint: '选项来自上面各供应商现场报回来的模型清单。',
+      hint: '选项来自上面各供应商的模型清单。',
       save: '保存',
+      saved: '调用顺序已保存。',
     },
   },
   template: {

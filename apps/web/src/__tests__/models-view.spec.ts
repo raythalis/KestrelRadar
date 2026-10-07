@@ -10,6 +10,8 @@ import i18n from '@/plugins/i18n'
 import vuetify from '@/plugins/vuetify'
 import ModelsView from '@/views/ModelsView.vue'
 
+const { pushToast } = vi.hoisted(() => ({ pushToast: vi.fn() }))
+vi.mock('@/stores/toast', () => ({ useToastStore: () => ({ push: pushToast }) }))
 vi.mock('@/api/config')
 // 卡片汇总只是卡片背面：不 mock 的话那次请求在 jsdom 里不落地，装载就永远等不齐
 vi.mock('@/api/cardStats')
@@ -33,7 +35,6 @@ const snapshot: ConfigSnapshot = {
   actions: [],
   channels: [],
   modelProviders: [provider('p1', '本机 Ollama'), provider('p2', '内网网关')],
-  models: [],
   templates: [
     {
       id: 'builtin:default',
@@ -118,15 +119,15 @@ describe('模型页', () => {
   })
 
   it('顺序下拉的选项来自各供应商现场报回来的模型，问不到的那家静默缺席', async () => {
-    const wrapper = await mountLoaded()
+    await mountLoaded()
 
-    const select = wrapper.findComponent({ name: 'VSelect' })
-    const items = select.props('items') as { title: string; value: string }[]
-    expect(items.map((item) => item.title)).toEqual([
+    await dv('model-order-select-0').trigger('click')
+    await flushPromises()
+    const items = [...document.querySelectorAll('.k2-menu__item')] as HTMLElement[]
+    expect(items.map((el) => el.textContent.trim())).toEqual([
       '本机 Ollama:qwen3:8b',
       '本机 Ollama:llama3.3:70b',
     ])
-    expect(items.map((item) => item.value)).toEqual(['p1:qwen3:8b', 'p1:llama3.3:70b'])
   })
 
   it('设置的顺序直接铺成行；保存时把空行去掉再写回设置', async () => {
@@ -141,6 +142,16 @@ describe('模型页', () => {
     await flushPromises()
     expect(api.updateSettings).toHaveBeenCalledWith({ judgeModelOrder: ['p1:qwen3:8b'] })
     expect(wrapper.emitted()).toBeTruthy()
+  })
+
+  it('保存成功给一条成功提示', async () => {
+    await mountLoaded()
+    pushToast.mockClear()
+
+    await dv('model-order-save').trigger('click')
+    await flushPromises()
+
+    expect(pushToast).toHaveBeenCalledWith('调用顺序已保存。', 'success')
   })
 
   it('删掉供应商：确认后调删除，顺序里引用它的行跟着消失并写回设置', async () => {

@@ -85,15 +85,55 @@ describe('ModelOrderList', () => {
     expect(rowCount(wrapper)).toBe(1)
   })
 
-  it('选项按「供应商:模型」拼，取不到模型的那家静默缺席', () => {
+  it('下拉用的是全站同一套外观（k2-select + k2-menu），选项按「供应商:模型」拼，取不到模型的那家静默缺席', async () => {
     const wrapper = mountList()
-    const select = wrapper.findComponent({ name: 'VSelect' })
-    const items = select.props('items') as { title: string }[]
-    expect(items.map((item) => item.title)).toEqual([
+    expect(wrapper.get('[data-test="model-order-select-0"]').classes()).toContain('k2-select')
+
+    await wrapper.get('[data-test="model-order-select-0"]').trigger('click')
+    await flushPromises()
+    const items = [...document.querySelectorAll('.k2-menu__item')] as HTMLElement[]
+    expect(items.map((el) => el.textContent.trim())).toEqual([
       '本机 Ollama:qwen3:8b',
       '本机 Ollama:llama3.3:70b',
       'DeepSeek 官方:deepseek-chat',
     ])
+    document.body.innerHTML = ''
+  })
+
+  it('从菜单里点一项：整行换成这一项', async () => {
+    const wrapper = mountList()
+    await wrapper.get('[data-test="model-order-select-0"]').trigger('click')
+    await flushPromises()
+
+    const items = [...document.querySelectorAll('.k2-menu__item')] as HTMLElement[]
+    items[1]!.click()
+    await flushPromises()
+
+    expect(wrapper.emitted('update:value')?.[0]).toEqual([['mp1:llama3.3:70b']])
+    document.body.innerHTML = ''
+  })
+
+  it('供应商的清单还没回来时：已选中的那一行照原样显示成人话，不露「id:模型名」', () => {
+    // 供应商还在，只是它的模型清单还没问到（或者它已经不报这个模型了）
+    const loading = [{ id: 'mp1', name: '本机 Ollama', models: [] }]
+    const wrapper = mountList({ value: ['mp1:qwen3:8b'], providers: loading })
+
+    expect(rowCount(wrapper)).toBe(1)
+    const text = wrapper.get('[data-test="model-order-select-0"]').text()
+    expect(text).toContain('本机 Ollama:qwen3:8b')
+    expect(text).not.toContain('mp1:')
+  })
+
+  it('标题用字段标签的样式，说明在它下一行；加号与保存都是主色', () => {
+    const wrapper = mountList()
+    const label = wrapper.get('.k2-order__headtext .k2-field__label')
+    expect(label.text()).toBe('模型调用顺序')
+    expect(wrapper.get('.k2-order__headtext .k2-order__sub').text()).toBe(
+      '按顺序依次尝试，前面的失败就用下一个',
+    )
+
+    expect(wrapper.get('[data-test="model-order-add"]').classes()).toContain('k2-iconbtn--primary')
+    expect(wrapper.get('[data-test="model-order-save"]').classes()).toContain('app-btn--primary')
   })
 
   it('保存按钮只出事件', async () => {

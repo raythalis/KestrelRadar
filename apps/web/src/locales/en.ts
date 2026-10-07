@@ -157,7 +157,7 @@ export default {
       algorithm_llm: 'LLM+',
     },
     intent: 'Intent',
-    intentHint: 'One plain sentence, e.g. "new movies with that actress"',
+    intentHint: 'e.g. "the latest Nolan movie trailer"',
     intentGlobalHint:
       'This monitor follows the global mode, which is algorithm-only, so no intent is needed. Turn on LLM globally (or for this monitor) and the intent field appears.',
     sensitivityLabel: 'Sensitivity',
@@ -272,8 +272,9 @@ export default {
       placeholder: 'Pick a model',
       add: 'Add a row',
       drag: 'Drag to reorder',
-      hint: 'Options are the model lists each provider reports above.',
+      hint: 'Options come from the model lists of the providers above.',
       save: 'Save',
+      saved: 'Call order saved.',
     },
   },
   template: {
