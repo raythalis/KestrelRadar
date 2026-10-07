@@ -50,7 +50,7 @@ describe('全局设置', () => {
         payload: { concurrency: 99 },
       })
       expect(res.statusCode).toBe(400)
-      expect(res.json().error.code).toBe('validation_error')
+      expect(res.json().error.code).toBe('VALIDATION_ERROR')
     } finally {
       await cleanup()
     }

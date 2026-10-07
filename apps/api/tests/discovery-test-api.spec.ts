@@ -34,10 +34,16 @@ describe('发现测试接口', () => {
       const res = await app.inject({ method: 'POST', url: `/api/discoveries/${discovery.id}/test` })
       expect(res.statusCode).toBe(200)
       expect(res.json()).toMatchObject({
-        routeOk: true,
-        contentOk: true,
-        foundItemCount: 2,
-        latestItemAt: '2026-09-30T12:00:00.000Z',
+        success: true,
+        data: {
+          ok: true,
+          data: {
+            routeOk: true,
+            contentOk: true,
+            foundItemCount: 2,
+            latestItemAt: '2026-09-30T12:00:00.000Z',
+          },
+        },
       })
 
       const snapshot = (await app.inject({ method: 'GET', url: '/api/config' })).json()
@@ -80,8 +86,12 @@ describe('发现测试接口', () => {
 
       const res = await app.inject({ method: 'POST', url: `/api/discoveries/${discovery.id}/test` })
 
-      expect(res.json()).toMatchObject({ routeOk: true, contentOk: false })
-      expect(res.json().message).toContain('订阅源')
+      expect(res.json().data).toMatchObject({
+        ok: false,
+        code: 'INVALID_RESPONSE',
+        data: { routeOk: true, contentOk: false },
+      })
+      expect(res.json().data.message).toContain('订阅源')
     } finally {
       await cleanup()
       await server.stop()
@@ -140,7 +150,7 @@ describe('发现测试接口', () => {
       })
 
       expect(response.statusCode).toBe(400)
-      expect(response.json().error.code).toBe('validation_error')
+      expect(response.json().error.code).toBe('VALIDATION_ERROR')
     } finally {
       await cleanup()
     }

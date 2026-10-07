@@ -51,7 +51,7 @@ describe('渠道接口', () => {
 
       const blocked = await app.inject({ method: 'DELETE', url: `/api/channels/${channel.id}` })
       expect(blocked.statusCode).toBe(409)
-      expect(blocked.json().error.code).toBe('conflict')
+      expect(blocked.json().error.code).toBe('CONFLICT')
 
       await app.inject({
         method: 'DELETE',

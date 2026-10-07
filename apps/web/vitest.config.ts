@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 import vue from '@vitejs/plugin-vue'
@@ -5,10 +6,15 @@ import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import { configDefaults, defineConfig } from 'vitest/config'
 
 // 独立配置：不 merge vite.config（后者是按 mode 求值的函数，mergeConfig 不支持回调形式）
+const rootPkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf-8'))
+
 export default defineConfig({
   plugins: [vue({ template: { transformAssetUrls } }), vuetify({ autoImport: true })],
   define: {
     __APP_VERSION__: JSON.stringify('test'),
+    __REPO_URL__: JSON.stringify(
+      typeof rootPkg.repository === 'string' ? rootPkg.repository : (rootPkg.repository?.url ?? ''),
+    ),
   },
   resolve: {
     alias: {

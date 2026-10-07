@@ -51,7 +51,14 @@ describe('触摸端尺寸 · v2 层（外壳与已迁移的页面）', () => {
   it('窄屏收起侧栏：抽屉里始终是完整导航，把手藏起来', () => {
     const block = v2MobileBlock()
     expect(block).toMatch(/\.k2-shell--rail \.k2-nav,/)
+    expect(block).toMatch(/\.k2-shell--rail \.k2-nav__label[^{]*{[^}]*inline-size:\s*auto/s)
     expect(block).toMatch(/\.k2-nav__handle\s*{[^}]*display:\s*none/s)
+  })
+
+  it('桌面收起侧栏：文字整条退出布局，不能只靠裁切露出半个字', () => {
+    expect(v2Scss).toMatch(
+      /\.k2-shell--rail \.k2-nav__label,\s*\.k2-shell--rail \.k2-nav__name\s*{[^}]*inline-size:\s*0[^}]*opacity:\s*0/s,
+    )
   })
 })
 

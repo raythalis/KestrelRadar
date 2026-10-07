@@ -28,13 +28,26 @@ export function createChannelService(repo: ChannelRepo) {
   ): void {
     if (type === 'webhook') {
       if (!isHttpUrl(config.url ?? '')) {
-        throw AppError.validation('Webhook 渠道要填一个 http:// 或 https:// 开头的地址')
+        throw AppError.validation('Webhook 渠道要填一个 http:// 或 https:// 开头的地址', {
+          field: 'config.url',
+          rule: 'INVALID_URL',
+        })
       }
       return
     }
     if (type === 'telegram') {
-      if (!(config.chatId ?? '').trim()) throw AppError.validation('Telegram 渠道要填 chat id')
-      if (!token.trim() && !hasToken) throw AppError.validation('Telegram 渠道要填 bot token')
+      if (!(config.chatId ?? '').trim()) {
+        throw AppError.validation('Telegram 渠道要填 chat id', {
+          field: 'config.chatId',
+          rule: 'REQUIRED_FIELD',
+        })
+      }
+      if (!token.trim() && !hasToken) {
+        throw AppError.validation('Telegram 渠道要填 bot token', {
+          field: 'secret',
+          rule: 'REQUIRED_FIELD',
+        })
+      }
     }
   }
 

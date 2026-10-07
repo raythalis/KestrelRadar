@@ -71,7 +71,8 @@ describe('配置 store', () => {
   })
 
   it('后端连不上时给出提示，不抛异常', async () => {
-    vi.mocked(fetchConfig).mockRejectedValue(new ApiError('network_error', '连不上后端（/api）'))
+    // 请求根本没到后端：这一层的码是 null（不属于任何一套错误码）
+    vi.mocked(fetchConfig).mockRejectedValue(new ApiError(null, '连不上后端（/api）'))
     const store = useConfigStore()
 
     await store.load()

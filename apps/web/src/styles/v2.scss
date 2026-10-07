@@ -71,6 +71,11 @@
   object-fit: contain;
 }
 
+/* 抓到网站图标时把底色让出来：图标自己带形状，垫一层色块反而脏 */
+.k2-tile--bare {
+  background: transparent;
+}
+
 .k2-tile--sm {
   inline-size: var(--k2-tile-sm);
   block-size: var(--k2-tile-sm);
@@ -381,8 +386,10 @@
   color: var(--k2-c-on-primary);
 }
 
-.k2-btn--primary:hover {
-  background: var(--k2-c-primary-hover);
+@media (hover: hover) and (pointer: fine) {
+  .k2-btn--primary:hover {
+    background: var(--k2-c-primary-hover);
+  }
 }
 
 .k2-btn--primary:active {
@@ -395,8 +402,10 @@
   color: var(--k2-c-text);
 }
 
-.k2-btn--ghost:hover {
-  background: var(--k2-c-wash-hover);
+@media (hover: hover) and (pointer: fine) {
+  .k2-btn--ghost:hover {
+    background: var(--k2-c-wash-hover);
+  }
 }
 
 .k2-link {
@@ -508,9 +517,11 @@
   cursor: pointer;
 }
 
-.k2-toast__close:hover {
-  background: var(--k2-c-wash-hover);
-  color: var(--k2-c-text);
+@media (hover: hover) and (pointer: fine) {
+  .k2-toast__close:hover {
+    background: var(--k2-c-wash-hover);
+    color: var(--k2-c-text);
+  }
 }
 
 /* 倒计时条：宽度按自己的 duration 线性收完，悬停时冻住 */
@@ -527,8 +538,10 @@
   animation-fill-mode: forwards;
 }
 
-.k2-toast:hover .k2-toast__bar {
-  animation-play-state: paused;
+@media (hover: hover) and (pointer: fine) {
+  .k2-toast:hover .k2-toast__bar {
+    animation-play-state: paused;
+  }
 }
 
 @keyframes k2-toast-life {
@@ -630,9 +643,11 @@
   cursor: pointer;
 }
 
-.k2-inputwrap__clear:hover {
-  background: var(--k2-c-wash-hover);
-  color: var(--k2-c-text);
+@media (hover: hover) and (pointer: fine) {
+  .k2-inputwrap__clear:hover {
+    background: var(--k2-c-wash-hover);
+    color: var(--k2-c-text);
+  }
 }
 
 /* 有叉时给文字让出位置，别顶到叉下面 */
@@ -786,8 +801,10 @@
     border-color var(--k2-motion-fast) var(--k2-motion-ease);
 }
 
-.k2-preset:hover {
-  background: var(--k2-c-wash-hover);
+@media (hover: hover) and (pointer: fine) {
+  .k2-preset:hover {
+    background: var(--k2-c-wash-hover);
+  }
 }
 
 /* ---------- 栅格 ---------- */
@@ -1022,9 +1039,11 @@
     color var(--k2-motion-fast) var(--k2-motion-ease);
 }
 
-.k2-nav__item:hover {
-  background: var(--k2-c-wash-hover);
-  color: var(--k2-c-text);
+@media (hover: hover) and (pointer: fine) {
+  .k2-nav__item:hover {
+    background: var(--k2-c-wash-hover);
+    color: var(--k2-c-text);
+  }
 }
 
 .k2-nav__item.is-active {
@@ -1043,9 +1062,15 @@
   transition: opacity var(--k2-motion-fast) var(--k2-motion-ease);
 }
 
-/* 收起：文字让位，图标位置钉住（卡片内边距、条目内边距都不动） */
+/* 收起：文字让位，图标位置钉住（卡片内边距、条目内边距都不动）。
+   必须整条退出布局：只靠 overflow 裁切、宽度不够时会露出半个字 */
 .k2-shell--rail .k2-nav__label,
-.k2-shell--rail .k2-nav__name,
+.k2-shell--rail .k2-nav__name {
+  inline-size: 0;
+  opacity: 0;
+}
+
+/* 侧栏底部的说明行：一直是次级小字 */
 .k2-nav__foot {
   overflow: hidden;
   padding-inline: var(--k2-s-2);
@@ -1075,9 +1100,11 @@
     color var(--k2-motion-fast) var(--k2-motion-ease);
 }
 
-.k2-nav__handle:hover {
-  background: var(--k2-c-surface3);
-  color: var(--k2-c-text);
+@media (hover: hover) and (pointer: fine) {
+  .k2-nav__handle:hover {
+    background: var(--k2-c-surface3);
+    color: var(--k2-c-text);
+  }
 }
 
 .k2-nav__handle .mdi {
@@ -1265,9 +1292,11 @@ body {
   color: var(--k2-c-text-faint);
 }
 
-.k2-list__row:hover .k2-list__chevron {
-  background: var(--k2-c-surface3);
-  color: var(--k2-c-text);
+@media (hover: hover) and (pointer: fine) {
+  .k2-list__row:hover .k2-list__chevron {
+    background: var(--k2-c-surface3);
+    color: var(--k2-c-text);
+  }
 }
 
 .k2-list__foot {
@@ -1371,9 +1400,11 @@ a.k2-row--link {
   transition: background var(--k2-motion-fast) var(--k2-motion-ease);
 }
 
-.k2-iconbtn:hover {
-  background: var(--k2-c-wash-hover);
-  color: var(--k2-c-text);
+@media (hover: hover) and (pointer: fine) {
+  .k2-iconbtn:hover {
+    background: var(--k2-c-wash-hover);
+    color: var(--k2-c-text);
+  }
 }
 
 /* 页头的主操作（新建这类）用实心 */
@@ -1382,9 +1413,11 @@ a.k2-row--link {
   color: var(--k2-c-on-primary);
 }
 
-.k2-iconbtn--primary:hover {
-  background: var(--k2-c-primary-hover);
-  color: var(--k2-c-on-primary);
+@media (hover: hover) and (pointer: fine) {
+  .k2-iconbtn--primary:hover {
+    background: var(--k2-c-primary-hover);
+    color: var(--k2-c-on-primary);
+  }
 }
 
 /* 危险动作（删除这类）挂这个修饰类：平时就显红，悬停给一层红底 */
@@ -1392,9 +1425,11 @@ a.k2-row--link {
   color: var(--k2-c-danger-ink);
 }
 
-.k2-iconbtn--danger:hover {
-  background: var(--k2-c-danger-soft);
-  color: var(--k2-c-danger-ink);
+@media (hover: hover) and (pointer: fine) {
+  .k2-iconbtn--danger:hover {
+    background: var(--k2-c-danger-soft);
+    color: var(--k2-c-danger-ink);
+  }
 }
 
 /* 到上限这类「还能看见但点不动」的按钮：留着位置，只是不再响应 */
@@ -1403,15 +1438,19 @@ a.k2-row--link {
   cursor: not-allowed;
 }
 
-.k2-iconbtn:disabled:hover {
-  background: transparent;
-  color: var(--k2-c-text-muted);
+@media (hover: hover) and (pointer: fine) {
+  .k2-iconbtn:disabled:hover {
+    background: transparent;
+    color: var(--k2-c-text-muted);
+  }
 }
 
 /* 低权重危险：平时保持中性，悬停才显危险色（列表里的关闭 / 忽视） */
-.k2-iconbtn--danger-hover:hover {
-  background: var(--k2-c-danger-soft);
-  color: var(--k2-c-danger-ink);
+@media (hover: hover) and (pointer: fine) {
+  .k2-iconbtn--danger-hover:hover {
+    background: var(--k2-c-danger-soft);
+    color: var(--k2-c-danger-ink);
+  }
 }
 
 /* 长列表限高滚动：仪表盘等长列表在卡片内侧滚，避免把整页撑长、两列高度失衡 */
@@ -1462,8 +1501,10 @@ a.k2-row--link {
   cursor: pointer;
 }
 
-.k2-menu__item:hover {
-  background: var(--k2-c-wash-hover);
+@media (hover: hover) and (pointer: fine) {
+  .k2-menu__item:hover {
+    background: var(--k2-c-wash-hover);
+  }
 }
 
 .k2-menu__item--danger {
@@ -1512,8 +1553,8 @@ a.k2-row--link {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  /* 与 success 本色一致（同 .k2-chan__test 的通过态） */
-  color: var(--k2-c-success);
+  /* LLM+ 自己的绿（比 success 亮一点），只有这一处用 */
+  color: var(--k2-c-llm-plus);
   font-weight: var(--k2-fw-medium);
   white-space: nowrap;
 }
@@ -1576,10 +1617,14 @@ a.k2-row--link {
     border-start-end-radius: var(--k2-r-md);
   }
 
-  /* 清空叉跟着输入那一行居中 */
-  .k2-inputwrap.is-clearable .k2-inputwrap__clear {
+  /* 清空叉跟着输入那一行居中：只有前缀分行的组合框才需要——
+     基准规则是按整块居中，前缀自占一行时整块的中心已经不在输入那一行了。
+     translate 必须显式归零：基准规则里那个 -50% 是配「上边 50%」用的，
+     这里改成从下边定位，再留着它就会把叉顶上去半个身位。 */
+  .k2-inputwrap.k2-inputgroup.is-clearable .k2-inputwrap__clear {
     inset-block-start: auto;
     inset-block-end: calc((var(--k2-field-h) - 28px) / 2);
+    translate: none;
   }
 }
 
@@ -1710,9 +1755,11 @@ a.k2-row--link {
   cursor: pointer;
 }
 
-.k2-col__add:hover {
-  background: var(--k2-c-wash-hover);
-  color: var(--k2-c-text);
+@media (hover: hover) and (pointer: fine) {
+  .k2-col__add:hover {
+    background: var(--k2-c-wash-hover);
+    color: var(--k2-c-text);
+  }
 }
 
 /* ---------- 弹窗与选择器（新增渠道那种） ---------- */
@@ -1916,9 +1963,11 @@ a.k2-row--link {
   cursor: pointer;
 }
 
-.k2-chip__x:hover {
-  background: var(--k2-c-wash-hover);
-  color: var(--k2-c-text);
+@media (hover: hover) and (pointer: fine) {
+  .k2-chip__x:hover {
+    background: var(--k2-c-wash-hover);
+    color: var(--k2-c-text);
+  }
 }
 
 /* 按钮里的转圈（保存中）：环用当前文字色，不引新颜色 */
@@ -2063,8 +2112,10 @@ a.k2-row--link {
   color: var(--k2-c-danger-ink);
 }
 
-.k2-btn--danger:hover {
-  filter: brightness(0.96);
+@media (hover: hover) and (pointer: fine) {
+  .k2-btn--danger:hover {
+    filter: brightness(0.96);
+  }
 }
 
 /* ---------- 四列网格（指标卡一行四张） ---------- */
@@ -2085,8 +2136,10 @@ a.k2-row--link {
   cursor: pointer;
 }
 
-.k2-row--link:hover {
-  background: var(--k2-c-wash-hover);
+@media (hover: hover) and (pointer: fine) {
+  .k2-row--link:hover {
+    background: var(--k2-c-wash-hover);
+  }
 }
 
 /* ---------- 分线组件的说明文字 ---------- */
@@ -2309,9 +2362,11 @@ a.k2-row--link {
   font-size: 20px;
 }
 
-.k2-subnav__item:hover {
-  background: var(--k2-c-wash-hover);
-  color: var(--k2-c-text);
+@media (hover: hover) and (pointer: fine) {
+  .k2-subnav__item:hover {
+    background: var(--k2-c-wash-hover);
+    color: var(--k2-c-text);
+  }
 }
 
 .k2-subnav__item--on {
@@ -2351,6 +2406,17 @@ a.k2-row--link {
   .k2-subnav__item {
     flex: none;
     white-space: nowrap;
+  }
+
+  /* 窄屏设置项：一律上下排（标签与说明在上、控件在下），不再左右分栏。
+     桌面那套 240px 的标签栏在手机上会把控件挤成半截，也会把长标签压成两行。 */
+  .k2-set__row {
+    flex-direction: column;
+    gap: var(--k2-s-2);
+  }
+
+  .k2-set__label {
+    inline-size: 100%;
   }
 }
 
@@ -2513,8 +2579,13 @@ a.k2-row--link {
     transform: none;
   }
 
+  /* 抽屉里始终是完整导航：收起状态只影响桌面那根图标轨道，这几个要让回来 */
   .k2-shell--rail .k2-nav__label,
-  .k2-shell--rail .k2-nav__name,
+  .k2-shell--rail .k2-nav__name {
+    inline-size: auto;
+    opacity: 1;
+  }
+
   .k2-nav__handle {
     display: none;
   }
@@ -2537,6 +2608,13 @@ a.k2-row--link {
   /* 配置页：三列在窄屏改成「一次看一列」，靠上面的标签切换 */
   .k2-tabs {
     display: flex;
+    /* 三列标签在窄屏一行放不下就整块换行，别把「数据源 / Data sources」拆成两行、
+       也不要把计数挤到另一行去 */
+    flex-wrap: wrap;
+  }
+
+  .k2-tabs__item {
+    flex: 0 1 auto;
   }
 
   .k2-group__body {
@@ -2719,8 +2797,10 @@ a.k2-row--link {
   cursor: pointer;
 }
 
-.k2-chip--action:hover {
-  filter: brightness(0.97);
+@media (hover: hover) and (pointer: fine) {
+  .k2-chip--action:hover {
+    filter: brightness(0.97);
+  }
 }
 
 .k2-chip.is-busy .k2-chip__dot {
@@ -2843,9 +2923,11 @@ a.k2-row--link {
   cursor: pointer;
 }
 
-.k2-panel__quiet:hover {
-  background: var(--k2-c-surface2);
-  color: var(--k2-c-text);
+@media (hover: hover) and (pointer: fine) {
+  .k2-panel__quiet:hover {
+    background: var(--k2-c-surface2);
+    color: var(--k2-c-text);
+  }
 }
 
 /* 选中了某个来源：按钮跟着变品牌色（参考稿的 active 态） */
@@ -2869,8 +2951,10 @@ a.k2-row--link {
   cursor: pointer;
 }
 
-.k2-panel__link:hover {
-  color: var(--k2-c-primary-hover);
+@media (hover: hover) and (pointer: fine) {
+  .k2-panel__link:hover {
+    color: var(--k2-c-primary-hover);
+  }
 }
 
 /* 计数徽章：跟随面板色调（异常面板自动变红） */
@@ -2934,8 +3018,10 @@ a.k2-row--link {
   cursor: pointer;
 }
 
-.k2-panel__more:hover {
-  background: var(--k2-c-surface3);
+@media (hover: hover) and (pointer: fine) {
+  .k2-panel__more:hover {
+    background: var(--k2-c-surface3);
+  }
 }
 
 /* 底部入口里的补充信息（参考里是「还有 N 条」那种半截提示） */
@@ -2992,9 +3078,11 @@ a.k2-row--link {
   cursor: pointer;
 }
 
-.k2-pop__close:hover {
-  background: var(--k2-c-surface3);
-  color: var(--k2-c-text);
+@media (hover: hover) and (pointer: fine) {
+  .k2-pop__close:hover {
+    background: var(--k2-c-surface3);
+    color: var(--k2-c-text);
+  }
 }
 
 /* 来源列表：最多 4 条的高度（每条 34px），再多在浮层里滚 */
@@ -3023,8 +3111,10 @@ a.k2-row--link {
   cursor: pointer;
 }
 
-.k2-pop__item:hover {
-  background: var(--k2-c-wash-hover);
+@media (hover: hover) and (pointer: fine) {
+  .k2-pop__item:hover {
+    background: var(--k2-c-wash-hover);
+  }
 }
 
 .k2-pop__item .v-icon {
@@ -3065,8 +3155,10 @@ a.k2-row--link {
   cursor: pointer;
 }
 
-.k2-pop__option:hover {
-  background: var(--k2-c-wash-hover);
+@media (hover: hover) and (pointer: fine) {
+  .k2-pop__option:hover {
+    background: var(--k2-c-wash-hover);
+  }
 }
 
 .k2-pop__option--on {
@@ -3115,8 +3207,10 @@ a.k2-row--link {
   cursor: pointer;
 }
 
-.k2-pop__reset:hover {
-  background: var(--k2-c-wash-hover);
+@media (hover: hover) and (pointer: fine) {
+  .k2-pop__reset:hover {
+    background: var(--k2-c-wash-hover);
+  }
 }
 
 /* ---------- 「查看全部事件」弹窗 ---------- */
@@ -3186,9 +3280,11 @@ a.k2-row--link {
   cursor: pointer;
 }
 
-.k2-modal__close:hover {
-  background: var(--k2-c-surface3);
-  color: var(--k2-c-text);
+@media (hover: hover) and (pointer: fine) {
+  .k2-modal__close:hover {
+    background: var(--k2-c-surface3);
+    color: var(--k2-c-text);
+  }
 }
 
 .k2-modal__bar {
@@ -3329,6 +3425,11 @@ a.k2-row--link {
   font-weight: var(--k2-fw-semibold);
 }
 
+/* 异常卡的第二行是次级说明：字号跟卡内其他文字同级，靠字重与颜色拉开层级 */
+.k2-incident .k2-card__sub {
+  font-size: var(--k2-fs-caption);
+}
+
 .k2-panel__body .k2-list__chevron {
   inline-size: var(--k2-icon-sm);
   block-size: var(--k2-icon-sm);
@@ -3385,8 +3486,10 @@ a.k2-row--link {
   text-decoration: none;
 }
 
-.k2-source-tags .k2-chip--tag:hover {
-  color: var(--k2-c-text);
+@media (hover: hover) and (pointer: fine) {
+  .k2-source-tags .k2-chip--tag:hover {
+    color: var(--k2-c-text);
+  }
 }
 
 /* +N 是个按钮，要多清掉浏览器给的 2px 默认边框，否则比旁边的标签高 4px */
@@ -3426,6 +3529,14 @@ a.k2-row--link {
   margin-block: var(--k2-s-2);
   font-size: var(--k2-fs-caption);
   line-height: var(--k2-lh-normal);
+}
+
+/* 副信息：语言无关的诊断片段（30s / HTTP 503 / Unauthorized），比正文淡一档 */
+.k2-incident__detail {
+  margin: 0 0 var(--k2-s-2);
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+  overflow-wrap: anywhere;
 }
 
 .k2-incident__foot {
@@ -3612,4 +3723,28 @@ a.k2-row--link {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 窄屏：这句话整行换行说完整，保存按钮落到文字下面（桌面仍是文字在左、按钮在右）。
+   说明文字比按钮长得多，窄屏挤在一行只会变成省略号。 */
+@media (max-width: 1183px) {
+  .k2-order__foot {
+    flex-wrap: wrap;
+    row-gap: var(--k2-s-3);
+  }
+
+  .k2-order__hint {
+    flex: 1 1 100%;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .k2-order__foot .app-spacer {
+    display: none;
+  }
+
+  .k2-order__foot .app-btn {
+    inline-size: 100%;
+  }
 }

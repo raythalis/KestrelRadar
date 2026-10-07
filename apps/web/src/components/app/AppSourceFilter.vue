@@ -23,12 +23,15 @@ const props = withDefaults(
     resetLabel?: string
     /** 还没选具体来源时，按钮上的字 */
     filterLabel?: string
+    /** 关闭按钮的无障碍名 */
+    closeLabel?: string
   }>(),
   {
-    title: '筛选事件',
-    note: '按信息来源查看',
-    resetLabel: '重置筛选',
-    filterLabel: '筛选',
+    // app/* 不写文案：默认一律留空，由页面把 t() 过的值传进来
+    title: '',
+    note: '',
+    resetLabel: '',
+    filterLabel: '',
   },
 )
 
@@ -74,7 +77,7 @@ const menuOpen = ref(false)
         <button
           type="button"
           class="k2-pop__close"
-          aria-label="关闭"
+          :aria-label="closeLabel"
           data-test="app-source-filter-close"
           @click="menuOpen = false"
         >

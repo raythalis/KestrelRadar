@@ -36,7 +36,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const filterId = ref<string | null>(null)
   const incidents = ref<Incident[]>([])
   const loading = ref(false)
-  const errorMessage = ref('')
 
   const isEmpty = computed(
     () => events.value.length === 0 && incidents.value.length === 0 && !loading.value,
@@ -88,7 +87,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   async function load(): Promise<void> {
     loading.value = true
-    errorMessage.value = ''
     const results = await Promise.allSettled([
       fetchStatsOverview(),
       fetchRecentEvents(listQuery()),
@@ -96,6 +94,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
       fetchEventSources(),
     ])
     const [statsResult, eventsResult, incidentsResult, sourcesResult] = results
+    // 拿不到的那几块各自留空（卡片显示「—」）；请求本身失败由 http.ts 统一弹浮层
     if (statsResult.status === 'fulfilled') stats.value = statsResult.value
     if (eventsResult.status === 'fulfilled') {
       events.value = eventsResult.value.events
@@ -104,10 +103,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
     if (incidentsResult.status === 'fulfilled') incidents.value = incidentsResult.value.incidents
     if (sourcesResult.status === 'fulfilled') sources.value = sourcesResult.value
-    // 八张卡是最重要的那块：它没拿到才算整页失败
-    if (statsResult.status === 'rejected') {
-      errorMessage.value = (statsResult.reason as Error).message
-    }
     loading.value = false
   }
 
@@ -120,7 +115,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loading,
     loadingMore,
     hasMore,
-    errorMessage,
     isEmpty,
     load,
     loadMore,

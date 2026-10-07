@@ -1,10 +1,13 @@
 import {
   failureCopy,
+  operationCodeOf,
   type Action,
   type ChannelTestResult,
   type FailureCode,
+  type TelegramChatsResult,
 } from '@kestrel/contracts'
 
+import { AppError } from '../../plugins/errors.ts'
 import { DeliveryError } from './sender.ts'
 
 import type { ActionRepo } from '../actions/action.repo.ts'
@@ -61,7 +64,7 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 export function createDeliveryService(deps: DeliveryDeps) {
   /**
-   * 新鲜窗口：源自己写了发布时间、而且已经很旧的，只入库不推送；
+   * 新鲜窗口：源自己写了发布时间、而且已经很旧的，只入库不投递；
    * 没写发布时间的一律不当作过期（不然不会写时间的源永远推不出来）。
    */
   function isFresh(item: Item, now: Date): boolean {
@@ -194,6 +197,7 @@ export function createDeliveryService(deps: DeliveryDeps) {
       const text = batch.map((message) => message.text).join('\n\n---\n\n')
       let error: string | null = null
       let failureCode: FailureCode = 'delivery.failed'
+      let detail: string | undefined
       try {
         await deps.batcher.enqueue({
           channel,
@@ -209,6 +213,7 @@ export function createDeliveryService(deps: DeliveryDeps) {
         // 推送不重试：一次投递失败就是一条异常（重试有重复发消息的风险）
         failureCode = failure instanceof DeliveryError ? failure.code : 'delivery.failed'
         error = (failure as Error).message || failureCopy(failureCode)
+        detail = failure instanceof DeliveryError ? failure.detail : undefined
       }
 
       const delivery = deps.deliveries.create({
@@ -230,6 +235,7 @@ export function createDeliveryService(deps: DeliveryDeps) {
           groupName: group.name,
           code: failureCode,
           message: error,
+          detail: detail ?? null,
         })
         continue
       }
@@ -243,7 +249,7 @@ export function createDeliveryService(deps: DeliveryDeps) {
       itemCount += sentItemIds.length
     }
 
-    if (messageCount === 0) return skip('没发出去（发送失败）')
+    if (messageCount === 0) return skip('没发出去（投递失败）')
     return {
       ok: true,
       actionId,
@@ -257,7 +263,7 @@ export function createDeliveryService(deps: DeliveryDeps) {
   return {
     deliverForAction,
 
-    /** 采集完顺手把「发现即发」的动作跑一遍 */
+    /** 采集完顺手把「采集到就投递」的动作跑一遍 */
     async deliverInstantForGroup(groupId: string): Promise<DeliveryOutcome[]> {
       const actions = deps.actions
         .list()
@@ -271,21 +277,41 @@ export function createDeliveryService(deps: DeliveryDeps) {
     async listTelegramChats(input: {
       channelId?: string
       token?: string
-    }): Promise<TelegramChat[]> {
+    }): Promise<TelegramChatsResult> {
       const typed = input.token?.trim()
       let token = typed && typed.length > 0 ? typed : null
+      // 资源不存在是 API Error
+      if (input.channelId && !deps.channels.get(input.channelId)) {
+        throw AppError.notFound('渠道不存在，可能刚被删掉')
+      }
       if (!token && input.channelId) token = deps.channels.getSecret(input.channelId)
-      if (!token)
-        throw new DeliveryError(
-          'delivery.telegramTokenMissing',
-          '没有可用的 bot token：填一个，或选一个已经存过 token 的 Telegram 渠道',
-        )
-      return deps.telegram.listChats(token)
+      if (!token) {
+        // 没得凭据是业务失败（请求本身是成功的）
+        return {
+          ok: false,
+          code: 'AUTH_FAILED',
+          message: '没有可用的 bot token：填一个，或选一个已经存过 token 的 Telegram 渠道',
+          details: { reason: 'delivery.telegramTokenMissing' },
+        }
+      }
+      try {
+        const chats = await deps.telegram.listChats(token)
+        return { ok: true, message: '', data: { chats } }
+      } catch (error) {
+        const reason = error instanceof DeliveryError ? error.code : 'delivery.telegramFailed'
+        return {
+          ok: false,
+          code: operationCodeOf(reason),
+          message: (error as Error).message || failureCopy(reason),
+          details: { reason },
+        }
+      }
     },
 
     async testChannel(channelId: string): Promise<ChannelTestResult> {
       const channel = deps.channels.get(channelId)
-      if (!channel) return { ok: false, message: '渠道不存在', sentAt: null }
+      // 资源不存在是 API Error，不装成业务失败
+      if (!channel) throw AppError.notFound('渠道不存在，可能刚被删掉')
       const text =
         deps.settings.get().language === 'en'
           ? '[Kestrel] Test message: this channel is connected.'
@@ -301,9 +327,19 @@ export function createDeliveryService(deps: DeliveryDeps) {
           eventCount: 0,
           hitAt: null,
         })
-        return { ok: true, message: '测试消息已发出', sentAt: new Date().toISOString() }
+        return {
+          ok: true,
+          message: '测试消息已投递',
+          data: { sentAt: new Date().toISOString() },
+        }
       } catch (error) {
-        return { ok: false, message: (error as Error).message || '测试消息发送失败', sentAt: null }
+        const reason = error instanceof DeliveryError ? error.code : null
+        return {
+          ok: false,
+          code: operationCodeOf(reason),
+          message: (error as Error).message || '测试消息投递失败',
+          ...(reason ? { details: { reason } } : {}),
+        }
       }
     },
   }

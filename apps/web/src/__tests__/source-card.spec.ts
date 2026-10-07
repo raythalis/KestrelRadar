@@ -41,6 +41,17 @@ describe('SourceCard', () => {
     expect(wrapper.get('[data-test="source-icon"]').text()).toBe('')
   })
 
+  it('网站图标真加载出来了，就把头像底色去掉；图挂了仍保留底色', async () => {
+    const ok = mountCard({ iconUrl: '/api/icons/abc.png' })
+    expect(ok.get('[data-test="source-icon"]').classes()).not.toContain('k2-tile--bare')
+    await ok.get('[data-test="source-icon-img"]').trigger('load')
+    expect(ok.get('[data-test="source-icon"]').classes()).toContain('k2-tile--bare')
+
+    const bad = mountCard({ iconUrl: '/api/icons/bad.png' })
+    await bad.get('[data-test="source-icon-img"]').trigger('error')
+    expect(bad.get('[data-test="source-icon"]').classes()).not.toContain('k2-tile--bare')
+  })
+
   it('没抓到图标（iconUrl 为空）时照旧用类型图标', () => {
     const wrapper = mountCard({ iconUrl: null })
     expect(wrapper.find('[data-test="source-icon-img"]').exists()).toBe(false)

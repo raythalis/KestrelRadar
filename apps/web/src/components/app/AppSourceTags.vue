@@ -18,6 +18,14 @@ const props = withDefaults(
     limit?: number
     /** 第 limit 个之后的来源（页面按需取回来的那份完整列表） */
     rest?: EventSourceRef[]
+    /** 「+N」按钮上的话：条数由组件给，文案由页面给 */
+    moreOf?: (count: number) => string
+    /** 浮层标题 */
+    title?: string
+    /** 浮层副标题：家数由组件给，文案由页面给 */
+    noteOf?: (count: number) => string
+    /** 关闭按钮的无障碍名 */
+    closeLabel?: string
   }>(),
   { total: 0, limit: EVENT_SOURCE_TAG_LIMIT },
 )
@@ -73,8 +81,8 @@ function onToggle(value: boolean): void {
           type="button"
           class="k2-chip k2-chip--tag k2-source-tags__more"
           data-test="app-source-tags-more"
-          :aria-label="`展开其余 ${restCount} 个来源`"
-          :title="`展开其余 ${restCount} 个来源`"
+          :aria-label="moreOf?.(restCount)"
+          :title="moreOf?.(restCount)"
           @click.stop
         >
           +{{ restCount }}
@@ -83,13 +91,13 @@ function onToggle(value: boolean): void {
 
       <div class="k2-pop__head">
         <span class="k2-pop__heading">
-          <span class="k2-pop__title">来源</span>
-          <span class="k2-pop__note">共 {{ all.length }} 家，点开去原文</span>
+          <span class="k2-pop__title">{{ title }}</span>
+          <span class="k2-pop__note">{{ noteOf?.(all.length) }}</span>
         </span>
         <button
           type="button"
           class="k2-pop__close"
-          aria-label="关闭"
+          :aria-label="closeLabel"
           data-test="app-source-tags-close"
           @click="open = false"
         >

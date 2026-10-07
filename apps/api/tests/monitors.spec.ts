@@ -74,7 +74,7 @@ describe('监听接口', () => {
         payload: { groupId: otherGroup.id, name: '越组绑定', actionIds: [action.id] },
       })
       expect(cross.statusCode).toBe(400)
-      expect(cross.json().error.code).toBe('validation_error')
+      expect(cross.json().error.code).toBe('VALIDATION_ERROR')
     } finally {
       await cleanup()
     }

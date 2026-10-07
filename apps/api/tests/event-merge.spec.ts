@@ -22,7 +22,7 @@ function container(): { container: Container; cleanup: () => void } {
 function seedGroup(
   c: Container,
   name = 'G',
-): { groupId: string; discoveries: Record<'A' | 'B', string> } {
+): { groupId: string; discoveries: Record<'A' | 'B', string>; monitorId: string } {
   const group = c.groups.create({ name, description: '', enabled: true })
   const a = c.discoveries.create({
     groupId: group.id,
@@ -40,10 +40,30 @@ function seedGroup(
     cronExpression: '0 * * * *',
     enabled: true,
   })
-  return { groupId: group.id, discoveries: { A: a.id, B: b.id } }
+  // 事件只由「判定为留下」的条目组成：这一组配一个监听，下面 addItem 会给条目补判定
+  const monitor = c.monitors.create({
+    groupId: group.id,
+    name: '监听',
+    mode: 'algorithm',
+    sensitivity: 'medium',
+    matchMode: 'any',
+    intentText: '',
+    includeKeywords: ['新闻'],
+    excludeKeywords: [],
+    useGlobalExcludes: false,
+    enabled: true,
+    actionIds: [],
+  })
+  return { groupId: group.id, discoveries: { A: a.id, B: b.id }, monitorId: monitor.id }
 }
 
-function addItem(c: Container, discoveryId: string, item: SeedItem, seenAt: string): void {
+function addItem(
+  c: Container,
+  discoveryId: string,
+  item: SeedItem,
+  seenAt: string,
+  verdict: 'pass' | 'drop' | 'none' = 'pass',
+): void {
   c.items.record(
     discoveryId,
     {
@@ -59,6 +79,22 @@ function addItem(c: Container, discoveryId: string, item: SeedItem, seenAt: stri
     },
     seenAt,
   )
+  if (verdict === 'none') return
+  const groupId = c.discoveries.get(discoveryId)?.groupId ?? ''
+  const monitorId = c.monitors.list().find((row) => row.groupId === groupId)?.id
+  const created = c.items.listByDiscovery(discoveryId).find((row) => row.title === item.title)
+  if (!monitorId || !created) return
+  c.judgments.insert({
+    itemId: created.id,
+    monitorId,
+    decision: verdict,
+    band: verdict === 'pass' ? 'high' : 'low',
+    score: verdict === 'pass' ? 90 : 0,
+    matchedKeywords: [],
+    layer: 'score',
+    reasons: [],
+    llmReason: null,
+  })
 }
 
 const T0 = '2026-10-01T02:00:00.000Z'
@@ -108,6 +144,42 @@ describe('事件归并', () => {
     expect(events).toHaveLength(1)
     expect(events[0]?.sourceCount).toBe(2)
     expect(c.events.listItems(events[0]?.id ?? '').length).toBe(2)
+    cleanup()
+  })
+
+  it('判定没通过的条目不进事件：判为丢弃的、以及压根没判过的都不算数', async () => {
+    const { container: c, cleanup } = container()
+    const { groupId, discoveries } = seedGroup(c)
+    addItem(
+      c,
+      discoveries.A,
+      { title: '通过的新闻', url: 'https://a.example.com/pass', discovery: 'A' },
+      T0,
+      'pass',
+    )
+    addItem(
+      c,
+      discoveries.A,
+      { title: '判为丢弃的新闻', url: 'https://a.example.com/drop', discovery: 'A' },
+      T0,
+      'drop',
+    )
+    addItem(
+      c,
+      discoveries.B,
+      { title: '没判过的新闻', url: 'https://b.example.com/none', discovery: 'B' },
+      T0,
+      'none',
+    )
+
+    await c.merger.mergePendingItems(discoveries.A)
+    await c.merger.mergePendingItems(discoveries.B)
+
+    const events = c.events.listByGroup(groupId)
+    expect(events).toHaveLength(1)
+    expect(events[0]?.title).toBe('通过的新闻')
+    // 原始条目还在（只是没被并进事件）
+    expect(c.items.listByDiscovery(discoveries.A)).toHaveLength(2)
     cleanup()
   })
 

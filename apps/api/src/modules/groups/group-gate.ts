@@ -9,7 +9,7 @@ import type { GroupRepo } from './group.repo.ts'
  *
  * - 关分组＝组内发现 / 监听 / 动作一起停用，开分组＝一起启用；三条 update 放在同一个事务里，
  *   中途失败整批回滚，不会出现「分开关了但里面还有几条在跑」。
- * - 反向同理：组内全部启用才算分组启用，只要有一条停用，分组也跟着停用。
+ * - 反向同理：组内**只要有一条启用**，分组就算启用；一条都不启用（或组里没有卡片）时分组才停用。
  * - 空分组不参与反向推导：没有卡片可参照，分组自己的开关说了算。
  */
 export function createGroupGate(deps: {
@@ -60,13 +60,16 @@ export function createGroupGate(deps: {
       else actions.update(child.id, { enabled: false })
     },
 
-    /** 卡片开关往上传 */
+    /**
+     * 卡片开关往上传：组里有一条启用，分组就启用；一条都没有才停用。
+     * 只改分组自己那一位，不往下传——否则「打开一条源」会把整组的东西一起打开。
+     */
     syncFromChildren(groupId: string): void {
       const children = childrenOf(groupId)
       if (children.length === 0) return
-      const allEnabled = children.every((row) => row.enabled)
+      const anyEnabled = children.some((row) => row.enabled)
       const group = groups.get(groupId)
-      if (group && group.enabled !== allEnabled) groups.update(groupId, { enabled: allEnabled })
+      if (group && group.enabled !== anyEnabled) groups.update(groupId, { enabled: anyEnabled })
     },
   }
 }

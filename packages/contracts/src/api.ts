@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { operationResultSchema } from './operation-result.ts'
 import { trimmedText } from './validation.ts'
 
 import {
@@ -15,24 +16,6 @@ import { messageTemplateSchema } from './template.ts'
 
 /** 接口前缀：全站一个，改这里就够 */
 export const API_PREFIX = '/api'
-
-export const ERROR_CODES = [
-  'validation_error',
-  'not_found',
-  'conflict',
-  'delivery_error',
-  'internal',
-] as const
-export const errorCodeSchema = z.enum(ERROR_CODES)
-export type ErrorCode = z.infer<typeof errorCodeSchema>
-
-export const errorResponseSchema = z.object({
-  error: z.object({
-    code: errorCodeSchema,
-    message: z.string(),
-  }),
-})
-export type ErrorResponse = z.infer<typeof errorResponseSchema>
 
 /** 前端一次拉全量的只读快照 */
 export const configSnapshotSchema = z.object({
@@ -65,10 +48,14 @@ export const telegramChatsInputSchema = z
   })
 export type TelegramChatsInput = z.infer<typeof telegramChatsInputSchema>
 
-/** 渠道连通性测试的结果 */
-export const channelTestResultSchema = z.object({
-  ok: z.boolean(),
-  message: z.string(),
-  sentAt: z.string().nullable(),
-})
+/** 渠道连通性测试的结果：业务结果 + 这条测试消息的发出时间 */
+export const channelTestResultSchema = operationResultSchema(
+  z.object({ sentAt: z.string().nullable() }),
+)
 export type ChannelTestResult = z.infer<typeof channelTestResultSchema>
+
+/** 读会话的结果：业务结果 + 拿到的会话列表 */
+export const telegramChatsResultSchema = operationResultSchema(
+  z.object({ chats: z.array(telegramChatSchema) }),
+)
+export type TelegramChatsResult = z.infer<typeof telegramChatsResultSchema>

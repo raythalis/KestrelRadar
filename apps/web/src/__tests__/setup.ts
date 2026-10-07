@@ -1,3 +1,11 @@
+// 组件里的 t() 需要有 i18n 实例：挂到 VTU 的全局配置上，所有 mount 都拿得到
+// （用例自己传的 plugins 照旧生效，两者会合并）
+import { config } from '@vue/test-utils'
+
+import i18n from '@/plugins/i18n'
+
+config.global.plugins = [...(config.global.plugins ?? []), i18n]
+
 // jsdom 里没有这几个浏览器 API，Vuetify 的布局会用到；给个无害的替身。
 class ResizeObserverStub {
   observe(): void {}

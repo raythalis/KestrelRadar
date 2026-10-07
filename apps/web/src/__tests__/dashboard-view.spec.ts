@@ -68,7 +68,7 @@ const incident: Incident = {
   groupName: 'AI 与开发',
   code: 'fetch.timeout',
   message: '连接超时（超过 30 秒没有回应）',
-  detail: null,
+  detail: '30s',
   status: 'open',
   dismissedAt: null,
   firstSeenAt: iso(120),
@@ -135,7 +135,7 @@ describe('仪表盘页', () => {
     expect(wrapper.findAll('[data-test="app-panel"]')).toHaveLength(2)
     // 迁移后页面顶部只有面板自己的头，旧的 section 标题没了
     expect(wrapper.find('.k2-sec').exists()).toBe(false)
-    expect(wrapper.text()).toContain('24h内关注的事件动态')
+    expect(wrapper.text()).toContain('24h内监听到的事件动态')
     expect(wrapper.text()).toContain('同一处异常60分钟内重复只更新时间，最多展示20条')
   })
 
@@ -222,20 +222,35 @@ describe('仪表盘页', () => {
     expect(wrapper.find('[data-test="event-row"]').exists()).toBe(false)
   })
 
-  it('异常卡显示对象名、错误原文与最近发生时间（底行不写「首次出现」），忽视后那一行消失', async () => {
+  it('异常卡显示对象名、当前语言的原因与最近发生时间（底行不写「首次出现」），忽视后那一行消失', async () => {
     const wrapper = await ready('GitHub Trending')
     const row = wrapper.get('[data-test="incident-row"]')
+    // 第二行副标题写清楚这条异常属于哪个分组
+    expect(row.get('[data-test="incident-group"]').text()).toBe('分组：AI 与开发')
     expect(row.text()).toContain('GitHub Trending')
-    expect(row.text()).toContain('连接超时（超过 30 秒没有回应）')
+    // 原因走语言包（码 → i18n key）：库里存的那句带参数的中文原文不再直接展示
+    expect(row.text()).toContain('连接超时，对方长时间没有回应')
+    expect(row.text()).not.toContain('连接超时（超过 30 秒没有回应）')
+    // 语言无关的副信息不丢：超时秒数还在
+    expect(row.get('[data-test="incident-detail"]').text()).toBe('30s')
     // 卡底那一行只有「时钟图标 + 最近发生时间」
     const time = row.get('[data-test="incident-foot"] [data-test="incident-last-seen"]')
     expect(time.find('.v-icon').exists()).toBe(true)
     expect(row.text()).not.toContain('首次出现')
-    expect(row.text()).not.toContain('AI 与开发')
 
     await row.get('[data-test="incident-dismiss"]').trigger('click')
     await vi.waitFor(() => expect(wrapper.find('[data-test="incident-row"]').exists()).toBe(false))
     expect(vi.mocked(dismissIncident)).toHaveBeenCalledWith('i1')
+  })
+
+  it('英文模式下异常原因也是英文，且不落库里的中文原文', async () => {
+    i18n.global.locale.value = 'en'
+    const wrapper = await ready('GitHub Trending')
+    const reason = wrapper.get('[data-test="incident-row"] .k2-card__message')
+    expect(reason.text()).toContain('Connection timed out')
+    expect(/[\u4e00-\u9fff]/.test(reason.text())).toBe(false)
+    // 英文下主文案是英文，副信息（语言无关）仍在
+    expect(wrapper.get('[data-test="incident-detail"]').text()).toBe('30s')
   })
 
   it('RSSHub 没配地址时说「未配置」，不是「连不上」', async () => {
@@ -255,16 +270,13 @@ describe('仪表盘页', () => {
     expect(wrapper.text()).toContain('没配 RSSHub 地址')
   })
 
-  it('八张卡拿不到就报错，数值不编 0；事件与异常照常显示（三块各拉各的）', async () => {
+  it('八张卡拿不到就留空（数值不编 0）；事件与异常照常显示（三块各拉各的）', async () => {
     vi.mocked(fetchStatsOverview).mockRejectedValue(new Error('连不上后端'))
     const wrapper = mountView()
     await vi.waitFor(() => expect(wrapper.find('[data-test="incident-row"]').exists()).toBe(true))
 
-    expect(
-      useToastStore()
-        .items.map((item) => item.text)
-        .join(' '),
-    ).toContain('拉取仪表盘数据失败')
+    // 页面不再自己弹浮层：请求失败的提示统一归 api/http.ts
+    expect(useToastStore().items).toHaveLength(0)
     expect(wrapper.find('[data-test="event-row"]').exists()).toBe(true)
     const cards = wrapper.findAll('[data-test="metric-card"]')
     expect(cards).toHaveLength(8)

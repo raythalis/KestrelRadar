@@ -322,6 +322,34 @@ export const MIGRATIONS: readonly Migration[] = [
       drop table models;
     `,
   },
+  {
+    // 事件只由「判定为留下」的条目组成（归并前会先过这道门）。历史里那些没通过的成员一并清掉：
+    // 因此清空的事件删掉；已投递过的事件原样保留（投递历史不丢）；留下来的事件按剩余成员重算时间窗。
+    name: '012-events-only-passed',
+    sql: `
+      delete from event_items
+      where item_id not in (select item_id from judgments where decision = 'pass')
+        and event_id not in (select id from events where status = 'delivered');
+
+      delete from events
+      where status <> 'delivered'
+        and not exists (select 1 from event_items where event_items.event_id = events.id);
+
+      update events set
+        first_item_at = (
+          select min(coalesce(i.source_published_at, i.first_seen_at))
+          from event_items ei join items i on i.id = ei.item_id
+          where ei.event_id = events.id
+        ),
+        last_item_at = (
+          select max(coalesce(i.source_published_at, i.first_seen_at))
+          from event_items ei join items i on i.id = ei.item_id
+          where ei.event_id = events.id
+        )
+      where status <> 'delivered'
+        and exists (select 1 from event_items where event_items.event_id = events.id);
+    `,
+  },
 ]
 
 export function runMigrations(conn: DatabaseSync): void {

@@ -25,7 +25,7 @@ export function createDiscoveryService(
 ) {
   function mustGet(id: string): Discovery {
     const discovery = repo.get(id)
-    if (!discovery) throw AppError.notFound('发现不存在')
+    if (!discovery) throw AppError.notFound('数据源不存在')
     return discovery
   }
 
@@ -42,6 +42,7 @@ export function createDiscoveryService(
     if (!isValidDiscoveryTarget(target, kind)) {
       throw AppError.validation(
         '目标要写成 http:// 或 https:// 开头的地址；RSSHub 路由可以写成 /命名空间/路由',
+        { field: 'target', rule: 'INVALID_URL' },
       )
     }
   }
@@ -71,7 +72,7 @@ export function createDiscoveryService(
         assertTarget(patch.target ?? current.target, patch.kind ?? current.kind)
       }
       const updated = repo.update(id, patch)
-      if (!updated) throw AppError.notFound('发现不存在')
+      if (!updated) throw AppError.notFound('数据源不存在')
       if (patch.enabled !== undefined) gate.syncFromChildren(updated.groupId)
       return withSchedule(updated)
     },

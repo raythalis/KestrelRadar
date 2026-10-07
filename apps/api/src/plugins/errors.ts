@@ -1,77 +1,128 @@
-import type { ErrorCode } from '@kestrel/contracts'
-import type { FastifyInstance } from 'fastify'
+import type { ApiErrorCode, ApiErrorDetails, ValidationRule } from '@kestrel/contracts'
+import { validationRuleForIssue } from '@kestrel/contracts'
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { ZodError } from 'zod'
 
 import { DeliveryError } from '../modules/delivery/sender.ts'
 
+/**
+ * API Error：只表示「这次 HTTP 请求没成功」。
+ *
+ * 业务层面的成没成是另一件事，由业务结果（operation-result）表达，不走这里。
+ */
 export class AppError extends Error {
-  readonly code: ErrorCode
+  readonly code: ApiErrorCode
   readonly status: number
+  readonly details?: ApiErrorDetails
 
-  constructor(code: ErrorCode, message: string, status: number) {
+  constructor(code: ApiErrorCode, message: string, status: number, details?: ApiErrorDetails) {
     super(message)
     this.name = 'AppError'
     this.code = code
     this.status = status
+    this.details = details
   }
 
   static notFound(message: string): AppError {
-    return new AppError('not_found', message, 404)
+    return new AppError('NOT_FOUND', message, 404)
   }
 
   static conflict(message: string): AppError {
-    return new AppError('conflict', message, 409)
+    return new AppError('CONFLICT', message, 409)
   }
 
-  static validation(message: string): AppError {
-    return new AppError('validation_error', message, 400)
+  static validation(message: string, details?: ApiErrorDetails): AppError {
+    return new AppError('VALIDATION_ERROR', message, 400, details)
   }
 }
 
-function describeZodError(error: ZodError): string {
+/** 人话描述：字段 + 原因，给日志和兜底展示用 */
+export function describeIssues(error: ZodError): string {
   return error.issues
     .map((issue) => `${issue.path.join('.') || 'body'}：${issue.message}`)
     .join('；')
 }
 
+/** 取第一条 issue 定位字段与规则：前端只需要一个明确指向 */
+export function firstIssueDetails(error: ZodError): ApiErrorDetails | undefined {
+  const first: unknown = error.issues[0]
+  if (!first) return undefined
+  const issue = first as {
+    code: string
+    path?: readonly (string | number)[]
+    origin?: string
+    type?: string
+    params?: { rule?: ValidationRule }
+  }
+  return {
+    field: (issue.path ?? []).join('.') || 'body',
+    rule: validationRuleForIssue({
+      code: issue.code,
+      origin: issue.origin,
+      type: issue.type,
+      params: issue.params,
+    }),
+  }
+}
+
+/** 4xx 也留一条痕：按码统计、按请求上下文排查，不打堆栈免得刷屏 */
+function logClientError(request: FastifyRequest, status: number, code: ApiErrorCode): void {
+  request.log.warn({ code, status, method: request.method, url: request.url }, 'request failed')
+}
+
 /** 统一的错误出口：错误码 + 人话消息，绝不把堆栈抛给调用方 */
 export function registerErrorHandler(app: FastifyInstance): void {
-  app.setErrorHandler((error, _request, reply) => {
+  const send = (
+    reply: FastifyReply,
+    status: number,
+    code: ApiErrorCode,
+    message: string,
+    details?: ApiErrorDetails,
+  ) =>
+    reply.status(status).send({
+      success: false,
+      error: { code, message, ...(details ? { details } : {}) },
+    })
+
+  app.setErrorHandler((error, request, reply) => {
     if (error instanceof AppError) {
-      return reply
-        .status(error.status)
-        .send({ error: { code: error.code, message: error.message } })
-    }
-    // 投递失败（token 不对、地址不通之类）是用户能自己改的问题，别报成 500
-    if (error instanceof DeliveryError) {
-      return reply.status(400).send({ error: { code: 'delivery_error', message: error.message } })
+      if (error.status < 500) logClientError(request, error.status, error.code)
+      return send(reply, error.status, error.code, error.message, error.details)
     }
     if (error instanceof ZodError) {
-      return reply
-        .status(400)
-        .send({ error: { code: 'validation_error', message: describeZodError(error) } })
+      logClientError(request, 400, 'VALIDATION_ERROR')
+      return send(reply, 400, 'VALIDATION_ERROR', describeIssues(error), firstIssueDetails(error))
+    }
+    // 发送失败本该由业务结果接口自己接住；漏到这里说明那条路径没收拾，按服务异常兜底并留下证据
+    if (error instanceof DeliveryError) {
+      request.log.error(
+        { code: 'INTERNAL_ERROR', method: request.method, url: request.url, err: error },
+        '投递失败漏到了 HTTP 出口',
+      )
+      return send(reply, 500, 'INTERNAL_ERROR', '服务器内部错误')
     }
     const statusCode = (error as { statusCode?: number }).statusCode
     if (typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500) {
       // 框架自己抛的客户端错误（请求体不合法之类）不该报成 500
-      return reply
-        .status(statusCode)
-        .send({ error: { code: 'validation_error', message: '请求不合法，请检查后重试' } })
+      logClientError(request, statusCode, 'VALIDATION_ERROR')
+      return send(reply, statusCode, 'VALIDATION_ERROR', '请求不合法，请检查后重试')
     }
     const message = (error as Error).message ?? ''
     if (message.includes('UNIQUE constraint failed')) {
-      return reply.status(409).send({ error: { code: 'conflict', message: '已经存在同样的记录' } })
+      logClientError(request, 409, 'CONFLICT')
+      return send(reply, 409, 'CONFLICT', '已经存在同样的记录')
     }
     if (message.includes('FOREIGN KEY constraint failed')) {
-      return reply
-        .status(409)
-        .send({ error: { code: 'conflict', message: '还有别的地方在引用它，先解除引用再删' } })
+      logClientError(request, 409, 'CONFLICT')
+      return send(reply, 409, 'CONFLICT', '还有别的地方在引用它，先解除引用再删')
     }
-    app.log.error(error)
-    return reply.status(500).send({ error: { code: 'internal', message: '服务器内部错误' } })
+    // 兜底：日志里必须带错误码、堆栈与请求上下文，不能只有一句 message
+    request.log.error(
+      { code: 'INTERNAL_ERROR', method: request.method, url: request.url, err: error },
+      'unhandled error',
+    )
+    return send(reply, 500, 'INTERNAL_ERROR', '服务器内部错误')
   })
 
-  app.setNotFoundHandler((_request, reply) => {
-    return reply.status(404).send({ error: { code: 'not_found', message: '没有这个接口' } })
-  })
+  app.setNotFoundHandler((_request, reply) => send(reply, 404, 'NOT_FOUND', '没有这个接口'))
 }

@@ -2,6 +2,7 @@
   "name": "kestrel",
   "version": "0.1.0",
   "private": true,
+  "repository": "https://github.com/raythalis/kestrel",
   "description": "个人信息监听与事件响应（monorepo 根）",
   "packageManager": "pnpm@12.8.1",
   "engines": {

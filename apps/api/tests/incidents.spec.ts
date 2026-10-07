@@ -109,6 +109,29 @@ describe('异常与采集流水', () => {
     expect(incidents[0]?.message).toContain('订阅源')
   })
 
+  it('HTTP 5xx：异常里留下语言无关的状态码（卡片副信息用它）', async () => {
+    server.setSequence('/boom', [{ status: 503, body: 'down', contentType: 'text/plain' }])
+    const { discovery } = addDiscovery(`${server.baseUrl}/boom`)
+
+    const outcome = await container.collector.collectDiscovery(discovery.id)
+
+    expect(outcome.code).toBe('fetch.httpStatus')
+    const incident = container.incidents.list().incidents[0]!
+    expect(incident.code).toBe('fetch.httpStatus')
+    expect(incident.detail).toBe('HTTP 503')
+  })
+
+  // 真的等一次超时：夹具里 requestTimeoutSeconds = 5（设置项下限也是 5）
+  it('超时：异常里的副信息是超时秒数', async () => {
+    server.setSequence('/slow', [{ hang: true }])
+    const { discovery } = addDiscovery(`${server.baseUrl}/slow`)
+
+    const outcome = await container.collector.collectDiscovery(discovery.id)
+
+    expect(outcome.code).toBe('fetch.timeout')
+    expect(container.incidents.list().incidents[0]?.detail).toBe('5s')
+  }, 15_000)
+
   it('同一条错误在去重窗口内重复发生：只有一条，时间滚动、首次时间不动', async () => {
     const { discovery } = addDiscovery(`${server.baseUrl}/html`)
 
@@ -178,7 +201,7 @@ describe('异常接口', () => {
         url: '/api/incidents/not-a-real-id/dismiss',
       })
       expect(missing.statusCode).toBe(404)
-      expect(missing.json().error.code).toBe('not_found')
+      expect(missing.json().error.code).toBe('NOT_FOUND')
     } finally {
       await cleanup()
     }

@@ -31,11 +31,27 @@ function event(index: number, read = true): RecentEvent {
   }
 }
 
+/** app/* 只收文案：页面传什么这里就传什么（见 DashboardView 的用法） */
+const COPY = {
+  title: '全部事件',
+  note: '24h内监听到的事件动态',
+  filterLabel: '全部来源',
+  allLabel: '全部来源',
+  clearLabel: '清除筛选',
+  loadingLabel: '正在加载…',
+  endLabel: '24 小时内就这些了',
+  closeLabel: '关闭',
+  filterPrefix: '当前来源：',
+  emptyLabel: '这一条来源下暂时没有事件',
+  scrollHintLabel: '向下滚动加载更早的事件',
+  statOf: (count: number) => `已展示 ${count} 条事件`,
+}
+
 const mounted: Array<{ unmount: () => void }> = []
 
 function mountDialog(props: Record<string, unknown> = {}) {
   const wrapper = mount(AppEventDialog, {
-    props: { modelValue: true, events: [event(1), event(2, false)], ...props },
+    props: { modelValue: true, events: [event(1), event(2, false)], ...COPY, ...props },
     attachTo: document.body,
     global: { plugins: [vuetify, vuetifyGlobals, i18n, appComponents] },
   })
@@ -66,7 +82,7 @@ describe('AppEventDialog', () => {
     const box = modal()
     expect(box).not.toBeNull()
     expect(box?.textContent).toContain('全部事件')
-    expect(box?.textContent).toContain('24h内关注的事件动态')
+    expect(box?.textContent).toContain('24h内监听到的事件动态')
     expect(box?.querySelectorAll('[data-test="event-row"]')).toHaveLength(2)
     // 未读的那一条有圆点，已读的没有
     expect(box?.querySelectorAll('[data-test="event-unread"]')).toHaveLength(1)

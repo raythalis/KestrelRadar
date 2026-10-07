@@ -113,7 +113,7 @@ export function createDeliveryRepo(db: Db) {
       return new Set(rows.map((row) => row.item_id))
     },
 
-    /** 所有动作投过的内容（汇总动作「包含已即时推送过的内容」开关用它） */
+    /** 所有动作投过的内容（汇总动作「包含已即时投递过的内容」开关用它） */
     anyDeliveredItemIds(): Set<string> {
       const rows = selectAnyDeliveredItems.all() as unknown as { item_id: string }[]
       return new Set(rows.map((row) => row.item_id))

@@ -1,17 +1,35 @@
-import type { ErrorCode } from '@kestrel/contracts'
+import type { ApiErrorCode, ApiErrorDetails, ApiErrorResponse } from '@kestrel/contracts'
 import axios, { type AxiosInstance } from 'axios'
 
-import type { ErrorResponse } from '@kestrel/contracts'
+import { apiErrorMessage, showApiError } from '@/utils/feedback'
 
 export const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
-export class ApiError extends Error {
-  readonly code: ErrorCode | 'network_error'
+/**
+ * 请求失败（连不上、超时、被拒）时没有后端错误码可用：用 null 表示这一层。
+ * 它不是任何一套码体系里的值，别拿它当 code 用。
+ */
+export type RequestFailure = null
 
-  constructor(code: ErrorCode | 'network_error', message: string) {
+export class ApiError extends Error {
+  /** 后端错误码；null = 请求根本没到后端 */
+  readonly code: ApiErrorCode | RequestFailure
+  /** 字段级定位（只有校验类才有），供弹窗高亮用 */
+  readonly details?: ApiErrorDetails
+  /** 后端原文：界面不用它（文案按码映射），只给兜底与日志 */
+  readonly serverMessage: string
+
+  constructor(
+    code: ApiErrorCode | RequestFailure,
+    message: string,
+    details?: ApiErrorDetails,
+    serverMessage = '',
+  ) {
     super(message)
     this.name = 'ApiError'
     this.code = code
+    this.details = details
+    this.serverMessage = serverMessage
   }
 }
 
@@ -24,18 +42,21 @@ export const http: AxiosInstance = axios.create({
 http.interceptors.response.use(
   (response) => response,
   (error: unknown) => {
-    if (axios.isAxiosError(error)) {
-      const data = error.response?.data as ErrorResponse | undefined
-      if (data?.error) {
-        // 校验失败的信息由后端契约给出（英文原文），页面不该原样展示：换成人话
-        const message =
-          data.error.code === 'validation_error'
-            ? '填写的内容不符合要求，请检查长度与格式'
-            : data.error.message
-        return Promise.reject(new ApiError(data.error.code, message))
-      }
-      return Promise.reject(new ApiError('network_error', `连不上后端（${API_BASE}）`))
-    }
-    return Promise.reject(new ApiError('network_error', String(error)))
+    const isAxios = axios.isAxiosError(error)
+    const payload = isAxios ? (error.response?.data as ApiErrorResponse | undefined) : undefined
+    const apiError = payload?.error
+    const code = apiError?.code ?? null
+    const details = apiError?.details
+    const serverMessage = apiError?.message ?? ''
+
+    // 请求失败全在这里收口：文案按码映射，浮层由 utils/feedback 统一弹
+    const failure = new ApiError(
+      code,
+      apiErrorMessage(code, details, serverMessage),
+      details,
+      serverMessage,
+    )
+    showApiError(failure)
+    return Promise.reject(failure)
   },
 )

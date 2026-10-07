@@ -48,6 +48,20 @@ describe('最近事件列表', () => {
       cronExpression: '0 * * * *',
       enabled: true,
     })
+    // 事件只收「判定为留下」的条目：这一组配个能命中的监听，采集后才会归并出事件
+    container.monitors.create({
+      groupId: group.id,
+      name: '监听',
+      mode: 'algorithm',
+      sensitivity: 'medium',
+      matchMode: 'any',
+      intentText: '',
+      includeKeywords: ['文章'],
+      excludeKeywords: [],
+      useGlobalExcludes: false,
+      enabled: true,
+      actionIds: [],
+    })
 
     await container.collector.collectDiscovery(discovery.id)
 

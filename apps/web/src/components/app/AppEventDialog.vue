@@ -25,6 +25,16 @@ const props = withDefaults(
     clearLabel?: string
     loadingLabel?: string
     endLabel?: string
+    /** 关闭按钮的无障碍名 */
+    closeLabel?: string
+    /** 工具条上「当前来源：」这一小段前缀 */
+    filterPrefix?: string
+    /** 这一条来源下没有事件时说的那句 */
+    emptyLabel?: string
+    /** 还能往下滚时给的一句提示 */
+    scrollHintLabel?: string
+    /** 底部「已展示 N 条事件」：条数由组件给，文案由页面给 */
+    statOf?: (count: number) => string
     /** 行的相对时间文案 */
     timeOf?: (event: RecentEvent) => string
     /** 这一件事的其余来源（按需取回来的那份），透传给行上的 +N 浮层 */
@@ -33,13 +43,14 @@ const props = withDefaults(
   {
     hasMore: false,
     loadingMore: false,
-    title: '全部事件',
-    note: '24h内关注的事件动态',
-    filterLabel: '全部来源',
-    allLabel: '全部来源',
-    clearLabel: '清除筛选',
-    loadingLabel: '正在加载…',
-    endLabel: '24 小时内就这些了',
+    // app/* 不写文案：默认一律留空，由页面把 t() 过的值传进来
+    title: '',
+    note: '',
+    filterLabel: '',
+    allLabel: '',
+    clearLabel: '',
+    loadingLabel: '',
+    endLabel: '',
   },
 )
 const emit = defineEmits<{
@@ -95,7 +106,7 @@ watch(
         <button
           type="button"
           class="k2-modal__close"
-          aria-label="关闭"
+          :aria-label="closeLabel"
           data-test="app-event-dialog-close"
           @click="open = false"
         >
@@ -106,7 +117,7 @@ watch(
       <div class="k2-modal__bar">
         <span class="k2-modal__filter">
           <v-icon size="14">mdi-filter-variant</v-icon>
-          当前来源：<strong>{{ filterLabel }}</strong>
+          {{ filterPrefix }}<strong>{{ filterLabel }}</strong>
         </span>
         <button
           v-if="filterLabel !== allLabel"
@@ -133,14 +144,14 @@ watch(
           :rest-sources="restOf?.(event)"
           @open="emit('open', $event)"
         />
-        <div v-if="events.length === 0" class="k2-modal__empty">这一条来源下暂时没有事件</div>
+        <div v-if="events.length === 0" class="k2-modal__empty">{{ emptyLabel }}</div>
         <div
           v-else-if="hasMore || loadingMore"
           class="k2-modal__more"
           data-test="app-event-dialog-loading"
         >
           <span v-if="loadingMore" class="k2-spin" aria-hidden="true" />
-          <span>{{ loadingMore ? loadingLabel : '向下滚动加载更早的事件' }}</span>
+          <span>{{ loadingMore ? loadingLabel : scrollHintLabel }}</span>
         </div>
         <div v-else class="k2-modal__more k2-modal__more--end" data-test="app-event-dialog-end">
           {{ endLabel }}
@@ -148,7 +159,7 @@ watch(
       </div>
 
       <div class="k2-modal__foot">
-        <span class="k2-modal__stat">已展示 {{ events.length }} 条事件</span>
+        <span class="k2-modal__stat">{{ statOf?.(events.length) }}</span>
       </div>
     </div>
   </v-dialog>

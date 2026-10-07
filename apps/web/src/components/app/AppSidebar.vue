@@ -18,6 +18,9 @@ withDefaults(
       /** 品牌标图片地址；不给就只显示文字标 */ logo?: string
     }
     closeLabel?: string
+    /** 折叠把手的无障碍名：收起时是「展开侧栏」，展开时是「收起侧栏」 */
+    expandLabel?: string
+    collapseLabel?: string
     version?: string
   }>(),
   { open: false },
@@ -67,8 +70,8 @@ const ui = useUiStore()
         type="button"
         class="k2-nav__handle"
         :aria-expanded="!ui.sidebarCollapsed"
-        :aria-label="ui.sidebarCollapsed ? '展开侧栏' : '收起侧栏'"
-        :title="ui.sidebarCollapsed ? '展开侧栏' : '收起侧栏'"
+        :aria-label="ui.sidebarCollapsed ? expandLabel : collapseLabel"
+        :title="ui.sidebarCollapsed ? expandLabel : collapseLabel"
         data-test="nav-handle"
         @click="ui.setSidebarCollapsed(!ui.sidebarCollapsed)"
       >

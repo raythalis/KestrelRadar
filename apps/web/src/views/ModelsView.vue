@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ModelProvider } from '@kestrel/contracts'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import ConfirmDialog from '@/components/biz/ConfirmDialog.vue'
@@ -28,14 +28,6 @@ const remoteModels = ref<Record<string, string[]>>({})
 /** 判定模型的调用顺序；存的是「供应商 id:模型名」，空行是 null */
 const order = ref<ModelOrderRow[]>([null])
 const savingOrder = ref(false)
-
-/** 页面级错误条已下线：弹窗开着时留给弹窗说，其余由浮层说 */
-watch(
-  () => store.errorMessage,
-  (message) => {
-    if (message && !dialogOpen.value && !pendingDelete.value) toast.push(message)
-  },
-)
 
 onMounted(async () => {
   if (!store.snapshot) await store.load()

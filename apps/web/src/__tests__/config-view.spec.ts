@@ -237,7 +237,7 @@ describe('配置管理页', { timeout: 20000 }, () => {
     const first = w.findAll('[data-test="group-toggle"]')[0]!
     await first.trigger('click')
     await flushPromises()
-    const tabs = w.findAll('[data-test^="tab-"]')
+    const tabs = w.findAll('[data-test^="app-tab-"]')
     expect(tabs.length).toBeGreaterThanOrEqual(3)
     const cols = w.findAll('[data-test^="column-"]')
     expect(cols.length).toBeGreaterThanOrEqual(3)
@@ -256,6 +256,67 @@ describe('配置管理页', { timeout: 20000 }, () => {
     test?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await flushPromises()
     expect(vi.mocked(api.testDiscovery)).toHaveBeenCalled()
+  })
+
+  it('试抓失败（路由就没通）：浮层按码给人话，卡片上不再留结论行', async () => {
+    vi.mocked(api.testDiscovery).mockResolvedValue({
+      ok: false,
+      code: 'TIMEOUT',
+      message: '连接超时（超过 30 秒没有回应）',
+      data: { routeOk: false, contentOk: false, foundItemCount: 0, latestItemAt: null },
+    })
+    const w = await mountLoaded()
+    await expandFirst(w)
+    await w.find('[data-test="source-menu"]').trigger('click')
+    await flushPromises()
+    // 菜单是 teleport 到 body 的浮层：等它真的挂出来再点，否则并发跑时容易点空
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-test="source-test"]')).not.toBeNull()
+    })
+    ;(document.querySelector('[data-test="source-test"]') as HTMLElement).dispatchEvent(
+      new MouseEvent('click', { bubbles: true }),
+    )
+    await flushPromises()
+
+    // 业务失败也走浮层：页面里不再有第二处结论
+    await vi.waitFor(() => {
+      expect(useToastStore().items.length).toBeGreaterThan(0)
+    })
+    const items = useToastStore().items
+    // 超时属于「可以再试」：黄色；文案由前端按码映射，不铺后端原文
+    expect(items[0]!.tone).toBe('warning')
+    expect(items[0]!.text).toBe('GitHub 日榜：连接超时，请稍后重试')
+    expect(items[0]!.text).not.toContain('超过 30 秒')
+    expect(w.findAll('[data-test="source-test-note"]')).toHaveLength(0)
+  })
+
+  it('试抓：路由通了只是没抓到条目，按「暂时没内容」提示（黄色）', async () => {
+    // 浮层店在同文件里跨用例累积：先清干净，再断言这一条
+    useToastStore().clear()
+    vi.mocked(api.testDiscovery).mockResolvedValue({
+      ok: false,
+      code: 'INVALID_RESPONSE',
+      message: 'feed.noEntry',
+      data: { routeOk: true, contentOk: false, foundItemCount: 0, latestItemAt: null },
+    })
+    const w = await mountLoaded()
+    await expandFirst(w)
+    await w.find('[data-test="source-menu"]').trigger('click')
+    await flushPromises()
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-test="source-test"]')).not.toBeNull()
+    })
+    ;(document.querySelector('[data-test="source-test"]') as HTMLElement).dispatchEvent(
+      new MouseEvent('click', { bubbles: true }),
+    )
+    await flushPromises()
+
+    await vi.waitFor(() => {
+      expect(useToastStore().items.length).toBeGreaterThan(0)
+    })
+    const items = useToastStore().items
+    expect(items[0]!.tone).toBe('warning')
+    expect(items[0]!.text).toContain('未获取到内容')
   })
 
   it('新建分组：走真分组弹窗，保存写回接口', async () => {
@@ -287,7 +348,7 @@ describe('配置管理页', { timeout: 20000 }, () => {
   it('窄屏标签切换：点另一段，当前列跟着换', async () => {
     const w = await mountLoaded()
     await expandFirst(w)
-    const tabs = w.findAll('[data-test^="tab-"]')
+    const tabs = w.findAll('[data-test^="app-tab-"]')
     expect(tabs.length).toBeGreaterThanOrEqual(2)
     const last = tabs[tabs.length - 1]!
     await last.trigger('click')

@@ -1,4 +1,9 @@
-import { failureCopy, type DiscoveryTestResult, type FailureCode } from '@kestrel/contracts'
+import {
+  failureCopy,
+  operationCodeOf,
+  type DiscoveryTestResult,
+  type FailureCode,
+} from '@kestrel/contracts'
 
 import type { IncidentService } from '../incidents/incident.service.ts'
 import type { SettingsService } from '../settings/settings.service.ts'
@@ -44,6 +49,8 @@ interface LoadResult {
   contentOk: boolean
   code: FailureCode | null
   message: string
+  /** 排查要用的那个数：超时秒数 / HTTP 状态码。语言无关，卡片上的副信息用它 */
+  detail?: string
   entries: ParsedEntry[]
 }
 
@@ -90,13 +97,21 @@ export function createCollector(deps: CollectorDeps) {
     return { url: discovery.target, kind: discovery.kind === 'web' ? 'web' : 'feed' }
   }
 
-  /** 把异常翻译成「错误码 + 人话」：码用来记流水与异常，话用来展示 */
+  /** 把异常翻译成「错误码 + 人话 + 排查用的数」：码用来记流水与异常，话用来展示 */
   function failureOf(
     error: unknown,
     timeoutSeconds: number,
-  ): { code: FailureCode; message: string } {
+  ): { code: FailureCode; message: string; detail?: string } {
     if (error instanceof FetchError) {
-      return { code: error.code(), message: error.describe(timeoutSeconds) }
+      const code = error.code()
+      // 超时与状态码这两个数只在原文里出现过，单独留一份语言无关的，前端当副信息展示
+      const detail =
+        code === 'fetch.timeout'
+          ? `${timeoutSeconds}s`
+          : error.status
+            ? `HTTP ${error.status}`
+            : undefined
+      return { code, message: error.describe(timeoutSeconds), detail }
     }
     const message = (error as Error).message
     return { code: 'collection.failed', message: message || failureCopy('collection.failed') }
@@ -200,11 +215,10 @@ export function createCollector(deps: CollectorDeps) {
     const existing = deps.discoveries.get(discoveryId)
     if (!existing) {
       return {
-        routeOk: false,
-        contentOk: false,
-        foundItemCount: 0,
-        latestItemAt: null,
+        ok: false,
+        code: operationCodeOf('discovery.missing'),
         message: failureCopy('discovery.missing'),
+        details: { reason: 'discovery.missing' },
       }
     }
     const result = await loadEntries(discoveryId)
@@ -217,12 +231,20 @@ export function createCollector(deps: CollectorDeps) {
       // 探测不到内容时保留上次已知的时间，不要把卡片上的信息抹掉
       latestItemAt: probeLatest ?? existing.latestItemAt,
     })
+    // 探测成功 = 路由与内容两级都通；只通了路由不算成功
+    const ok = result.routeOk && result.contentOk
     return {
-      routeOk: result.routeOk,
-      contentOk: result.contentOk,
-      foundItemCount: result.entries.length,
-      latestItemAt: probeLatest,
+      ok,
+      // 成功不带码，失败才给业务码
+      ...(ok ? {} : { code: operationCodeOf(result.code) }),
       message: result.message,
+      ...(ok || !result.code ? {} : { details: { reason: result.code } }),
+      data: {
+        routeOk: result.routeOk,
+        contentOk: result.contentOk,
+        foundItemCount: result.entries.length,
+        latestItemAt: probeLatest,
+      },
     }
   }
 
@@ -303,6 +325,7 @@ export function createCollector(deps: CollectorDeps) {
         groupName: deps.groups?.get(discovery.groupId)?.name ?? '',
         code: result.code,
         message: result.message,
+        detail: result.detail ?? null,
       })
     }
 

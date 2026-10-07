@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import AboutPanel from '@/components/settings/AboutPanel.vue'
 import SettingsForm from '@/components/settings/SettingsForm.vue'
 import TemplateList from '@/components/settings/TemplateList.vue'
 import type { SettingsCard } from '@/components/settings/types'
@@ -169,6 +170,7 @@ const tabs = computed(() => [
   { value: 'judge', icon: 'mdi-filter-variant', title: t('settings.tab.judge') },
   { value: 'collection', icon: 'mdi-tray-arrow-down', title: t('settings.tab.collection') },
   { value: 'delivery', icon: 'mdi-send-outline', title: t('settings.tab.delivery') },
+  { value: 'about', icon: 'mdi-information-outline', title: t('settings.tab.about') },
 ])
 
 const activeCards = computed(() => cardsByTab.value[tab.value] ?? [])
@@ -200,8 +202,13 @@ const activeCards = computed(() => cardsByTab.value[tab.value] ?? [])
       </nav>
 
       <div class="k2-sets-pane">
-        <SettingsForm :cards="activeCards" :data-test="`pane-${tab}`" />
+        <SettingsForm
+          v-if="activeCards.length > 0"
+          :cards="activeCards"
+          :data-test="`pane-${tab}`"
+        />
         <TemplateList v-if="tab === 'delivery'" data-test="pane-templates" />
+        <AboutPanel v-if="tab === 'about'" />
       </div>
     </div>
   </div>

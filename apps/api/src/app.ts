@@ -1,7 +1,7 @@
 import { dirname, join } from 'node:path'
 
 import { API_PREFIX } from '@kestrel/contracts'
-import Fastify, { type FastifyInstance } from 'fastify'
+import Fastify, { type FastifyInstance, type FastifyServerOptions } from 'fastify'
 
 import { buildContainer } from './container.ts'
 import type { TelegramGateway } from './modules/delivery/telegram.ts'
@@ -11,7 +11,8 @@ import { registerRoutes } from './routes/index.ts'
 
 export interface BuildAppOptions {
   dbPath: string
-  logger?: boolean
+  /** 日志：默认关；测试里可以塞个 pino 配置把输出抓下来 */
+  logger?: FastifyServerOptions['logger']
   /** 采集调度默认跟着服务一起起；测试里关掉，免得定时器跟着测试跑 */
   enableScheduler?: boolean
   /** 测试用：换成假的 Telegram 网关，别真去打 Telegram */

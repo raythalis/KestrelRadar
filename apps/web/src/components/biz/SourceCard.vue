@@ -1,16 +1,17 @@
-<!-- SourceCard：发现卡（业务组件层 · v2）。
+<!-- SourceCard：数据源卡（业务组件层 · v2）。
      正面回答：去哪儿看、多久看一次、现在什么状态；背面回答：最近一次采集到底成不成。
-     交互：整卡点＝编辑；状态块只说一次（启用/停用），开关与「抓取测试」收进 ⋯ 菜单；
+     交互：整卡点＝编辑；状态块只说一次（启用/停用），开关与「测试采集」收进 ⋯ 菜单；
      翻面只由卡脚那个三竖线按钮触发，正反面同一高度（高度定在 .k2-flip 上）。
      背面的统计类数值（成功率 / 迷你柱 / 最近七天条数）等后端有落库统计再上，这里只放现有真数据。
      只出事件，不碰 store：数据、试抓与写操作都由页面负责。 -->
 <script setup lang="ts">
-import { CUSTOM_SCHEDULE_COPY, humanizeCron, type CardStat } from '@kestrel/contracts'
+import { humanizeCron, type CardStat } from '@kestrel/contracts'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { cardStatView } from '@/components/biz/card-stat'
 import { SEMANTIC_ICONS } from '@/components/biz/icons'
+import { cronText } from '@/utils/cron'
 import { formatShortDateTime } from '@/utils/format'
 
 const props = withDefaults(
@@ -61,9 +62,14 @@ const menuOpen = ref(false)
 /** 网站图标加载失败就回落类型图标（外站抽风不该让卡片开天窗） */
 const iconFailed = ref(false)
 const showSiteIcon = computed(() => Boolean(props.iconUrl) && !iconFailed.value)
+/** 真显示出来的图标把底色让掉：图标自己有形状，垫一层色块反而脏 */
+const iconLoaded = ref(false)
 watch(
   () => props.iconUrl,
-  () => (iconFailed.value = false),
+  () => {
+    iconFailed.value = false
+    iconLoaded.value = false
+  },
 )
 
 /** 背面三件套：成功率、迷你柱、窗口内计数 */
@@ -73,7 +79,7 @@ const { hasRate, rateText, barHeights, total } = cardStatView(stat, days)
 
 /** 计划：认得出写人话；认不出写「自定义时间」，原表达式挂 tooltip */
 const plan = computed(() => humanizeCron(props.cron))
-const planText = computed(() => plan.value ?? CUSTOM_SCHEDULE_COPY)
+const planText = computed(() => cronText(plan.value))
 const stateLabel = computed(() => (props.enabled ? t('common.enabled') : t('common.disabled')))
 </script>
 
@@ -89,13 +95,14 @@ const stateLabel = computed(() => (props.enabled ? t('common.enabled') : t('comm
         @keydown.enter.prevent="emit('edit')"
       >
         <div class="k2-card__head">
-          <span class="k2-tile" data-test="source-icon">
+          <span class="k2-tile" :class="{ 'k2-tile--bare': iconLoaded }" data-test="source-icon">
             <img
               v-if="showSiteIcon"
               class="k2-tile__img"
               :src="iconUrl || undefined"
               alt=""
               data-test="source-icon-img"
+              @load="iconLoaded = true"
               @error="iconFailed = true"
             />
             <v-icon v-else size="20">{{ icon }}</v-icon>

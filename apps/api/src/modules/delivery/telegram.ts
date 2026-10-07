@@ -61,8 +61,9 @@ export function createTelegramGateway(
       if (!response.ok || !payload?.ok) {
         const reason = payload?.description ?? `HTTP ${response.status}`
         throw new DeliveryError(
-          'delivery.telegramFailed',
+          response.status === 401 ? 'delivery.telegramAuth' : 'delivery.telegramFailed',
           response.status === 401 ? `bot token 不对：${reason}` : `Telegram 说：${reason}`,
+          reason,
         )
       }
       return payload.result as T

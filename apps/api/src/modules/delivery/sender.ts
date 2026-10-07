@@ -27,14 +27,19 @@ export function resolveTimeout(option: TimeoutOption | undefined, fallback: numb
   return typeof option === 'number' && option > 0 ? option : fallback
 }
 
-/** 投递失败：带错误码，异常记录拿它分类；文案默认从失败文案表里取 */
+/**
+ * 投递失败：带错误码，异常记录拿它分类；文案默认从失败文案表里取。
+ * detail 是给对方原始说法留的位置（如 HTTP 500 / Unauthorized）：语言无关，排查用。
+ */
 export class DeliveryError extends Error {
   readonly code: FailureCode
+  readonly detail?: string
 
-  constructor(code: FailureCode, message?: string) {
+  constructor(code: FailureCode, message?: string, detail?: string) {
     super(message ?? failureCopy(code))
     this.name = 'DeliveryError'
     this.code = code
+    this.detail = detail
   }
 }
 
@@ -79,6 +84,7 @@ export function createWebhookSender(
           throw new DeliveryError(
             'delivery.webhookStatus',
             failureCopy('delivery.webhookStatus', { status: response.status }),
+            `HTTP ${response.status}`,
           )
       } catch (error) {
         if ((error as Error).name === 'AbortError')

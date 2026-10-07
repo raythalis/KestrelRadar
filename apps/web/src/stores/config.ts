@@ -24,6 +24,8 @@ import type {
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
+import i18n from '@/plugins/i18n'
+
 import {
   createAction as createActionApi,
   createChannel as createChannelApi,
@@ -126,7 +128,9 @@ export const useConfigStore = defineStore('config', () => {
       if (snapshotResult.status === 'fulfilled') snapshot.value = snapshotResult.value
       else throw snapshotResult.reason
     } catch (error) {
-      errorMessage.value = error instanceof ApiError ? error.message : '读取配置失败'
+      // 不是 ApiError（请求根本没到后端那类）才走这句；文案同样出自语言包
+      errorMessage.value =
+        error instanceof ApiError ? error.message : i18n.global.t('error.loadFailed')
     } finally {
       loading.value = false
     }
@@ -142,7 +146,8 @@ export const useConfigStore = defineStore('config', () => {
       await load()
       return true
     } catch (error) {
-      errorMessage.value = error instanceof ApiError ? error.message : '操作失败'
+      errorMessage.value =
+        error instanceof ApiError ? error.message : i18n.global.t('error.unknown')
       return false
     } finally {
       saving.value = false
@@ -219,7 +224,7 @@ export const useConfigStore = defineStore('config', () => {
 
   const removeDiscovery = (id: string) => write(() => removeDiscoveryApi(id))
 
-  /** 手动测试：结果直接返回给卡片就地显示 */
+  /** 手动测试：只把业务结果返回给调用处，提示由页面弹浮层 */
   async function testDiscovery(id: string): Promise<DiscoveryTestResult | null> {
     saving.value = true
     errorMessage.value = ''
@@ -228,7 +233,8 @@ export const useConfigStore = defineStore('config', () => {
       await load()
       return result
     } catch (error) {
-      errorMessage.value = error instanceof ApiError ? error.message : '测试失败'
+      errorMessage.value =
+        error instanceof ApiError ? error.message : i18n.global.t('error.unknown')
       return null
     } finally {
       saving.value = false

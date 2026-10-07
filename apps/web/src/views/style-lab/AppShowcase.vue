@@ -249,10 +249,18 @@ function eventTime(value: string): string {
             <span class="k2-panel__mark" aria-hidden="true" />
             <span class="k2-sec__title">最近事件</span>
             <span class="k2-panel__badge">{{ filteredEvents.length }}</span>
-            <span class="k2-panel__sub">24h内关注的事件动态</span>
+            <span class="k2-panel__sub">24h内监听到的事件动态</span>
           </span>
           <span class="k2-panel__actions">
-            <AppSourceFilter v-model="sourceFilter" :options="filterOptions" @reset="resetFilter" />
+            <AppSourceFilter
+              v-model="sourceFilter"
+              :options="filterOptions"
+              :title="'筛选事件'"
+              :note="'按信息来源查看'"
+              :reset-label="'重置筛选'"
+              :close-label="'关闭'"
+              @reset="resetFilter"
+            />
             <button type="button" class="k2-panel__link" @click="dialogOpen = true">
               查看全部
               <v-icon size="14">mdi-chevron-right</v-icon>
@@ -319,6 +327,16 @@ function eventTime(value: string): string {
       :events="filteredEvents"
       :filter-label="filterLabel"
       :all-label="ALL_SOURCES"
+      :title="'全部事件'"
+      :note="'24h内监听到的事件动态'"
+      :clear-label="'清除筛选'"
+      :loading-label="'正在加载…'"
+      :end-label="'24 小时内就这些了'"
+      :close-label="'关闭'"
+      :filter-prefix="'当前来源：'"
+      :empty-label="'这一条来源下暂时没有事件'"
+      :scroll-hint-label="'向下滚动加载更早的事件'"
+      :stat-of="(count) => `已展示 ${count} 条事件`"
       :time-of="timeOfEvent"
       :rest-of="restOf"
       @open="openEvent"
@@ -337,7 +355,7 @@ function eventTime(value: string): string {
             <span class="k2-panel__mark" aria-hidden="true" />
             <span class="k2-sec__title">最近事件</span>
             <span class="k2-panel__badge">0</span>
-            <span class="k2-panel__sub">24h内关注的事件动态</span>
+            <span class="k2-panel__sub">24h内监听到的事件动态</span>
           </span>
         </template>
         <AppEmptyState
@@ -373,7 +391,7 @@ function eventTime(value: string): string {
             <span class="k2-panel__mark" aria-hidden="true" />
             <span class="k2-sec__title">最近事件</span>
             <span class="k2-panel__badge">{{ manyEvents.length }}</span>
-            <span class="k2-panel__sub">24h内关注的事件动态</span>
+            <span class="k2-panel__sub">24h内监听到的事件动态</span>
           </span>
           <span class="k2-panel__actions">
             <button type="button" class="k2-panel__link" @click="manyDialogOpen = true">
@@ -423,7 +441,13 @@ function eventTime(value: string): string {
       :events="lazyEvents"
       :has-more="lazyHasMore"
       :loading-more="lazyLoading"
-      :note="`24h内关注的事件动态 · 先给一页，滚到底再补一页（模拟后端的 cursor 分页）`"
+      :note="`24h内监听到的事件动态 · 先给一页，滚到底再补一页（模拟后端的 cursor 分页）`"
+      :title="'全部事件'"
+      :close-label="'关闭'"
+      :filter-prefix="'当前来源：'"
+      :empty-label="'这一条来源下暂时没有事件'"
+      :scroll-hint-label="'向下滚动加载更早的事件'"
+      :stat-of="(count) => `已展示 ${count} 条事件`"
       :time-of="timeOfEvent"
       :rest-of="restOf"
       @open="openEvent"
@@ -432,9 +456,31 @@ function eventTime(value: string): string {
 
     <div class="lab__h3">来源标签组 · AppSourceTags</div>
     <div class="lab-form">
-      <AppSourceTags :sources="ACTIVITY_EVENTS[1]?.sources ?? []" :total="1" />
-      <AppSourceTags :sources="ACTIVITY_EVENTS[0]?.sources ?? []" :total="2" />
-      <AppSourceTags :sources="ACTIVITY_EVENTS[4]?.sources ?? []" :total="8" :rest="MANY_SOURCES" />
+      <AppSourceTags
+        :sources="ACTIVITY_EVENTS[1]?.sources ?? []"
+        :total="1"
+        :more-of="(count) => `展开其余 ${count} 个来源`"
+        :title="'来源'"
+        :note-of="(count) => `共 ${count} 家，点开去原文`"
+        :close-label="'关闭'"
+      />
+      <AppSourceTags
+        :sources="ACTIVITY_EVENTS[0]?.sources ?? []"
+        :total="2"
+        :more-of="(count) => `展开其余 ${count} 个来源`"
+        :title="'来源'"
+        :note-of="(count) => `共 ${count} 家，点开去原文`"
+        :close-label="'关闭'"
+      />
+      <AppSourceTags
+        :sources="ACTIVITY_EVENTS[4]?.sources ?? []"
+        :total="8"
+        :rest="MANY_SOURCES"
+        :more-of="(count) => `展开其余 ${count} 个来源`"
+        :title="'来源'"
+        :note-of="(count) => `共 ${count} 家，点开去原文`"
+        :close-label="'关闭'"
+      />
     </div>
 
     <div class="lab__h3">状态 · AppStatus</div>

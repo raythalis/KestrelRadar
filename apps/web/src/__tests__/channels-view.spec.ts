@@ -145,7 +145,11 @@ describe('通知渠道页', () => {
   })
 
   it('读取会话：把读到的会话列进下拉', async () => {
-    vi.mocked(api.readTelegramChats).mockResolvedValue([{ id: '-1001', title: '家庭群' }])
+    vi.mocked(api.readTelegramChats).mockResolvedValue({
+      ok: true,
+      message: '',
+      data: { chats: [{ id: '-1001', title: '家庭群' }] },
+    })
     const wrapper = await mountLoaded()
 
     await wrapper.get('[data-test="channel-card"]').trigger('click')
@@ -158,11 +162,11 @@ describe('通知渠道页', () => {
     expect(dialog.text()).toContain('会话')
   })
 
-  it('发送测试消息：卡片上留结论（圆点），结果同时弹浮层', async () => {
+  it('测试连接成功：报一条绿色浮层，卡片圆点变绿', async () => {
     vi.mocked(api.testChannel).mockResolvedValue({
       ok: true,
-      message: '测试消息已发出',
-      sentAt: '2026-10-01T03:00:00.000Z',
+      message: '',
+      data: { sentAt: '2026-10-01T03:00:00.000Z' },
     })
     const wrapper = await mountLoaded()
 
@@ -171,18 +175,51 @@ describe('通知渠道页', () => {
 
     expect(api.testChannel).toHaveBeenCalledWith('c1')
     expect(wrapper.get('[data-test="channel-test"]').classes()).toContain('k2-chan__probe--ok')
-    expect(
-      useToastStore()
-        .items.map((item) => item.text)
-        .join(' '),
-    ).toContain('测试消息已发出')
+    // 测试是「做过一件事」：成没成都在浮层说，卡片上不再有第二处结论
+    const items = useToastStore().items
+    expect(items).toHaveLength(1)
+    expect(items[0]!.tone).toBe('success')
+    expect(items[0]!.text).toContain('测试消息已投递')
+    expect(wrapper.find('[data-test="channel-test-note"]').exists()).toBe(false)
+  })
+
+  it('测试连接业务失败：浮层按码给人话，圆点标红', async () => {
+    vi.mocked(api.testChannel).mockResolvedValue({
+      ok: false,
+      code: 'AUTH_FAILED',
+      message: 'bot token 不对：Unauthorized',
+    })
+    const wrapper = await mountLoaded()
+
+    await wrapper.get('[data-test="channel-test"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('[data-test="channel-test"]').classes()).toContain('k2-chan__probe--fail')
+    const items = useToastStore().items
+    expect(items).toHaveLength(1)
+    expect(items[0]!.tone).toBe('danger')
+    // 文案由前端按码映射：后端原文只当兜底，不铺到界面上
+    expect(items[0]!.text).toBe('家庭群：认证失败，请检查密钥或凭证后重试')
+    expect(items[0]!.text).not.toContain('Unauthorized')
+  })
+
+  it('测试请求本身失败（接口 500）：只把圆点标红，浮层归 http.ts 统一弹', async () => {
+    vi.mocked(api.testChannel).mockRejectedValue(new Error('服务暂时不可用，稍后再试'))
+    const wrapper = await mountLoaded()
+
+    await wrapper.get('[data-test="channel-test"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('[data-test="channel-test"]').classes()).toContain('k2-chan__probe--fail')
+    // 页面不再自己处理请求失败：这一层由 api/http.ts 的浮层负责
+    expect(useToastStore().items).toHaveLength(0)
   })
 
   it('删除渠道先确认，文案提醒被动作引用着', async () => {
     const wrapper = await mountLoaded()
     await wrapper.get('[data-test="channel-delete"]').trigger('click')
     await flushPromises()
-    expect(document.body.textContent).toContain('还在用它的动作将无法发送通知')
+    expect(document.body.textContent).toContain('还在用它的动作将无法投递通知')
 
     // 弹窗挂在 body 上，历史用例可能留着旧节点：取最后一个（当前这次挂载的）
     ;([...document.querySelectorAll('[data-test="confirm-ok"]')].pop() as HTMLElement).click()

@@ -108,6 +108,21 @@ describe('设置页', () => {
     expect(wrapper.find('[data-test="setting-globalExcludeKeywords"]').exists()).toBe(true)
   })
 
+  it('关于页：版本号与仓库地址来自构建配置，地址是可点的链接', async () => {
+    const wrapper = await mountLoaded('general')
+    expect(wrapper.find('[data-test="tab-about"]').exists()).toBe(true)
+
+    await wrapper.get('[data-test="tab-about"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="pane-about"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="pane-general"]').exists()).toBe(false)
+    expect(wrapper.get('[data-test="about-version"]').text()).toBe('test')
+    const repo = wrapper.get('[data-test="about-repository"]')
+    expect(repo.attributes('href')).toBe('https://github.com/raythalis/kestrel')
+    expect(repo.attributes('target')).toBe('_blank')
+  })
+
   it('改一个数值：点保存才写回，且只提交改过的那项', async () => {
     const wrapper = await mountLoaded('judge')
     // 没改动时保存不可用

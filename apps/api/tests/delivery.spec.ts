@@ -2,7 +2,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildContainer, type Container } from '../src/container.ts'
 import { createChannelBatcher } from '../src/modules/delivery/batch.ts'
-import type { DeliverableMessage, DeliverySender } from '../src/modules/delivery/sender.ts'
+import {
+  createWebhookSender,
+  type DeliverableMessage,
+  type DeliverySender,
+} from '../src/modules/delivery/sender.ts'
 import { buildFingerprint } from '../src/modules/collection/fingerprint.ts'
 import { openDatabase } from '../src/db/index.ts'
 import { createTempDb } from './helpers/temp-db.ts'
@@ -152,6 +156,35 @@ async function runPipeline(c: Container, discoveryId: string): Promise<void> {
   const groupId = c.discoveries.get(discoveryId)?.groupId ?? ''
   await c.delivery.deliverInstantForGroup(groupId)
 }
+
+describe('投递失败：原始说法留在异常里当副信息', () => {
+  it('Webhook 返回 500：异常里留下 HTTP 500', async () => {
+    const db = createTempDb()
+    const failing = createWebhookSender({
+      fetchImpl: (async () => new Response('boom', { status: 500 })) as unknown as typeof fetch,
+      timeoutSeconds: 1,
+    })
+    const c = buildContainer(openDatabase(db.path), {
+      sender: failing,
+      batcher: createChannelBatcher(failing, 5),
+    })
+    try {
+      const fx = seed(c)
+      addItem(c, fx.discoveryA, {
+        title: '一条新闻：某公司发布新品',
+        url: 'https://a.example.com/1',
+      })
+
+      await runPipeline(c, fx.discoveryA)
+
+      const incident = c.incidents.listAll().find((item) => item.kind === 'delivery')
+      expect(incident?.code).toBe('delivery.webhookStatus')
+      expect(incident?.detail).toBe('HTTP 500')
+    } finally {
+      db.cleanup()
+    }
+  })
+})
 
 describe('即时投递（发现即发）', () => {
   it('命中就发一条消息，里面带事件标题、来源数与链接', async () => {

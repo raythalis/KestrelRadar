@@ -24,19 +24,20 @@ export const FAILURE_CODES = [
   // 模型
   'llm.unavailable',
   'llm.failed',
-  // 推送：Webhook
+  // 投递：Webhook
   'delivery.webhookNoUrl',
   'delivery.webhookStatus',
   'delivery.webhookTimeout',
   'delivery.webhookFailed',
-  // 推送：Telegram
+  // 投递：Telegram
   'delivery.notTelegram',
   'delivery.telegramNoToken',
   'delivery.telegramNoChat',
   'delivery.telegramTokenMissing',
   'delivery.telegramTimeout',
+  'delivery.telegramAuth',
   'delivery.telegramFailed',
-  // 推送：其他
+  // 投递：其他
   'delivery.channelUnavailable',
   'delivery.failed',
 ] as const
@@ -48,6 +49,8 @@ export interface FailureCopyParams {
   seconds?: number
   /** HTTP 状态码 */
   status?: number
+  /** 对方原话（Telegram 的 description 之类） */
+  reason?: string
 }
 
 const COPY: Record<FailureCode, (params: FailureCopyParams) => string> = {
@@ -67,15 +70,16 @@ const COPY: Record<FailureCode, (params: FailureCopyParams) => string> = {
   'delivery.webhookNoUrl': () => '这个 Webhook 渠道还没填地址',
   'delivery.webhookStatus': ({ status }) => `Webhook 返回 ${status ?? 0}`,
   'delivery.webhookTimeout': () => 'Webhook 超时',
-  'delivery.webhookFailed': () => 'Webhook 发送失败',
+  'delivery.webhookFailed': () => 'Webhook 投递失败',
   'delivery.notTelegram': () => '这个渠道不是 Telegram',
   'delivery.telegramNoToken': () => '这个 Telegram 渠道还没填 bot token',
   'delivery.telegramNoChat': () => '这个 Telegram 渠道还没选会话（chat id）',
   'delivery.telegramTokenMissing': () => '先填 bot token 再读取会话',
   'delivery.telegramTimeout': () => 'Telegram 超时',
+  'delivery.telegramAuth': ({ reason }) => `bot token 不对：${reason ?? 'Unauthorized'}`,
   'delivery.telegramFailed': () => 'Telegram 请求失败',
   'delivery.channelUnavailable': () => '通知渠道不可用',
-  'delivery.failed': () => '发送失败',
+  'delivery.failed': () => '投递失败',
 }
 
 /** 取一条文案；带参数的把参数一起给进来 */

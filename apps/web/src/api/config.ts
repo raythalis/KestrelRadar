@@ -19,6 +19,7 @@ import type {
   Settings,
   StatsRsshub,
   TelegramChat,
+  TelegramChatsResult,
   UpdateActionInput,
   UpdateChannelInput,
   UpdateDiscoveryInput,
@@ -67,8 +68,10 @@ export async function removeDiscovery(id: string): Promise<void> {
 
 /** 手动测试：只探测连通性，不写条目 */
 export async function testDiscovery(id: string): Promise<DiscoveryTestResult> {
-  const { data } = await http.post<DiscoveryTestResult>(`/discoveries/${id}/test`)
-  return data
+  const { data } = await http.post<{ success: true; data: DiscoveryTestResult }>(
+    `/discoveries/${id}/test`,
+  )
+  return data.data
 }
 
 export async function createMonitor(input: CreateMonitorInput): Promise<Monitor> {
@@ -143,17 +146,22 @@ export async function removeChannel(id: string): Promise<void> {
 
 /** 真发一条测试消息，有副作用，只能手动点 */
 export async function testChannel(id: string): Promise<ChannelTestResult> {
-  const { data } = await http.post<ChannelTestResult>(`/channels/${id}/test`)
-  return data
+  const { data } = await http.post<{ success: true; data: ChannelTestResult }>(
+    `/channels/${id}/test`,
+  )
+  return data.data
 }
 
 /** 读取会话：给 token（正在填）或给渠道 id（用库里存的 token） */
 export async function readTelegramChats(input: {
   token?: string
   channelId?: string
-}): Promise<TelegramChat[]> {
-  const { data } = await http.post<TelegramChat[]>('/channels/telegram/chats', input)
-  return data
+}): Promise<TelegramChatsResult> {
+  const { data } = await http.post<{ success: true; data: TelegramChatsResult }>(
+    '/channels/telegram/chats',
+    input,
+  )
+  return data.data
 }
 
 export async function createProvider(input: CreateModelProviderInput): Promise<ModelProvider> {

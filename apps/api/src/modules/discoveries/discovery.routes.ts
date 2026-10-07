@@ -22,7 +22,7 @@ export function registerDiscoveryRoutes(
   /** 手动测试：只探测连通性，不写条目（添加发现时的首次校验也走这条） */
   app.post<{ Params: IdParams }>('/discoveries/:id/test', async (request) => {
     service.get(request.params.id)
-    return collector.probeDiscovery(request.params.id)
+    return { success: true, data: await collector.probeDiscovery(request.params.id) }
   })
 
   app.get<{ Params: IdParams }>('/discoveries/:id', async (request) =>

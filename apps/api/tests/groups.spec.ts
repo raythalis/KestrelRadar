@@ -35,7 +35,7 @@ describe('分组接口', () => {
 
       const gone = await app.inject({ method: 'GET', url: `/api/groups/${group.id}` })
       expect(gone.statusCode).toBe(404)
-      expect(gone.json().error.code).toBe('not_found')
+      expect(gone.json().error.code).toBe('NOT_FOUND')
     } finally {
       await cleanup()
     }
@@ -46,7 +46,7 @@ describe('分组接口', () => {
     try {
       const res = await app.inject({ method: 'POST', url: '/api/groups', payload: { name: '' } })
       expect(res.statusCode).toBe(400)
-      expect(res.json().error.code).toBe('validation_error')
+      expect(res.json().error.code).toBe('VALIDATION_ERROR')
     } finally {
       await cleanup()
     }
@@ -147,7 +147,7 @@ describe('分组接口', () => {
     }
   })
 
-  it('反向同理：组内只要有一条停用，分组也跟着停用；全部启用才回到启用', async () => {
+  it('反向同理：组里只要还有一条启用，分组就保持启用；一条都不启用才停用', async () => {
     const { app, cleanup } = await createTestApp()
     try {
       const group = (
@@ -168,25 +168,45 @@ describe('分组接口', () => {
           })
         ).json()
       const first = await make('D1')
-      await make('D2')
+      const second = await make('D2')
 
       const groupEnabled = async () =>
         (await app.inject({ method: 'GET', url: `/api/groups/${group.id}` })).json().enabled
       expect(await groupEnabled()).toBe(true)
 
+      // 只关掉一条：另一条还开着，分组保持启用
       await app.inject({
         method: 'PATCH',
         url: `/api/discoveries/${first.id}`,
         payload: { enabled: false },
       })
-      expect(await groupEnabled()).toBe(false)
+      expect(await groupEnabled()).toBe(true)
 
+      // 两条都关掉：分组才跟着停用
       await app.inject({
         method: 'PATCH',
-        url: `/api/discoveries/${first.id}`,
+        url: `/api/discoveries/${second.id}`,
+        payload: { enabled: false },
+      })
+      expect(await groupEnabled()).toBe(false)
+
+      // 只要有一条转启用，分组就启用
+      await app.inject({
+        method: 'PATCH',
+        url: `/api/discoveries/${second.id}`,
         payload: { enabled: true },
       })
       expect(await groupEnabled()).toBe(true)
+
+      // 打开一条只把分组开关带起来，不替别的卡片做主
+      const rows = (await app.inject({ method: 'GET', url: '/api/discoveries' })).json() as {
+        id: string
+        enabled: boolean
+      }[]
+      expect(rows).toHaveLength(2)
+      const byId = new Map(rows.map((row) => [row.id, row.enabled]))
+      expect(byId.get(first.id)).toBe(false)
+      expect(byId.get(second.id)).toBe(true)
     } finally {
       await cleanup()
     }

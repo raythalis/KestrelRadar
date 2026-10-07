@@ -8,6 +8,7 @@
 <script setup lang="ts">
 import type { EventSourceRef, RecentEvent } from '@kestrel/contracts'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import AppSourceTags from '@/components/app/AppSourceTags.vue'
 import { DISCOVERY_ICONS } from '@/components/biz/icons'
@@ -20,6 +21,8 @@ const props = defineProps<{
   restSources?: EventSourceRef[]
 }>()
 const emit = defineEmits<{ open: [event: RecentEvent]; more: [event: RecentEvent] }>()
+
+const { t } = useI18n()
 
 /** 行首图标色调跟着来源类型走（和发现卡的图标记法一致） */
 const tone = computed(() => {
@@ -61,6 +64,10 @@ function openRow(): void {
         :sources="event.sources"
         :total="event.sourceCount"
         :rest="restSources"
+        :more-of="(count) => t('dashboard.events.sourceMore', { n: count })"
+        :title="t('dashboard.events.sourceTitle')"
+        :note-of="(count) => t('dashboard.events.sourceNote', { n: count })"
+        :close-label="t('common.close')"
         @more="emit('more', event)"
       />
     </span>

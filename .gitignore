@@ -25,6 +25,9 @@ apps/api/data/icons/
 # 本地专用（基础设施细节、迁移参考代码、本机脚本）——绝不推到远端
 local/
 
+# AI 临时工作目录（工作文档/脚本/草稿）——本机的东西，不进远端
+.ai/
+
 # Python（legacy 目录、脚本）
 __pycache__/
 *.py[cod]

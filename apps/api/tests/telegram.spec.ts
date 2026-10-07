@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { buildContainer, type Container } from '../src/container.ts'
 import { openDatabase } from '../src/db/index.ts'
 import { createDeliverySender } from '../src/modules/delivery/dispatcher.ts'
-import { createWebhookSender } from '../src/modules/delivery/sender.ts'
+import { DeliveryError, createWebhookSender } from '../src/modules/delivery/sender.ts'
 import { createTelegramGateway } from '../src/modules/delivery/telegram.ts'
 import { createTempDb } from './helpers/temp-db.ts'
 import { createTestApp } from './helpers/test-app.ts'
@@ -172,8 +172,10 @@ describe('读取会话走服务层', () => {
       enabled: true,
     })
 
-    const chats = await container.delivery.listTelegramChats({ channelId: created.id })
-    expect(chats).toEqual([{ id: '42', title: 'Ray' }])
+    const result = await container.delivery.listTelegramChats({ channelId: created.id })
+    expect(result).toMatchObject({ ok: true })
+    expect(result.code).toBeUndefined()
+    expect(result.data?.chats).toEqual([{ id: '42', title: 'Ray' }])
     expect(calls[0]?.url).toBe('https://api.telegram.org/bot999:xyz/getUpdates')
   })
 
@@ -190,8 +192,10 @@ describe('读取会话走服务层', () => {
     expect(calls[0]?.url).toBe('https://api.telegram.org/bot111:new/getUpdates')
   })
 
-  it('既没 token 也没渠道时报错', async () => {
-    await expect(container.delivery.listTelegramChats({})).rejects.toThrow(/bot token/)
+  it('既没 token 也没渠道：业务失败（AUTH_FAILED），不是抛错', async () => {
+    const result = await container.delivery.listTelegramChats({})
+    expect(result).toMatchObject({ ok: false, code: 'AUTH_FAILED' })
+    expect(result.message).toContain('bot token')
   })
 })
 
@@ -230,14 +234,16 @@ describe('读取会话接口', () => {
         payload: { channelId: created.id },
       })
       expect(response.statusCode).toBe(200)
-      expect(response.json()).toEqual(chats)
+      expect(response.json().data).toMatchObject({ ok: true })
+      expect(response.json().data.code).toBeUndefined()
+      expect(response.json().data.data.chats).toEqual(chats)
       expect(calls[0]?.url).toBe('https://api.telegram.org/bot999:xyz/getUpdates')
     } finally {
       await cleanup()
     }
   })
 
-  it('token 不对：回 400 + 人话，不把堆栈丢出去', async () => {
+  it('token 不对：业务失败（200 + ok:false + AUTH_FAILED），不把堆栈丢出去', async () => {
     const gateway = createTelegramGateway({
       fetchImpl: fakeFetch([], [{ ok: false, description: 'Unauthorized' }], 401),
     })
@@ -248,13 +254,28 @@ describe('读取会话接口', () => {
         url: '/api/channels/telegram/chats',
         payload: { token: 'bad-token' },
       })
-      expect(response.statusCode).toBe(400)
-      expect(response.json()).toEqual({
-        error: { code: 'delivery_error', message: 'bot token 不对：Unauthorized' },
-      })
+      expect(response.statusCode).toBe(200)
+      const body = response.json()
+      expect(body.success).toBe(true)
+      expect(body.data).toMatchObject({ ok: false, code: 'AUTH_FAILED' })
+      expect(body.data.message).toContain('bot token 不对')
+      // 细码只给日志与统计
+      expect(body.data.details.reason).toBe('delivery.telegramAuth')
     } finally {
       await cleanup()
     }
+  })
+
+  it('token 不对：错误里留下对方的原始说法（语言无关，卡片副信息用它）', async () => {
+    const gateway = createTelegramGateway({
+      fetchImpl: fakeFetch([], [{ ok: false, description: 'Unauthorized' }], 401),
+    })
+
+    const failure = await gateway.send(message).catch((error: unknown) => error)
+
+    expect(failure).toBeInstanceOf(DeliveryError)
+    expect((failure as DeliveryError).code).toBe('delivery.telegramAuth')
+    expect((failure as DeliveryError).detail).toBe('Unauthorized')
   })
 
   it('什么都没给：回 400 校验错', async () => {
@@ -266,7 +287,7 @@ describe('读取会话接口', () => {
         payload: {},
       })
       expect(response.statusCode).toBe(400)
-      expect(response.json().error.code).toBe('validation_error')
+      expect(response.json().error.code).toBe('VALIDATION_ERROR')
     } finally {
       await cleanup()
     }

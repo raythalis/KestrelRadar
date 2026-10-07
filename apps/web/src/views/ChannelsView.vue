@@ -1,11 +1,11 @@
 <!-- 通知渠道页（v2）。
      渠道是「动作往哪里发」的落点，所以这一页只有一件事：把渠道列清楚、能试通、能改。
-     页头 + 一条提示带（最近一次测试的结论）+ 卡片网格；卡片上不出现开关：
+     页头 + 卡片网格；卡片上不出现开关：
      启用、密钥、会话都在编辑弹窗里改（加渠道时先选类型）。
      页面负责数据与写操作，卡片 / 弹窗只出事件。 -->
 <script setup lang="ts">
 import type { Channel, ChannelType } from '@kestrel/contracts'
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { CHANNEL_ICONS } from '@/components/biz/icons'
@@ -16,10 +16,9 @@ import ChannelDialog from '@/components/biz/ChannelDialog.vue'
 import ConfirmDialog from '@/components/biz/ConfirmDialog.vue'
 import type { ChannelChat, ChannelDialogValues } from '@/components/biz/types'
 import { useConfigStore } from '@/stores/config'
-import { useToastStore } from '@/stores/toast'
+import { showOperationResult } from '@/utils/feedback'
 
 const store = useConfigStore()
-const toast = useToastStore()
 const { t } = useI18n()
 
 type DotState = 'idle' | 'testing' | 'ok' | 'warn' | 'fail'
@@ -74,13 +73,17 @@ async function readChats(values: { token: string; channelId?: string }): Promise
   chatsLoading.value = true
   chatsError.value = ''
   try {
-    chats.value = await readTelegramChats({
+    const result = await readTelegramChats({
       token: values.token.trim() || undefined,
       channelId: values.channelId,
     })
-    if (chats.value.length === 0) chatsError.value = t('channel.noChatsHint')
-  } catch (error) {
-    chatsError.value = (error as { message?: string }).message ?? t('channel.readFailed')
+    chats.value = result.data?.chats ?? []
+    // 业务失败（token 不对、超时）走统一浮层；读到了但一条都没有，才是页面上的提示
+    if (!result.ok) showOperationResult(result)
+    else if (chats.value.length === 0) chatsError.value = t('channel.noChatsHint')
+  } catch {
+    // 请求本身失败由 http.ts 统一提示：这里只把列表收干净
+    chats.value = []
   } finally {
     chatsLoading.value = false
   }
@@ -108,12 +111,15 @@ async function runTest(channel: Channel): Promise<void> {
   dots.value = { ...dots.value, [channel.id]: 'testing' }
   try {
     const result = await testChannel(channel.id)
-    dots.value = { ...dots.value, [channel.id]: result.ok ? 'ok' : 'warn' }
-    toast.push(`${channel.name}：${result.message}`, result.ok ? 'success' : 'danger')
-  } catch (error) {
+    // 测试是「做过一件事」：成没成都在浮层里说一声，卡片只留圆点
+    const ok = showOperationResult(result, {
+      context: channel.name,
+      successText: t('channel.testSent'),
+    })
+    dots.value = { ...dots.value, [channel.id]: ok ? 'ok' : 'fail' }
+  } catch {
+    // 请求本身失败由 http.ts 统一提示；这里只把圆点标红
     dots.value = { ...dots.value, [channel.id]: 'fail' }
-    const message = (error as { message?: string }).message ?? t('channel.testFailed')
-    toast.push(`${channel.name}：${message}`, 'danger')
   }
 }
 
@@ -122,14 +128,6 @@ async function confirmDelete(): Promise<void> {
   pendingDelete.value = null
   if (target) await store.removeChannel(target.id)
 }
-
-/** 页面级错误条已下线：弹窗开着时留给弹窗说，其余由浮层说 */
-watch(
-  () => store.errorMessage,
-  (message) => {
-    if (message && !dialogOpen.value && !pendingDelete.value) toast.push(message)
-  },
-)
 </script>
 
 <template>

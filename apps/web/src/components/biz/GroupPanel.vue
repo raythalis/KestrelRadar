@@ -1,6 +1,6 @@
 <!-- GroupPanel：配置页的「分组」折叠块（业务组件层 · v2）。
      摘要行：折叠箭头 · 名称 + 简介 · 三个计数胶囊 · 启用开关 · ⋯ 菜单（编辑 / 删除）。
-     ≥900px 展开后三列并排（发现 / 监听 / 动作）；<900px 顶部出现标签，一次看一列。
+     宽屏展开后三列并排；窄屏顶部出现标签，一次看一列（标签走真 AppTabs，不在这手写）。
      停用只说一次：由开关表达，不再整块压暗、也不另挂状态标签。
      卡片由页面通过插槽填进来（业务组件只负责结构与位置，不碰 store）。 -->
 <script setup lang="ts">
@@ -8,6 +8,8 @@ import type { Group } from '@kestrel/contracts'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import AppTabs from '@/components/app/AppTabs.vue'
+import type { AppTabItem } from '@/components/app/types'
 import { SEMANTIC_ICONS } from '@/components/biz/icons'
 
 type ColumnKey = 'discoveries' | 'monitors' | 'actions'
@@ -30,7 +32,7 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 /** 窄屏一次只看一列 */
-const active = ref<ColumnKey>('discoveries')
+const active = ref<string>('discoveries')
 const menuOpen = ref(false)
 
 /** 三列各有自己的图标：发现=信息、监听=规则、动作=执行 */
@@ -42,6 +44,16 @@ const COLUMNS: { key: ColumnKey; icon: string; addKey: string }[] = [
 
 const columns = computed(() =>
   COLUMNS.map((column) => ({ ...column, label: t(`column.${column.key}`) })),
+)
+
+/** 窄屏标签：值与计数交给 AppTabs，文案仍是这一层拼好的 */
+const tabItems = computed<AppTabItem[]>(() =>
+  columns.value.map((column) => ({
+    value: column.key,
+    label: column.label,
+    icon: column.icon,
+    count: props.counts[column.key],
+  })),
 )
 
 const enabledLabel = computed(() =>
@@ -122,23 +134,7 @@ const enabledLabel = computed(() =>
     </div>
 
     <div v-if="expanded" class="k2-group__body">
-      <div class="k2-tabs" role="tablist">
-        <button
-          v-for="column in columns"
-          :key="column.key"
-          type="button"
-          class="k2-tabs__item"
-          :class="{ 'k2-tabs__item--on': column.key === active }"
-          role="tab"
-          :aria-selected="column.key === active"
-          :data-test="`tab-${column.key}`"
-          @click="active = column.key"
-        >
-          <v-icon size="16">{{ column.icon }}</v-icon>
-          {{ column.label }}
-          <span class="k2-tabs__count">{{ counts[column.key] }}</span>
-        </button>
-      </div>
+      <AppTabs v-model="active" :items="tabItems" />
 
       <section
         v-for="column in columns"

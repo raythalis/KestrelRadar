@@ -63,7 +63,12 @@ export const CRON_MESSAGE = '定时表达式不合法，例如「0 * * * *」表
 
 /** 必填的 cron（发现频率） */
 export function cronExpressionSchema() {
-  return z.string().trim().min(1).max(120).refine(isValidCronExpression, { message: CRON_MESSAGE })
+  return z
+    .string()
+    .trim()
+    .min(1)
+    .max(120)
+    .refine(isValidCronExpression, { message: CRON_MESSAGE, params: { rule: 'INVALID_CRON' } })
 }
 
 /** 可空的 cron（动作的汇总时间）：空串 / null 都当没填 */
@@ -72,6 +77,9 @@ export function optionalCronSchema() {
     .string()
     .trim()
     .max(120)
-    .refine((value) => value === '' || isValidCronExpression(value), { message: CRON_MESSAGE })
+    .refine((value) => value === '' || isValidCronExpression(value), {
+      message: CRON_MESSAGE,
+      params: { rule: 'INVALID_CRON' },
+    })
     .nullable()
 }

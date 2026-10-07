@@ -12,6 +12,7 @@ import { useI18n } from 'vue-i18n'
 
 import { cardStatView } from '@/components/biz/card-stat'
 import { SEMANTIC_ICONS } from '@/components/biz/icons'
+import { cronText } from '@/utils/cron'
 
 const props = withDefaults(
   defineProps<{
@@ -67,6 +68,8 @@ const channelMissing = computed(() => !props.channelName)
 const stateLabel = computed(() => (props.enabled ? t('common.enabled') : t('common.disabled')))
 /** 汇总时间：认得出写人话，认不出写裸表达式 */
 const plan = computed(() => (props.cron ? humanizeCron(props.cron) : null))
+/** 认得出写人话；认不出退回裸表达式（这一处只做展示，不改值） */
+const planText = computed(() => (plan.value ? cronText(plan.value) : props.cron))
 </script>
 
 <template>
@@ -156,7 +159,7 @@ const plan = computed(() => (props.cron ? humanizeCron(props.cron) : null))
           >
             <span class="k2-chip__dot" />{{ stateLabel }}
           </span>
-          <span v-if="cron" class="k2-card__meta" data-test="action-cron">{{ plan ?? cron }}</span>
+          <span v-if="cron" class="k2-card__meta" data-test="action-cron">{{ planText }}</span>
           <button
             type="button"
             class="k2-iconbtn k2-card__flipbtn"

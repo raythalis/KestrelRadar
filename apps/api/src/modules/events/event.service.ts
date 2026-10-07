@@ -15,6 +15,8 @@ import { AppError } from '../../plugins/errors.ts'
 import type { DiscoveryRepo } from '../discoveries/discovery.repo.ts'
 import type { GroupRepo } from '../groups/group.repo.ts'
 import type { Item, ItemRepo } from '../items/item.repo.ts'
+import type { JudgmentRepo } from '../judgment/judgment.repo.ts'
+import type { MonitorRepo } from '../monitors/monitor.repo.ts'
 import type { SettingsService } from '../settings/settings.service.ts'
 import type { Event, EventRepo } from './event.repo.ts'
 import {
@@ -69,6 +71,9 @@ export interface EventServiceDeps {
   discoveries: DiscoveryRepo
   groups: GroupRepo
   items: ItemRepo
+  /** 事件的成员必须是「判定为留下」的条目：这两样是那道门的依据 */
+  judgments: JudgmentRepo
+  monitors: MonitorRepo
   settings: SettingsService
 }
 
@@ -205,7 +210,10 @@ export function createEventService(deps: EventServiceDeps) {
       return { id: eventId, readAt: deps.events.readAtForEvents([eventId]).get(eventId) ?? at }
     },
 
-    /** 把这条来源里还没并入事件的条目归并一遍（幂等，重复调用不会多出事件） */
+    /**
+     * 把这条来源里「判定为留下」的条目归并一遍（幂等，重复调用不会多出事件）。
+     * 事件列表就是筛选结果：判为丢弃的、还没判过的条目一律不并进来，只留在原始条目里。
+     */
     async mergePendingItems(discoveryId: string): Promise<EventMergeResult> {
       const empty: EventMergeResult = { created: 0, merged: 0, updatedMarked: 0 }
       const discovery = deps.discoveries.get(discoveryId)
@@ -213,8 +221,15 @@ export function createEventService(deps: EventServiceDeps) {
       const group = deps.groups.get(discovery.groupId)
       if (!group?.enabled) return empty
 
+      const monitorIds = deps.monitors
+        .list()
+        .filter((monitor) => monitor.enabled && monitor.groupId === discovery.groupId)
+        .map((monitor) => monitor.id)
+      const passed = deps.judgments.passItemIds(monitorIds)
+
       const result: EventMergeResult = { ...empty }
       for (const item of deps.items.listByDiscovery(discoveryId)) {
+        if (!passed.has(item.id)) continue
         if (deps.events.memberEventId(item.id)) continue
         const at = itemTime(item)
         const urlKey = item.url ? normalizeUrl(item.url) : null

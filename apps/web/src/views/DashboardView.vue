@@ -20,8 +20,8 @@ import EventRow from '@/components/biz/EventRow.vue'
 import IncidentCard from '@/components/biz/IncidentCard.vue'
 import { SEMANTIC_ICONS } from '@/components/biz/icons'
 import { useDashboardStore } from '@/stores/dashboard'
-import { useToastStore } from '@/stores/toast'
 import { formatDateTime, formatShortDateTime, timeAgo } from '@/utils/format'
+import { incidentDetail, incidentReasonKey } from '@/utils/incident'
 
 type Tone = 'success' | 'warning' | 'danger' | 'info' | 'primary' | 'neutral'
 
@@ -39,16 +39,7 @@ interface MetricCard {
 }
 
 const store = useDashboardStore()
-const toast = useToastStore()
-const { t } = useI18n()
-
-/** 页面级提示已下线：读不到数据、忽视失败都走浮层 */
-watch(
-  () => store.errorMessage,
-  (message) => {
-    if (message) toast.push(t('dashboard.loadFailed'))
-  },
-)
+const { t, te } = useI18n()
 
 onMounted(() => {
   if (!store.stats) void store.load()
@@ -245,8 +236,8 @@ const filterLabel = computed(
 async function applyFilter(discoveryId: string | null): Promise<void> {
   try {
     await store.setFilter(discoveryId)
-  } catch (error) {
-    toast.push((error as Error).message)
+  } catch {
+    // 失败提示归 http.ts 的统一浮层，这里只保证流程不吊在半路
   }
 }
 
@@ -262,7 +253,9 @@ function resetFilter(): void {
 /** 点开一条：真跳原文，同时记已读（后端幂等，前端就地更新那一行） */
 function openEvent(event: RecentEvent): void {
   if (event.url) window.open(event.url, '_blank', 'noopener,noreferrer')
-  void store.markRead(event.id).catch((error: Error) => toast.push(error.message))
+  void store.markRead(event.id).catch(() => {
+    // 同上：读不读得上已读不影响看原文
+  })
 }
 
 /** 这一件事的其余来源（接口给的是全部来源，前两个挂标签、其余进 +N 浮层） */
@@ -273,12 +266,15 @@ function restOf(event: RecentEvent): EventSourceRef[] | undefined {
 
 const timeOfEvent = (item: RecentEvent): string => eventTime(item.lastItemAt)
 
+/** 弹窗底部那句：条数由弹窗给，文案归这里 */
+const shownText = (count: number): string => t('dashboard.events.shown', { n: count })
+
 /** 弹窗滚到底：接着上一页往下取 */
 async function onLoadMore(): Promise<void> {
   try {
     await store.loadMore()
-  } catch (error) {
-    toast.push((error as Error).message)
+  } catch {
+    // 失败提示归 http.ts 的统一浮层
   }
 }
 
@@ -295,12 +291,18 @@ function timeSlot(): 'morning' | 'noon' | 'afternoon' | 'evening' {
   return 'evening'
 }
 
-/** 忽视：后端只改状态；成功就把那行去掉，失败把原因留在异常区标题下 */
+/** 忽视：后端只改状态；成功就把那行去掉，失败由 http.ts 的统一浮层说一声 */
+/** 异常原因：码能翻就翻（当前语言），翻不了就用记录里的原文兜底 */
+function incidentReason(incident: Incident): string {
+  const key = incidentReasonKey(incident.code)
+  return key && te(key) ? t(key) : incident.message
+}
+
 async function onDismiss(incident: Incident): Promise<void> {
   try {
     await store.dismiss(incident.id)
-  } catch (error) {
-    toast.push((error as Error).message)
+  } catch {
+    // 失败提示归 http.ts 的统一浮层
   }
 }
 
@@ -386,6 +388,7 @@ const loading = computed(() => store.loading && !store.stats)
               :title="t('dashboard.events.filterTitle')"
               :note="t('dashboard.events.filterNote')"
               :reset-label="t('dashboard.events.filterReset')"
+              :close-label="t('common.close')"
               @reset="resetFilter"
             />
             <button
@@ -467,8 +470,13 @@ const loading = computed(() => store.loading && !store.stats)
             v-for="incident in store.incidents"
             :key="incident.id"
             :incident="incident"
+            :reason="incidentReason(incident)"
+            :detail="incidentDetail(incident)"
             :last-seen="formatDateTime(incident.createdAt)"
             :dismiss-label="t('dashboard.incidents.dismiss')"
+            :group-label="
+              incident.groupName ? t('dashboard.incidents.group', { name: incident.groupName }) : ''
+            "
             @dismiss="onDismiss"
           />
         </div>
@@ -487,6 +495,11 @@ const loading = computed(() => store.loading && !store.stats)
       :clear-label="t('dashboard.events.clearFilter')"
       :loading-label="t('dashboard.events.loadingMore')"
       :end-label="t('dashboard.events.dialogEnd')"
+      :close-label="t('common.close')"
+      :filter-prefix="t('dashboard.events.filterCurrent')"
+      :empty-label="t('dashboard.events.filterEmpty')"
+      :scroll-hint-label="t('dashboard.events.scrollHint')"
+      :stat-of="shownText"
       :time-of="timeOfEvent"
       :rest-of="restOf"
       @open="openEvent"

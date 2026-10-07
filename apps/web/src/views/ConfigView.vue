@@ -5,7 +5,7 @@
      页面只做数据映射与写操作（业务组件不碰 store）；弹窗仍是既有那一套，下一步再迁 v2。 -->
 <script setup lang="ts">
 import type { Action, Discovery, Group, Monitor } from '@kestrel/contracts'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -26,7 +26,7 @@ import type {
   SourceDialogValues,
 } from '@/components/biz/types'
 import { useConfigStore } from '@/stores/config'
-import { useToastStore } from '@/stores/toast'
+import { showOperationResult } from '@/utils/feedback'
 import { templateDisplayName } from '@/utils/format'
 
 type ColumnKey = 'discoveries' | 'monitors' | 'actions'
@@ -47,16 +47,6 @@ interface PendingDelete {
 const store = useConfigStore()
 const router = useRouter()
 const { t } = useI18n()
-
-/** 错误只说一次：有弹窗开着就由弹窗说，否则由浮层说 */
-const anyDialogOpen = computed(
-  () =>
-    groupDialogOpen.value ||
-    sourceDialogOpen.value ||
-    monitorDialogOpen.value ||
-    actionDialogOpen.value ||
-    pendingDelete.value !== null,
-)
 
 /** 动作弹窗里点「新建通知渠道」：只把人送到通知渠道页（类型到那儿自己选），不替他开 Telegram 弹窗 */
 function goNewChannel(): void {
@@ -94,18 +84,8 @@ function isLinked(groupId: string, kind: 'monitor' | 'action', id: string): bool
   return Boolean(monitor && action && monitorActionIds(groupId, monitor).includes(action.id))
 }
 
-const toast = useToastStore()
-
 /** 正在试抓的数据源 id：试抓中不许再点第二次 */
 const testingSourceId = ref('')
-
-/** 页面级错误条已下线：读不到、写不动、请求失败都改由浮层说；弹窗开着时留给弹窗自己说 */
-watch(
-  () => store.errorMessage,
-  (message) => {
-    if (message && !anyDialogOpen.value) toast.push(message)
-  },
-)
 
 const groupDialogOpen = ref(false)
 const editingGroup = ref<Group | null>(null)
@@ -217,18 +197,15 @@ async function runSourceTest(discovery: Discovery): Promise<void> {
   testingSourceId.value = discovery.id
   try {
     const result = await store.testDiscovery(discovery.id)
-    // 请求本身失败：说明与浮层由 errorMessage 那条线负责
+    // 请求本身失败：http.ts 已经弹过浮层，这里不再说第二遍
     if (!result) return
-    if (!result.routeOk) {
-      toast.push(`${discovery.name}：${t('discovery.testFail')}`, 'danger')
-    } else if (result.contentOk) {
-      toast.push(
-        `${discovery.name}：${t('discovery.testOk', { n: result.foundItemCount })}`,
-        'success',
-      )
-    } else {
-      toast.push(`${discovery.name}：${t('discovery.testEmpty')}`, 'warning')
-    }
+    const detail = result.data
+    showOperationResult(result, {
+      context: discovery.name,
+      // 路由通了、只是没抓到条目：还能用，只是这次没内容
+      ...(detail?.routeOk ? { softText: t('discovery.testEmpty') } : {}),
+      successText: t('discovery.testOk', { n: detail?.foundItemCount ?? 0 }),
+    })
   } finally {
     testingSourceId.value = ''
   }

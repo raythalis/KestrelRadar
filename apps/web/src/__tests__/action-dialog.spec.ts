@@ -165,7 +165,7 @@ describe('ActionDialog', () => {
     await flushPromises()
     expect(q('action-dialog-trigger')?.textContent).toContain('每天汇总')
     await openMenu('action-dialog-trigger')
-    expect(document.body.textContent).toContain('发现即发')
+    expect(document.body.textContent).toContain('采集到就投递')
     expect(document.body.textContent).toContain('每天汇总')
 
     const grid = document.querySelector('.action-dialog__grid')
@@ -173,7 +173,7 @@ describe('ActionDialog', () => {
       expect(grid?.querySelector(`[data-test="${test}"]`)).toBeTruthy()
     }
     expect(document.body.textContent).toContain('合并为一条消息')
-    expect(document.body.textContent).toContain('包含已即时推送过的内容')
+    expect(document.body.textContent).toContain('包含已即时投递过的内容')
   })
 
   it('桌面两列：开关与发送时间跨满两列，名称/触发方式、渠道/模板成对', async () => {

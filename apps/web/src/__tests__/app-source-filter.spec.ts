@@ -12,11 +12,20 @@ const OPTIONS = [
   { id: 'd-sspai', name: '少数派', count: 2 },
 ]
 
+/** app/* 只收文案：页面传什么这里就传什么（见 DashboardView 的用法） */
+const COPY = {
+  title: '筛选事件',
+  note: '按信息来源查看',
+  resetLabel: '重置筛选',
+  filterLabel: '筛选',
+  closeLabel: '关闭',
+}
+
 const mounted: Array<{ unmount: () => void }> = []
 
 function mountFilter(props: Record<string, unknown> = {}, attach = true) {
   const wrapper = mount(AppSourceFilter, {
-    props: { options: OPTIONS, modelValue: '', ...props },
+    props: { options: OPTIONS, modelValue: '', ...COPY, ...props },
     attachTo: attach ? document.body : undefined,
     global: { plugins: [vuetify, vuetifyGlobals, i18n, appComponents] },
   })

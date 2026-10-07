@@ -47,6 +47,8 @@ export interface V2ColorTokens {
   success: string
   successSoft: string
   successInk: string
+  /** LLM+ 专属的绿：比 success 明亮浅一点，只给 LlmPlusTag 用 */
+  llmPlus: string
   warning: string
   warningSoft: string
   warningInk: string
@@ -117,6 +119,8 @@ export const V2_COLOR: { light: V2ColorTokens; dark: V2ColorTokens } = {
     primaryInk: '#4338ca',
     onPrimary: '#ffffff',
     success: '#12b76a',
+    /** LLM+ 这个名字专用的绿：比 success 明亮浅一点，只给 LlmPlusTag 用 */
+    llmPlus: '#23c978',
     successSoft: 'rgba(18, 183, 106, 0.12)',
     successInk: '#067647',
     warning: '#f79009',
@@ -156,6 +160,7 @@ export const V2_COLOR: { light: V2ColorTokens; dark: V2ColorTokens } = {
     primaryInk: '#a5b4fc',
     onPrimary: '#ffffff',
     success: '#32d583',
+    llmPlus: '#45dd8f',
     successSoft: 'rgba(50, 213, 131, 0.16)',
     successInk: '#a6f4c5',
     warning: '#fdb022',

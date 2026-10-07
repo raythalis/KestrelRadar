@@ -66,10 +66,14 @@ function onThemeClick(event: MouseEvent): void {
   )
 }
 
-// 界面语言以 store 为准（它管着持久化）：刷新后也要把存着的语言装回去
+// 界面语言以 store 为准（它管着持久化）：刷新后也要把存着的语言装回去。
+// <html lang> 跟着一起改：读屏软件按它决定用哪种语音念，别停在 index.html 里那个 zh-CN。
 watch(
   () => ui.locale,
-  (next) => (locale.value = next),
+  (next) => {
+    locale.value = next
+    document.documentElement.lang = next
+  },
   { immediate: true },
 )
 
@@ -141,6 +145,8 @@ function onKeydown(event: KeyboardEvent): void {
         :open="drawerOpen"
         :brand="brand"
         :close-label="t('nav.closeMenu')"
+        :expand-label="t('nav.expand')"
+        :collapse-label="t('nav.collapse')"
         @close="drawerOpen = false"
       />
 

@@ -191,6 +191,8 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     discoveries: discoveryRepo,
     groups: groupRepo,
     items: itemRepo,
+    judgments: judgmentRepo,
+    monitors: monitorRepo,
     settings,
   })
 

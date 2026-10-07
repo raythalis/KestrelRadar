@@ -47,7 +47,7 @@ describe('ConfirmDialog', () => {
     expect(lead?.querySelector('.k2-dialog__subject')).not.toBeNull()
     const removed = document.querySelector('[data-test="confirm-remove-list"]')?.textContent ?? ''
     expect(removed).toContain('2')
-    expect(removed).toContain('发现')
+    expect(removed).toContain('数据源')
     expect(document.querySelector('[data-test="confirm-keep-list"]')?.textContent).toContain('事件')
     expect(document.querySelector('[data-test="confirm-question"]')).not.toBeNull()
     // 有清单时不再重复那句纯文本说明

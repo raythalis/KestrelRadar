@@ -21,7 +21,10 @@ export function httpUrl(max: number) {
     .string()
     .trim()
     .max(max)
-    .refine((value) => isHttpUrl(value), { message: HTTP_URL_MESSAGE })
+    .refine((value) => isHttpUrl(value), {
+      message: HTTP_URL_MESSAGE,
+      params: { rule: 'INVALID_URL' },
+    })
 }
 
 /** 可为空的 http(s) 地址（设置项没配就是空串） */
@@ -30,7 +33,10 @@ export function optionalHttpUrl(max: number) {
     .string()
     .trim()
     .max(max)
-    .refine((value) => value === '' || isHttpUrl(value), { message: HTTP_URL_MESSAGE })
+    .refine((value) => value === '' || isHttpUrl(value), {
+      message: HTTP_URL_MESSAGE,
+      params: { rule: 'INVALID_URL' },
+    })
 }
 
 /** 标签类数组：每一项 trim 后非空并限长，整体限个数 */
