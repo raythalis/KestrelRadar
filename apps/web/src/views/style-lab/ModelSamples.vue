@@ -93,7 +93,9 @@ function reset(): void {
       「内网网关」那家没取到模型，所以选项里一条都没有它，界面上也不解释。
       删掉一家供应商，用到它模型的那一行会自己消失，末尾仍留一行空的。
     </p>
-    <ModelOrderList v-model:value="order" :providers="orderProviders" @save="saved = true" />
+    <section class="k2-card">
+      <ModelOrderList v-model:value="order" :providers="orderProviders" @save="saved = true" />
+    </section>
     <div class="lab__controls">
       <button
         type="button"

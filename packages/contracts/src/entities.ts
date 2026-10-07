@@ -265,7 +265,8 @@ export const modelSchema = z.object({
 export type Model = z.infer<typeof modelSchema>
 
 export const createModelInputSchema = z.object({
-  modelName: trimmedRequired(200),
+  // 模型名来自供应商接口返回的清单，用户不再手填，所以没有名称规则
+  modelName: z.string(),
   enabled: z.boolean().default(true),
   sortOrder: z.number().int().default(0),
 })

@@ -249,8 +249,7 @@ export default {
     testFailed: 'Test failed',
   },
   model: {
-    subtitle:
-      'v1.0 just keeps the provider and model list; judging works once you turn on {llmPlus} under Settings → Judge.',
+    subtitle: 'Supports {llmPlus}',
     addProvider: 'New provider',
     editProvider: 'Edit provider',
     deleteProvider: 'Delete provider',
@@ -270,10 +269,11 @@ export default {
     order: {
       title: 'Model order',
       sub: 'Tried in order; if one fails the next is used',
-      add: 'Add a row',
       placeholder: 'Pick a model',
+      add: 'Add a row',
+      drag: 'Drag to reorder',
       hint: 'Options come from the providers configured above.',
-      save: 'Save order',
+      save: 'Save',
     },
     addModel: 'Add a model name',
     noModels: 'No models yet',

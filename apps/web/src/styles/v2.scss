@@ -1397,6 +1397,17 @@ a.k2-row--link {
   color: var(--k2-c-danger-ink);
 }
 
+/* 到上限这类「还能看见但点不动」的按钮：留着位置，只是不再响应 */
+.k2-iconbtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.k2-iconbtn:disabled:hover {
+  background: transparent;
+  color: var(--k2-c-text-muted);
+}
+
 /* 低权重危险：平时保持中性，悬停才显危险色（列表里的关闭 / 忽视） */
 .k2-iconbtn--danger-hover:hover {
   background: var(--k2-c-danger-soft);
@@ -3500,4 +3511,106 @@ a.k2-row--link {
 
 .k2-empty-art--incidents .k2-empty-art__spark {
   background: var(--k2-c-success);
+}
+
+/* ---------- 模型调用顺序：一行一个下拉，横向尽量省地方（移动端不挤） ---------- */
+.k2-order {
+  display: flex;
+  flex-direction: column;
+}
+
+.k2-order__head {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+  padding-block-end: var(--k2-s-3);
+}
+
+.k2-order__title {
+  font-size: var(--k2-fs-body);
+  font-weight: var(--k2-fw-medium);
+}
+
+.k2-order__sub {
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 窄屏放不下标题 + 这句说明，就只留标题（下面还有一行提示） */
+@media (max-width: 600px) {
+  .k2-order__sub {
+    display: none;
+  }
+}
+
+.k2-order__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-2);
+}
+
+.k2-order__row {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+  min-inline-size: 0;
+  padding: var(--k2-s-1) var(--k2-s-2);
+  border-radius: var(--k2-r-md);
+  background: var(--k2-c-surface2);
+  box-shadow: inset 0 0 0 1px var(--k2-c-border-soft);
+}
+
+/* 拖到哪一行，哪一行给个框，松手就落在这儿 */
+.k2-order__row.is-over {
+  box-shadow: inset 0 0 0 1px var(--k2-c-primary);
+}
+
+.k2-order__no {
+  flex: none;
+  inline-size: 12px;
+  text-align: center;
+  font-size: var(--k2-fs-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--k2-c-text-muted);
+}
+
+/* 抓手：六个点，纯 CSS 画，不占字体子集 */
+.k2-order__grip {
+  flex: none;
+  inline-size: 12px;
+  block-size: 14px;
+  cursor: grab;
+  background-image: radial-gradient(currentColor 1px, transparent 1.2px);
+  background-size: 6px 5px;
+  color: var(--k2-c-text-muted);
+  opacity: 0.7;
+}
+
+.k2-order__grip:active {
+  cursor: grabbing;
+}
+
+.k2-order__main {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.k2-order__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-3);
+  padding-block-start: var(--k2-s-4);
+}
+
+.k2-order__hint {
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

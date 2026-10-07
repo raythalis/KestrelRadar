@@ -28,7 +28,9 @@ describe('ProviderCard', () => {
   it('卡上给名称、图标、类型胶囊与编辑 / 删除', () => {
     const wrapper = mountCard()
     expect(wrapper.get('[data-test="provider-name"]').text()).toBe('本机 Ollama')
-    expect(wrapper.get('[data-test="provider-kind"]').text()).toBe('Ollama')
+    const kind = wrapper.get('[data-test="provider-kind"]')
+    expect(kind.text()).toBe('Ollama')
+    expect(kind.classes()).toContain('k2-t-primary')
     expect(wrapper.find('.k2-tile i').exists()).toBe(true)
     expect(wrapper.find('[data-test="provider-edit"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="provider-delete"]').exists()).toBe(true)

@@ -19,7 +19,8 @@ function mountList(props: Record<string, unknown> = {}) {
   })
 }
 
-const rowCount = (wrapper: ReturnType<typeof mountList>): number =>
+type Wrapper = ReturnType<typeof mountList>
+const rowCount = (wrapper: Wrapper): number =>
   wrapper.findAll('[data-test="model-order-row"]').length
 
 describe('ModelOrderList', () => {
@@ -29,25 +30,43 @@ describe('ModelOrderList', () => {
     expect(rowCount(mountList({ value: ['mp1:qwen3:8b', 'mp2:deepseek-chat'] }))).toBe(2)
   })
 
-  it('+ 号加一行，到三行就收起来', async () => {
+  it('加号在卡片右上：点一次加一行，到三行就禁用（还在，只是点不动）', async () => {
     const wrapper = mountList()
-    await wrapper.get('[data-test="model-order-add"]').trigger('click')
-    // 受控：值在父级，点一次加一行
+    const add = wrapper.get('[data-test="model-order-add"]')
+    expect(add.attributes('disabled')).toBeUndefined()
+
+    await add.trigger('click')
     expect(wrapper.emitted('update:value')?.[0]).toEqual([[null, null]])
 
-    const two = mountList({ value: [null, null] })
-    await two.get('[data-test="model-order-add"]').trigger('click')
-    expect(two.emitted('update:value')?.[0]).toEqual([[null, null, null]])
-
     const full = mountList({ value: ['mp1:qwen3:8b', 'mp2:deepseek-chat', 'mp1:llama3.3:70b'] })
+    const fullAdd = full.get('[data-test="model-order-add"]')
     expect(rowCount(full)).toBe(3)
-    expect(full.find('[data-test="model-order-add"]').exists()).toBe(false)
+    expect(fullAdd.attributes('disabled')).toBeDefined()
+    await fullAdd.trigger('click')
+    expect(full.emitted('update:value')).toBeUndefined()
   })
 
-  it('删掉一行后至少还留一行空的', async () => {
-    const wrapper = mountList({ value: ['mp1:qwen3:8b'] })
-    await wrapper.get('[data-test="model-order-remove"]').trigger('click')
-    expect(wrapper.emitted('update:value')?.[0]).toEqual([[null]])
+  it('只有一行时不显示删除按钮，两行以上才有', () => {
+    expect(mountList().find('[data-test="model-order-remove"]').exists()).toBe(false)
+    const two = mountList({ value: ['mp1:qwen3:8b', 'mp2:deepseek-chat'] })
+    expect(two.findAll('[data-test="model-order-remove"]')).toHaveLength(2)
+  })
+
+  it('删一行后仍至少留一行空行', async () => {
+    const wrapper = mountList({ value: ['mp1:qwen3:8b', 'mp2:deepseek-chat'] })
+    await wrapper.findAll('[data-test="model-order-remove"]')[0]!.trigger('click')
+    expect(wrapper.emitted('update:value')?.[0]).toEqual([['mp2:deepseek-chat']])
+  })
+
+  it('抓着抓手拖动就换顺序', async () => {
+    const wrapper = mountList({ value: ['mp1:qwen3:8b', 'mp2:deepseek-chat', 'mp1:llama3.3:70b'] })
+    const rows = wrapper.findAll('[data-test="model-order-row"]')
+    await rows[0]!.find('[data-test="model-order-grip"]').trigger('dragstart')
+    await rows[2]!.trigger('dragover')
+    await rows[2]!.trigger('drop')
+    expect(wrapper.emitted('update:value')?.[0]).toEqual([
+      ['mp2:deepseek-chat', 'mp1:llama3.3:70b', 'mp1:qwen3:8b'],
+    ])
   })
 
   it('供应商被删、选项里没这个值了：那一行自动消失，末尾仍留一行空的', async () => {
@@ -66,7 +85,7 @@ describe('ModelOrderList', () => {
     expect(rowCount(wrapper)).toBe(1)
   })
 
-  it('选项按「供应商:模型」拼，取不到模型的那家静默缺席', async () => {
+  it('选项按「供应商:模型」拼，取不到模型的那家静默缺席', () => {
     const wrapper = mountList()
     const select = wrapper.findComponent({ name: 'VSelect' })
     const items = select.props('items') as { title: string }[]

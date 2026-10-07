@@ -26,7 +26,9 @@ const kindLabel = computed(() => t(`model.kind.${props.provider.kind}`))
     </div>
 
     <div class="k2-card__tags">
-      <span class="k2-chip k2-chip--tag" data-test="provider-kind">{{ kindLabel }}</span>
+      <span class="k2-chip k2-chip--soft k2-t-primary" data-test="provider-kind">{{
+        kindLabel
+      }}</span>
     </div>
 
     <div class="k2-card__foot">
