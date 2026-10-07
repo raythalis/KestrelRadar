@@ -41,7 +41,6 @@ import type { JudgeLlm } from './modules/judgment/llm.ts'
 import { createModelProviderRepo } from './modules/model-providers/model-provider.repo.ts'
 import { createRemoteModels } from './modules/model-providers/remote-models.ts'
 import { createModelProviderService } from './modules/model-providers/model-provider.service.ts'
-import { createModelRepo } from './modules/model-providers/model.repo.ts'
 import { createMonitorRepo } from './modules/monitors/monitor.repo.ts'
 import { createMonitorService } from './modules/monitors/monitor.service.ts'
 import { createHiddenSettings, type HiddenSettings } from './modules/settings/hidden.ts'
@@ -114,7 +113,6 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
   })
   const channelRepo = createChannelRepo(db)
   const providerRepo = createModelProviderRepo(db)
-  const modelRepo = createModelRepo(db)
   const settingsRepo = createSettingsRepo(db)
   const itemRepo = createItemRepo(db)
   const judgmentRepo = createJudgmentRepo(db)
@@ -334,7 +332,7 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     monitors: createMonitorService(monitorRepo, groupRepo, actionRepo, groupGate),
     actions: createActionService(actionRepo, groupRepo, channelRepo, groupGate),
     channels: createChannelService(channelRepo),
-    modelProviders: createModelProviderService(providerRepo, modelRepo, remoteModels),
+    modelProviders: createModelProviderService(providerRepo, remoteModels),
     settings,
     hidden,
     incidents,

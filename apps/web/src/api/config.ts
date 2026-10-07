@@ -4,7 +4,6 @@ import type {
   ChannelTestResult,
   ConfigSnapshot,
   CreateChannelInput,
-  CreateModelInput,
   CreateModelProviderInput,
   CreateActionInput,
   CreateDiscoveryInput,
@@ -15,7 +14,6 @@ import type {
   DiscoveryTestResult,
   Group,
   MessageTemplate,
-  Model,
   ModelProvider,
   Monitor,
   Settings,
@@ -26,7 +24,6 @@ import type {
   UpdateDiscoveryInput,
   UpdateGroupInput,
   UpdateMessageTemplateInput,
-  UpdateModelInput,
   UpdateModelProviderInput,
   UpdateMonitorInput,
   UpdateSettingsInput,
@@ -182,20 +179,6 @@ export async function fetchAvailableModels(providerId: string): Promise<string[]
     `/model-providers/${providerId}/available-models`,
   )
   return data.models
-}
-
-export async function createModel(providerId: string, input: CreateModelInput): Promise<Model> {
-  const { data } = await http.post<Model>(`/model-providers/${providerId}/models`, input)
-  return data
-}
-
-export async function updateModel(id: string, patch: UpdateModelInput): Promise<Model> {
-  const { data } = await http.patch<Model>(`/models/${id}`, patch)
-  return data
-}
-
-export async function removeModel(id: string): Promise<void> {
-  await http.delete(`/models/${id}`)
 }
 
 /**

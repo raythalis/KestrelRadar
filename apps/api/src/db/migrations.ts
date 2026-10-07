@@ -314,6 +314,14 @@ export const MIGRATIONS: readonly Migration[] = [
       create index idx_event_reads_read_at on event_reads (read_at);
     `,
   },
+  {
+    // 模型不再登记进库：清单一律现场问供应商要（见 /model-providers/:id/available-models），
+    // 调用顺序直接存「供应商 id:模型名」，这张表没有任何人读了。
+    name: '011-drop-models',
+    sql: `
+      drop table models;
+    `,
+  },
 ]
 
 export function runMigrations(conn: DatabaseSync): void {

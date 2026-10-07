@@ -8,7 +8,6 @@ import {
   discoverySchema,
   groupSchema,
   modelProviderSchema,
-  modelSchema,
   monitorSchema,
 } from './entities.ts'
 import { settingsSchema } from './settings.ts'
@@ -43,7 +42,6 @@ export const configSnapshotSchema = z.object({
   actions: z.array(actionSchema),
   channels: z.array(channelSchema),
   modelProviders: z.array(modelProviderSchema),
-  models: z.array(modelSchema),
   templates: z.array(messageTemplateSchema),
   settings: settingsSchema,
 })

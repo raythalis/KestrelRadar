@@ -42,7 +42,6 @@ const snapshot: ConfigSnapshot = {
     },
   ],
   modelProviders: [],
-  models: [],
   templates: [
     {
       id: 'builtin:default',

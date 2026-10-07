@@ -47,7 +47,6 @@ describe('配置快照接口', () => {
       expect(snapshot.modelProviders).toHaveLength(1)
       expect(snapshot.monitors).toEqual([])
       expect(snapshot.actions).toEqual([])
-      expect(snapshot.models).toEqual([])
       // 内置模板始终在快照里，供动作选择
       expect(snapshot.templates.map((item: { builtin: boolean }) => item.builtin)).toEqual([true])
       expect(snapshot.settings.concurrency).toBe(SETTINGS_DEFAULTS.concurrency)

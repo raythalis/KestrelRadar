@@ -255,27 +255,8 @@ export const updateModelProviderInputSchema = z.object({
 export type CreateModelProviderInput = z.infer<typeof createModelProviderInputSchema>
 export type UpdateModelProviderInput = z.infer<typeof updateModelProviderInputSchema>
 
-export const modelSchema = z.object({
-  ...commonRead,
-  providerId: idSchema,
-  modelName: z.string().min(1).max(200),
-  enabled: z.boolean(),
-  sortOrder: z.number().int(),
-})
-export type Model = z.infer<typeof modelSchema>
-
 /** 供应商接口报回来的可用模型清单（拿不到就是空数组，界面上静默不显示） */
 export const availableModelsSchema = z.object({
   models: z.array(z.string().min(1).max(200)),
 })
 export type AvailableModels = z.infer<typeof availableModelsSchema>
-
-export const createModelInputSchema = z.object({
-  // 模型名来自供应商接口返回的清单，用户不再手填，所以没有名称规则
-  modelName: z.string(),
-  enabled: z.boolean().default(true),
-  sortOrder: z.number().int().default(0),
-})
-export const updateModelInputSchema = createModelInputSchema.partial()
-export type CreateModelInput = z.infer<typeof createModelInputSchema>
-export type UpdateModelInput = z.infer<typeof updateModelInputSchema>

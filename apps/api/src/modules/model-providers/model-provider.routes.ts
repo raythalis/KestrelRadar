@@ -1,9 +1,4 @@
-import {
-  createModelInputSchema,
-  createModelProviderInputSchema,
-  updateModelInputSchema,
-  updateModelProviderInputSchema,
-} from '@kestrel/contracts'
+import { createModelProviderInputSchema, updateModelProviderInputSchema } from '@kestrel/contracts'
 import type { FastifyInstance } from 'fastify'
 
 import { parseOrThrow } from '../../utils/parse.ts'
@@ -37,21 +32,4 @@ export function registerModelProviderRoutes(
   app.get<{ Params: { id: string } }>('/model-providers/:id/available-models', async (request) =>
     service.availableModels(request.params.id),
   )
-
-  app.get('/models', async () => service.listModels())
-
-  app.post<{ Params: { id: string } }>('/model-providers/:id/models', async (request, reply) => {
-    const input = parseOrThrow(createModelInputSchema, request.body)
-    return reply.status(201).send(service.addModel(request.params.id, input))
-  })
-
-  app.patch<{ Params: { id: string } }>('/models/:id', async (request) => {
-    const patch = parseOrThrow(updateModelInputSchema, request.body)
-    return service.updateModel(request.params.id, patch)
-  })
-
-  app.delete<{ Params: { id: string } }>('/models/:id', async (request, reply) => {
-    service.removeModel(request.params.id)
-    return reply.status(204).send()
-  })
 }

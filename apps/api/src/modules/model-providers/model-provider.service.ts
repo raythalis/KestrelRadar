@@ -1,22 +1,14 @@
 import type {
-  CreateModelInput,
   CreateModelProviderInput,
-  Model,
   ModelProvider,
-  UpdateModelInput,
   UpdateModelProviderInput,
 } from '@kestrel/contracts'
 
 import { AppError } from '../../plugins/errors.ts'
 import type { ModelProviderRepo } from './model-provider.repo.ts'
-import type { ModelRepo } from './model.repo.ts'
 import type { RemoteModels } from './remote-models.ts'
 
-export function createModelProviderService(
-  repo: ModelProviderRepo,
-  models: ModelRepo,
-  remote: RemoteModels,
-) {
+export function createModelProviderService(repo: ModelProviderRepo, remote: RemoteModels) {
   function mustGetProvider(id: string): ModelProvider {
     const provider = repo.get(id)
     if (!provider) throw AppError.notFound('模型供应商不存在')
@@ -42,27 +34,10 @@ export function createModelProviderService(
       repo.remove(id)
     },
 
-    listModels: (): Model[] => models.list(),
-
     /** 现场问供应商有哪些模型；问不到就是空数组（界面上静默不显示这一家） */
     availableModels: async (id: string): Promise<{ models: string[] }> => {
       const provider = mustGetProvider(id)
       return { models: await remote.list(provider, repo.readApiKey(provider.id)) }
-    },
-
-    addModel: (providerId: string, input: CreateModelInput): Model => {
-      mustGetProvider(providerId)
-      return models.create(providerId, input)
-    },
-
-    updateModel: (id: string, patch: UpdateModelInput): Model => {
-      const updated = models.update(id, patch)
-      if (!updated) throw AppError.notFound('模型不存在')
-      return updated
-    },
-
-    removeModel: (id: string): void => {
-      if (!models.remove(id)) throw AppError.notFound('模型不存在')
     },
   }
 }

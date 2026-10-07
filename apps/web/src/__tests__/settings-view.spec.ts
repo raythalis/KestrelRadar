@@ -20,7 +20,6 @@ const snapshot: ConfigSnapshot = {
   actions: [],
   channels: [],
   modelProviders: [],
-  models: [],
   templates: [
     {
       id: 'builtin:default',

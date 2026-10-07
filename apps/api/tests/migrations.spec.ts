@@ -12,7 +12,6 @@ const CONFIG_TABLES = [
   'actions',
   'channels',
   'model_providers',
-  'models',
   'settings',
   'monitor_actions',
 ]

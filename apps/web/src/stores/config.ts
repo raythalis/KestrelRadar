@@ -7,19 +7,16 @@ import type {
   CreateChannelInput,
   CreateDiscoveryInput,
   CreateMessageTemplateInput,
-  CreateModelInput,
   CreateModelProviderInput,
   CreateMonitorInput,
   DiscoveryTestResult,
   Group,
   MessageTemplate,
-  Model,
   ModelProvider,
   UpdateActionInput,
   UpdateDiscoveryInput,
   UpdateChannelInput,
   UpdateMessageTemplateInput,
-  UpdateModelInput,
   UpdateModelProviderInput,
   UpdateMonitorInput,
   UpdateSettingsInput,
@@ -30,7 +27,6 @@ import { computed, ref } from 'vue'
 import {
   createAction as createActionApi,
   createChannel as createChannelApi,
-  createModel as createModelApi,
   createProvider as createProviderApi,
   createTemplate as createTemplateApi,
   createDiscovery as createDiscoveryApi,
@@ -42,7 +38,6 @@ import {
   removeDiscovery as removeDiscoveryApi,
   removeGroup as removeGroupApi,
   removeChannel as removeChannelApi,
-  removeModel as removeModelApi,
   removeMonitor as removeMonitorApi,
   removeProvider as removeProviderApi,
   removeTemplate as removeTemplateApi,
@@ -52,7 +47,6 @@ import {
   updateDiscovery as updateDiscoveryApi,
   updateGroup as updateGroupApi,
   updateChannel as updateChannelApi,
-  updateModel as updateModelApi,
   updateMonitor as updateMonitorApi,
   updateProvider as updateProviderApi,
   updateSettings as updateSettingsApi,
@@ -74,9 +68,6 @@ export const useConfigStore = defineStore('config', () => {
   const templates = computed<MessageTemplate[]>(() => snapshot.value?.templates ?? [])
   const settings = computed<Settings>(() => snapshot.value?.settings ?? SETTINGS_DEFAULTS)
   const providers = computed<ModelProvider[]>(() => snapshot.value?.modelProviders ?? [])
-  /** 某个供应商下的模型清单 */
-  const modelsOf = (providerId: string): Model[] =>
-    (snapshot.value?.models ?? []).filter((model) => model.providerId === providerId)
   const providerName = (providerId: string): string =>
     providers.value.find((provider) => provider.id === providerId)?.name ?? ''
 
@@ -223,13 +214,6 @@ export const useConfigStore = defineStore('config', () => {
 
   const removeProvider = (id: string) => write(() => removeProviderApi(id))
 
-  const createModel = (providerId: string, input: CreateModelInput) =>
-    write(() => createModelApi(providerId, input))
-
-  const saveModel = (id: string, patch: UpdateModelInput) => write(() => updateModelApi(id, patch))
-
-  const removeModel = (id: string) => write(() => removeModelApi(id))
-
   const setDiscoveryEnabled = (id: string, enabled: boolean) =>
     write(() => updateDiscoveryApi(id, { enabled }))
 
@@ -308,12 +292,8 @@ export const useConfigStore = defineStore('config', () => {
     createProvider,
     saveProvider,
     removeProvider,
-    createModel,
-    saveModel,
-    removeModel,
     availableModels,
     providers,
-    modelsOf,
     providerName,
   }
 })
