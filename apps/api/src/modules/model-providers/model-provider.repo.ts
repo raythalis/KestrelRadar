@@ -61,6 +61,11 @@ export function createModelProviderRepo(db: Db) {
       return row ? toProvider(row) : undefined
     },
 
+    /** 原始密钥：只给服务端调模型用，任何接口都不返回它 */
+    readApiKey(id: string): string | null {
+      return find(id)?.api_key ?? null
+    },
+
     create(input: CreateModelProviderInput): ModelProvider {
       const now = nowIso()
       const id = randomUUID()

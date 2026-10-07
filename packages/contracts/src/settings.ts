@@ -10,6 +10,8 @@ export const settingsSchema = z.object({
   rsshubAccessKey: trimmedText(200),
   /** 全局判断模式：纯算法 或 算法 + LLM */
   judgeMode: z.enum(['algorithm', 'algorithm_llm']),
+  /** LLM+ 调模型时按这个顺序试：前一个彻底不通才轮到下一个（最多 3 个） */
+  judgeModelOrder: z.array(z.string().min(1)).max(3),
   /** 同时抓几个源 */
   concurrency: z.number().int().min(1).max(20),
   /** 条目 / 事件保留天数 */
@@ -61,6 +63,7 @@ export const SETTINGS_DEFAULTS: Settings = {
   rsshubBaseUrl: 'http://localhost:1200',
   rsshubAccessKey: '',
   judgeMode: 'algorithm',
+  judgeModelOrder: [],
   concurrency: 5,
   retentionDays: 90,
   eventArchiveDays: 14,

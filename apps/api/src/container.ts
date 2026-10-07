@@ -36,6 +36,7 @@ import { createIconService, type IconService } from './modules/icons/icon.servic
 import { createItemRepo, type ItemRepo } from './modules/items/item.repo.ts'
 import { createJudgeService } from './modules/judgment/judge.service.ts'
 import { createJudgmentRepo, type JudgmentRepo } from './modules/judgment/judgment.repo.ts'
+import { createProviderLlm, type LlmTarget } from './modules/judgment/llm-client.ts'
 import type { JudgeLlm } from './modules/judgment/llm.ts'
 import { createModelProviderRepo } from './modules/model-providers/model-provider.repo.ts'
 import { createModelProviderService } from './modules/model-providers/model-provider.service.ts'
@@ -80,8 +81,10 @@ export interface Container {
 export interface ContainerOptions {
   /** 采集与判定的结果写进服务日志，方便排查 */
   log?: (level: 'info' | 'warn', message: string) => void
-  /** 判定用的模型实现；不传就是「还没配模型」，走降级开关 */
+  /** 判定用的模型实现；不传就按设置里的模型顺序真去调（顺序为空=还没配模型，走降级开关） */
   llm?: JudgeLlm
+  /** 调模型用的 fetch；测试里换成假的，平时不传 */
+  llmFetch?: typeof fetch
   /** 投递用的发送器；不传就是真的往 Webhook 发 */
   sender?: DeliverySender
   telegram?: TelegramGateway
@@ -131,6 +134,28 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     }),
   })
 
+  /**
+   * 判定用的模型顺序（设置里的 judgeModelOrder）→ 能真正发请求的调用目标。
+   * 顺序里引用的模型或供应商已经不在了、或被停用了，就跳过它，让后面的顶上。
+   */
+  function llmTargets(): LlmTarget[] {
+    const targets: LlmTarget[] = []
+    for (const id of settings.get().judgeModelOrder) {
+      const model = modelRepo.get(id)
+      if (!model || !model.enabled) continue
+      const provider = providerRepo.get(model.providerId)
+      if (!provider || !provider.enabled) continue
+      targets.push({
+        modelId: model.id,
+        modelName: model.modelName,
+        providerName: provider.name,
+        baseUrl: provider.baseUrl,
+        apiKey: providerRepo.readApiKey(provider.id),
+      })
+    }
+    return targets
+  }
+
   const judge = createJudgeService({
     monitors: monitorRepo,
     groups: groupRepo,
@@ -139,7 +164,16 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     judgments: judgmentRepo,
     settings,
     incidents,
-    llm: options.llm,
+    // 顺序为空时它自己会报「还没有配置可用的判定模型」，跟以前的空壳行为一致
+    llm:
+      options.llm ??
+      createProviderLlm({
+        targets: llmTargets,
+        timeoutSeconds: () => settings.get().llmTimeoutSeconds,
+        maxRetries: () => settings.get().llmMaxRetries,
+        fetchImpl: options.llmFetch,
+        log: options.log,
+      }),
     log: options.log,
   })
 
