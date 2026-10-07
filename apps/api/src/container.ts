@@ -39,6 +39,7 @@ import { createJudgmentRepo, type JudgmentRepo } from './modules/judgment/judgme
 import { createProviderLlm, type LlmTarget } from './modules/judgment/llm-client.ts'
 import type { JudgeLlm } from './modules/judgment/llm.ts'
 import { createModelProviderRepo } from './modules/model-providers/model-provider.repo.ts'
+import { createRemoteModels } from './modules/model-providers/remote-models.ts'
 import { createModelProviderService } from './modules/model-providers/model-provider.service.ts'
 import { createModelRepo } from './modules/model-providers/model.repo.ts'
 import { createMonitorRepo } from './modules/monitors/monitor.repo.ts'
@@ -122,6 +123,12 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
   const templateRepo = createTemplateRepo(db)
 
   const settings = createSettingsService(settingsRepo)
+  const fetchImpl = options.llmFetch ?? fetch
+  const remoteModels = createRemoteModels({
+    timeoutMs: () => settings.get().llmTimeoutSeconds * 1000,
+    fetchImpl,
+    log: options.log,
+  })
   const hidden = createHiddenSettings(settingsRepo)
   const runs = createRunRepo(db)
 
@@ -140,14 +147,18 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
    */
   function llmTargets(): LlmTarget[] {
     const targets: LlmTarget[] = []
-    for (const id of settings.get().judgeModelOrder) {
-      const model = modelRepo.get(id)
-      if (!model || !model.enabled) continue
-      const provider = providerRepo.get(model.providerId)
+    for (const entry of settings.get().judgeModelOrder) {
+      // 存的是「供应商 id:模型名」，供应商已经没了就跳过它，让后面的顶上
+      const separator = entry.indexOf(':')
+      if (separator <= 0) continue
+      const providerId = entry.slice(0, separator)
+      const modelName = entry.slice(separator + 1)
+      if (modelName.length === 0) continue
+      const provider = providerRepo.get(providerId)
       if (!provider || !provider.enabled) continue
       targets.push({
-        modelId: model.id,
-        modelName: model.modelName,
+        modelId: entry,
+        modelName,
         providerName: provider.name,
         baseUrl: provider.baseUrl,
         apiKey: providerRepo.readApiKey(provider.id),
@@ -171,7 +182,7 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
         targets: llmTargets,
         timeoutSeconds: () => settings.get().llmTimeoutSeconds,
         maxRetries: () => settings.get().llmMaxRetries,
-        fetchImpl: options.llmFetch,
+        fetchImpl,
         log: options.log,
       }),
     log: options.log,
@@ -323,7 +334,7 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     monitors: createMonitorService(monitorRepo, groupRepo, actionRepo, groupGate),
     actions: createActionService(actionRepo, groupRepo, channelRepo, groupGate),
     channels: createChannelService(channelRepo),
-    modelProviders: createModelProviderService(providerRepo, modelRepo),
+    modelProviders: createModelProviderService(providerRepo, modelRepo, remoteModels),
     settings,
     hidden,
     incidents,

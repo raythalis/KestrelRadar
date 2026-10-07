@@ -5,6 +5,7 @@ import { createPinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as api from '@/api/config'
+import appComponents from '@/plugins/components'
 import i18n from '@/plugins/i18n'
 import vuetify from '@/plugins/vuetify'
 import ModelsView from '@/views/ModelsView.vue'
@@ -13,36 +14,26 @@ vi.mock('@/api/config')
 // 卡片汇总只是卡片背面：不 mock 的话那次请求在 jsdom 里不落地，装载就永远等不齐
 vi.mock('@/api/cardStats')
 
+const provider = (id: string, name: string) => ({
+  id,
+  name,
+  kind: 'openai_compatible' as const,
+  baseUrl: `http://127.0.0.1:1${id.slice(1)}`,
+  hasApiKey: false,
+  enabled: true,
+  sortOrder: 0,
+  createdAt: '2026-10-01T00:00:00.000Z',
+  updatedAt: '2026-10-01T00:00:00.000Z',
+})
+
 const snapshot: ConfigSnapshot = {
   groups: [],
   discoveries: [],
   monitors: [],
   actions: [],
   channels: [],
-  modelProviders: [
-    {
-      id: 'p1',
-      name: '本地 Ollama',
-      kind: 'ollama',
-      baseUrl: 'http://127.0.0.1:11434',
-      hasApiKey: false,
-      enabled: true,
-      sortOrder: 0,
-      createdAt: '2026-10-01T00:00:00.000Z',
-      updatedAt: '2026-10-01T00:00:00.000Z',
-    },
-  ],
-  models: [
-    {
-      id: 'm1',
-      providerId: 'p1',
-      modelName: 'qwen2.5:7b',
-      enabled: true,
-      sortOrder: 0,
-      createdAt: '2026-10-01T00:00:00.000Z',
-      updatedAt: '2026-10-01T00:00:00.000Z',
-    },
-  ],
+  modelProviders: [provider('p1', '本机 Ollama'), provider('p2', '内网网关')],
+  models: [],
   templates: [
     {
       id: 'builtin:default',
@@ -54,7 +45,7 @@ const snapshot: ConfigSnapshot = {
       updatedAt: null,
     },
   ],
-  settings: SETTINGS_DEFAULTS,
+  settings: { ...SETTINGS_DEFAULTS, judgeModelOrder: ['p1:qwen3:8b'] },
 }
 
 // 弹窗走真组件并 teleport 到 body：页面与弹窗都在 document 里，
@@ -68,12 +59,12 @@ function mountView() {
   return mount(ModelsView, {
     // 弹窗走真组件 + teleport：挂到 document body，别替身（替身后点击不会触达组件）
     attachTo: document.body,
-    global: { plugins: [createPinia(), vuetify, i18n] },
+    global: { plugins: [createPinia(), vuetify, i18n, appComponents] },
   })
 }
 
-async function mountLoaded() {
-  vi.mocked(api.fetchConfig).mockResolvedValue(snapshot)
+async function mountLoaded(config: ConfigSnapshot = snapshot) {
+  vi.mocked(api.fetchConfig).mockResolvedValue(config)
   const wrapper = mountView()
   // 两轮：装载里除了配置快照还要等卡片汇总那次请求落地，快照才写进 store
   await flushPromises()
@@ -92,80 +83,92 @@ describe('模型页', () => {
       api.createProvider,
       api.updateProvider,
       api.removeProvider,
-      api.createModel,
-      api.updateModel,
-      api.removeModel,
+      api.updateSettings,
     ]) {
       vi.mocked(fn).mockReset()
       vi.mocked(fn).mockResolvedValue(undefined as never)
     }
+    vi.mocked(api.fetchAvailableModels).mockReset()
+    // 默认：两家都报模型；内网网关那家问不到（静默缺席）
+    vi.mocked(api.fetchAvailableModels).mockImplementation(async (id: string) =>
+      id === 'p1' ? ['qwen3:8b', 'llama3.3:70b'] : [],
+    )
   })
 
-  it('列出供应商与它下面的模型', async () => {
-    const wrapper = await mountLoaded()
-    expect(wrapper.findAll('[data-test="provider-card"]')).toHaveLength(1)
-    expect(wrapper.get('[data-test="provider-name"]').text()).toBe('本地 Ollama')
-    expect(wrapper.get('[data-test="provider-kind"]').text()).toBe('Ollama')
-    expect(wrapper.get('[data-test="provider-base-url"]').text()).toContain('11434')
-    expect(wrapper.get('[data-test="model-name"]').text()).toBe('qwen2.5:7b')
+  it('一个供应商都没有时：只给空态，不显示模型调用顺序', async () => {
+    const wrapper = await mountLoaded({ ...snapshot, modelProviders: [] })
+
+    expect(dv('models-empty').exists()).toBe(true)
+    expect(wrapper.text()).toContain('还没有供应商。')
+    expect(document.querySelector('[data-test="model-order-card"]')).toBeNull()
   })
 
-  it('加一个模型名：调创建接口', async () => {
-    vi.mocked(api.createModel).mockResolvedValue(snapshot.models[0]!)
-    const wrapper = await mountLoaded()
+  it('供应商卡只有名称、类型与编辑 / 删除，没有开关', async () => {
+    await mountLoaded()
 
-    await wrapper.get('[data-test="model-draft-p1"]').setValue('llama3:8b')
-    await wrapper.get('[data-test="model-add"]').trigger('click')
-    await flushPromises()
-
-    expect(api.createModel).toHaveBeenCalledWith('p1', {
-      modelName: 'llama3:8b',
-      enabled: true,
-      sortOrder: 0,
-    })
+    expect(dvAll('provider-card')).toHaveLength(2)
+    expect(dvAll('provider-name').map((item) => item.text())).toEqual(['本机 Ollama', '内网网关'])
+    expect(dvAll('provider-kind').map((item) => item.text())).toEqual([
+      'OpenAI 兼容',
+      'OpenAI 兼容',
+    ])
+    expect(document.querySelector('[data-test="provider-enabled"]')).toBeNull()
+    expect(dv('provider-edit').exists()).toBe(true)
+    expect(dv('provider-delete').exists()).toBe(true)
   })
 
-  it('停用开关写回后端', async () => {
+  it('顺序下拉的选项来自各供应商现场报回来的模型，问不到的那家静默缺席', async () => {
     const wrapper = await mountLoaded()
-    await wrapper.get('[data-test="model-enabled-m1"]').trigger('click')
-    await flushPromises()
-    expect(api.updateModel).toHaveBeenCalledWith('m1', { enabled: false })
+
+    const select = wrapper.findComponent({ name: 'VSelect' })
+    const items = select.props('items') as { title: string; value: string }[]
+    expect(items.map((item) => item.title)).toEqual([
+      '本机 Ollama:qwen3:8b',
+      '本机 Ollama:llama3.3:70b',
+    ])
+    expect(items.map((item) => item.value)).toEqual(['p1:qwen3:8b', 'p1:llama3.3:70b'])
   })
 
-  it('删除模型直接调接口；删除供应商要确认', async () => {
+  it('设置的顺序直接铺成行；保存时把空行去掉再写回设置', async () => {
     const wrapper = await mountLoaded()
-    await wrapper.get('[data-test="model-delete"]').trigger('click')
-    await flushPromises()
-    expect(api.removeModel).toHaveBeenCalledWith('m1')
+    expect(dvAll('model-order-row')).toHaveLength(1)
 
-    await wrapper.get('[data-test="provider-delete"]').trigger('click')
+    await dv('model-order-add').trigger('click')
     await flushPromises()
-    expect(document.body.textContent).toContain('它下面的模型清单会一起删掉')
-    // 弹窗挂在 body 上，历史用例可能留着旧节点：取最后一个（当前这次挂载的）
-    ;([...document.querySelectorAll('[data-test="confirm-ok"]')].pop() as HTMLElement).click()
+    expect(dvAll('model-order-row')).toHaveLength(2)
+
+    await dv('model-order-save').trigger('click')
     await flushPromises()
+    expect(api.updateSettings).toHaveBeenCalledWith({ judgeModelOrder: ['p1:qwen3:8b'] })
+    expect(wrapper.emitted()).toBeTruthy()
+  })
+
+  it('删掉供应商：确认后调删除，顺序里引用它的行跟着消失并写回设置', async () => {
+    await mountLoaded()
+
+    await dvAll('provider-delete')[0]!.trigger('click')
     await flushPromises()
+    await dv('confirm-ok').trigger('click')
+    await flushPromises()
+
     expect(api.removeProvider).toHaveBeenCalledWith('p1')
+    expect(api.updateSettings).toHaveBeenCalledWith({ judgeModelOrder: [] })
   })
 
   it('新建供应商：填名称与地址 → 调创建接口', async () => {
-    vi.mocked(api.createProvider).mockResolvedValue(snapshot.modelProviders[0]!)
-    const wrapper = await mountLoaded()
+    await mountLoaded()
 
-    await wrapper.get('[data-test="new-provider"]').trigger('click')
-    const dialog = dv('provider-dialog')
-    await dialog.get('[data-test="provider-name-input"]').setValue('远端')
-    await dialog.get('[data-test="provider-base-url-input"]').setValue('http://192.168.5.9:11434')
-    await dialog.get('[data-test="provider-api-key-input"]').setValue('sk-x')
+    await dv('new-provider').trigger('click')
     await flushPromises()
-    await dialog.get('[data-test="provider-save"]').trigger('click')
+    await dv('provider-name-input').setValue('新的')
+    await dv('provider-base-url-input').setValue('https://api.example.com')
+    await dv('provider-save').trigger('click')
     await flushPromises()
 
     expect(api.createProvider).toHaveBeenCalledWith({
-      name: '远端',
+      name: '新的',
       kind: 'openai_compatible',
-      baseUrl: 'http://192.168.5.9:11434',
-      apiKey: 'sk-x',
+      baseUrl: 'https://api.example.com',
       enabled: true,
       sortOrder: 0,
     })

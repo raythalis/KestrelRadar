@@ -33,6 +33,11 @@ export function registerModelProviderRoutes(
     return reply.status(204).send()
   })
 
+  // 现场问供应商有哪些模型（下拉用）；问不到就返回空数组，界面上静默
+  app.get<{ Params: { id: string } }>('/model-providers/:id/available-models', async (request) =>
+    service.availableModels(request.params.id),
+  )
+
   app.get('/models', async () => service.listModels())
 
   app.post<{ Params: { id: string } }>('/model-providers/:id/models', async (request, reply) => {

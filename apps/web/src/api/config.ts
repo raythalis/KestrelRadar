@@ -176,6 +176,14 @@ export async function removeProvider(id: string): Promise<void> {
   await http.delete(`/model-providers/${id}`)
 }
 
+/** 现场问供应商有哪些模型；后端问不到会返回空数组（界面上静默不显示这一家） */
+export async function fetchAvailableModels(providerId: string): Promise<string[]> {
+  const { data } = await http.get<{ models: string[] }>(
+    `/model-providers/${providerId}/available-models`,
+  )
+  return data.models
+}
+
 export async function createModel(providerId: string, input: CreateModelInput): Promise<Model> {
   const { data } = await http.post<Model>(`/model-providers/${providerId}/models`, input)
   return data

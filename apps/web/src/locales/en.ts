@@ -253,7 +253,8 @@ export default {
     addProvider: 'New provider',
     editProvider: 'Edit provider',
     deleteProvider: 'Delete provider',
-    deleteProviderBody: 'Delete provider "{name}"? Its model list goes with it.',
+    deleteProviderBody:
+      'Delete provider "{name}"? Rows in the model order that use it will disappear too.',
     empty: 'No providers yet.',
     kindLabel: 'Kind',
     kind: {
@@ -265,18 +266,15 @@ export default {
     baseUrlInvalid: 'Enter an address starting with http:// or https://',
     apiKey: 'API key',
     apiKeyHint: 'Usually empty for local Ollama',
-    hasApiKey: 'key set',
     order: {
       title: 'Model order',
       sub: 'Tried in order; if one fails the next is used',
       placeholder: 'Pick a model',
       add: 'Add a row',
       drag: 'Drag to reorder',
-      hint: 'Options come from the providers configured above.',
+      hint: 'Options are the model lists each provider reports above.',
       save: 'Save',
     },
-    addModel: 'Add a model name',
-    noModels: 'No models yet',
   },
   template: {
     builtinDefault: 'Default template',

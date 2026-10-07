@@ -36,6 +36,7 @@ import {
   createDiscovery as createDiscoveryApi,
   createGroup as createGroupApi,
   createMonitor as createMonitorApi,
+  fetchAvailableModels as fetchAvailableModelsApi,
   fetchConfig,
   removeAction as removeActionApi,
   removeDiscovery as removeDiscoveryApi,
@@ -206,6 +207,15 @@ export const useConfigStore = defineStore('config', () => {
 
   const removeChannel = (id: string) => write(() => removeChannelApi(id))
 
+  /** 某个供应商现场报回来的模型清单；问不到就是空数组，界面上静默 */
+  async function availableModels(providerId: string): Promise<string[]> {
+    try {
+      return await fetchAvailableModelsApi(providerId)
+    } catch {
+      return []
+    }
+  }
+
   const createProvider = (input: CreateModelProviderInput) => write(() => createProviderApi(input))
 
   const saveProvider = (id: string, patch: UpdateModelProviderInput) =>
@@ -301,6 +311,7 @@ export const useConfigStore = defineStore('config', () => {
     createModel,
     saveModel,
     removeModel,
+    availableModels,
     providers,
     modelsOf,
     providerName,

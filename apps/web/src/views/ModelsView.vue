@@ -3,10 +3,10 @@ import type { ModelProvider } from '@kestrel/contracts'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import AppButton from '@/components/app/AppButton.vue'
-import AppInput from '@/components/app/AppInput.vue'
 import ConfirmDialog from '@/components/biz/ConfirmDialog.vue'
 import LlmPlusTag from '@/components/biz/LlmPlusTag.vue'
+import ModelOrderList, { type ModelOrderRow } from '@/components/biz/ModelOrderList.vue'
+import ProviderCard from '@/components/biz/ProviderCard.vue'
 import ProviderDialog from '@/components/biz/ProviderDialog.vue'
 import type { ProviderDialogValues } from '@/components/biz/types'
 import { useConfigStore } from '@/stores/config'
@@ -22,8 +22,12 @@ const saving = ref(false)
 const dialogError = ref('')
 const pendingDelete = ref<ModelProvider | null>(null)
 const deleting = ref(false)
-/** 每个供应商下面「加一个模型」输入框里的草稿 */
-const drafts = ref<Record<string, string>>({})
+
+/** 各家供应商现场报回来的模型清单；问不到的那家就是空数组，下拉里静默缺席 */
+const remoteModels = ref<Record<string, string[]>>({})
+/** 判定模型的调用顺序；存的是「供应商 id:模型名」，空行是 null */
+const order = ref<ModelOrderRow[]>([null])
+const savingOrder = ref(false)
 
 /** 页面级错误条已下线：弹窗开着时留给弹窗说，其余由浮层说 */
 watch(
@@ -33,11 +37,32 @@ watch(
   },
 )
 
-onMounted(() => {
-  if (!store.snapshot) void store.load()
+onMounted(async () => {
+  if (!store.snapshot) await store.load()
+  const saved = store.settings.judgeModelOrder ?? []
+  order.value = saved.length > 0 ? [...saved] : [null]
+  await loadRemoteModels()
 })
 
-/** 确认框开着＝有对象在等删 */
+async function loadRemoteModels(): Promise<void> {
+  const entries = await Promise.all(
+    store.providers.map(async (provider) => {
+      const models = await store.availableModels(provider.id)
+      return [provider.id, models] as const
+    }),
+  )
+  remoteModels.value = Object.fromEntries(entries)
+}
+
+/** 顺序列表的选项来源：供应商 + 它报回来的模型（问不到就是空数组） */
+const orderProviders = computed(() =>
+  store.providers.map((provider) => ({
+    id: provider.id,
+    name: provider.name,
+    models: remoteModels.value[provider.id] ?? [],
+  })),
+)
+
 const deleteOpen = computed({
   get: () => pendingDelete.value !== null,
   set: (value: boolean) => {
@@ -68,25 +93,33 @@ async function saveProvider(values: ProviderDialogValues): Promise<void> {
   saving.value = false
   if (ok) {
     dialogOpen.value = false
+    // 地址或密钥改了，能拿到哪些模型也可能变了
+    await loadRemoteModels()
     return
   }
   dialogError.value = store.errorMessage ?? ''
 }
 
-async function addModel(providerId: string): Promise<void> {
-  const modelName = (drafts.value[providerId] ?? '').trim()
-  if (modelName.length === 0) return
-  const ok = await store.createModel(providerId, { modelName, enabled: true, sortOrder: 0 })
-  if (ok) drafts.value = { ...drafts.value, [providerId]: '' }
+/** 保存顺序：空行不存；顺序里引用的供应商已经没了，行也早就从界面上消失了 */
+async function saveOrder(): Promise<void> {
+  savingOrder.value = true
+  const values = order.value.filter((row): row is string => row !== null)
+  await store.saveSettings({ judgeModelOrder: values })
+  savingOrder.value = false
 }
 
 async function confirmDelete(): Promise<void> {
   const target = pendingDelete.value
   if (!target) return
   deleting.value = true
-  await store.removeProvider(target.id)
+  const ok = await store.removeProvider(target.id)
   deleting.value = false
   pendingDelete.value = null
+  if (!ok) return
+  // 顺序里引用这一家的行跟着去掉，顺手把设置也清干净
+  order.value = order.value.map((row) => (row?.startsWith(`${target.id}:`) ? null : row))
+  await saveOrder()
+  await loadRemoteModels()
 }
 </script>
 
@@ -116,133 +149,26 @@ async function confirmDelete(): Promise<void> {
       <AppEmptyState data-test="models-empty" icon="mdi-brain" :title="t('model.empty')" />
     </section>
 
-    <div v-else class="k2-grid">
-      <article
-        v-for="provider in store.providers"
-        :key="provider.id"
-        class="k2-card k2-card--sm"
-        data-test="provider-card"
-      >
-        <div class="k2-card__head">
-          <span class="k2-tile k2-tile--sm"><i class="mdi mdi-brain" /></span>
-          <span class="k2-card__heading">
-            <span class="k2-row__title" data-test="provider-name">{{ provider.name }}</span>
-            <span class="k2-row__sub" data-test="provider-base-url">{{ provider.baseUrl }}</span>
-          </span>
-          <button
-            type="button"
-            class="k2-switch"
-            :class="{ 'k2-switch--on': provider.enabled }"
-            :aria-label="provider.enabled ? t('common.enabled') : t('common.disabled')"
-            :aria-pressed="provider.enabled"
-            data-test="provider-enabled"
-            @click="store.saveProvider(provider.id, { enabled: !provider.enabled })"
-          >
-            <span class="k2-switch__dot" />
-          </button>
-        </div>
+    <template v-else>
+      <div class="k2-grid">
+        <ProviderCard
+          v-for="provider in store.providers"
+          :key="provider.id"
+          :provider="provider"
+          @edit="openDialog(provider)"
+          @remove="pendingDelete = provider"
+        />
+      </div>
 
-        <div class="k2-card__tags">
-          <span class="k2-chip k2-chip--tag" data-test="provider-kind">
-            {{ t(`model.kind.${provider.kind}`) }}
-          </span>
-          <span v-if="provider.hasApiKey" class="k2-chip k2-chip--tag">
-            {{ t('model.hasApiKey') }}
-          </span>
-        </div>
-
-        <hr class="k2-card__sep" />
-
-        <div class="k2-rows">
-          <div
-            v-for="model in store.modelsOf(provider.id)"
-            :key="model.id"
-            class="k2-row"
-            data-test="model-row"
-          >
-            <span class="k2-tile k2-tile--sm"><i class="mdi mdi-cube-outline" /></span>
-            <span class="k2-row__main">
-              <span class="k2-row__title" data-test="model-name">{{ model.modelName }}</span>
-            </span>
-            <span class="k2-row__side">
-              <button
-                type="button"
-                class="k2-switch"
-                :class="{ 'k2-switch--on': model.enabled }"
-                :aria-label="model.enabled ? t('common.enabled') : t('common.disabled')"
-                :aria-pressed="model.enabled"
-                :data-test="`model-enabled-${model.id}`"
-                @click="store.saveModel(model.id, { enabled: !model.enabled })"
-              >
-                <span class="k2-switch__dot" />
-              </button>
-              <button
-                type="button"
-                class="k2-iconbtn k2-iconbtn--danger"
-                :aria-label="t('common.delete')"
-                data-test="model-delete"
-                @click="store.removeModel(model.id)"
-              >
-                <i class="mdi mdi-close" />
-              </button>
-            </span>
-          </div>
-
-          <div v-if="store.modelsOf(provider.id).length === 0" class="k2-row">
-            <span class="k2-tile k2-tile--sm"><i class="mdi mdi-cube-outline" /></span>
-            <span class="k2-row__main">
-              <span class="k2-row__sub">{{ t('model.noModels') }}</span>
-            </span>
-            <span class="k2-row__side" />
-          </div>
-
-          <div class="k2-row">
-            <span class="k2-tile k2-tile--sm"><i class="mdi mdi-plus" /></span>
-            <span class="k2-row__main">
-              <AppInput
-                v-model="drafts[provider.id]"
-                :label="t('model.addModel')"
-                :maxlength="200"
-                :data-test="`model-draft-${provider.id}`"
-                @keyup.enter="addModel(provider.id)"
-              />
-            </span>
-            <span class="k2-row__side">
-              <AppButton
-                size="sm"
-                variant="secondary"
-                data-test="model-add"
-                @click="addModel(provider.id)"
-              >
-                {{ t('common.add') }}
-              </AppButton>
-            </span>
-          </div>
-        </div>
-
-        <div class="k2-card__foot">
-          <span class="app-spacer" />
-          <button
-            type="button"
-            class="k2-iconbtn"
-            :aria-label="t('common.edit')"
-            data-test="provider-edit"
-            @click="openDialog(provider)"
-          >
-            <i class="mdi mdi-pencil" />
-          </button>
-          <button
-            type="button"
-            class="k2-iconbtn k2-iconbtn--danger"
-            :aria-label="t('common.delete')"
-            data-test="provider-delete"
-            @click="pendingDelete = provider"
-          >
-            <i class="mdi mdi-trash-can-outline" />
-          </button>
-        </div>
-      </article>
-    </div>
+      <section class="k2-card" data-test="model-order-card">
+        <ModelOrderList
+          v-model:value="order"
+          :providers="orderProviders"
+          :busy="savingOrder"
+          @save="saveOrder"
+        />
+      </section>
+    </template>
 
     <ProviderDialog
       v-model="dialogOpen"

@@ -104,19 +104,9 @@ describe('LLM+ 真调模型：顺序、重试与兜底（走真实 HTTP）', () 
       enabled: true,
       sortOrder: 0,
     })
-    const broken = container.modelProviders.addModel(provider.id, {
-      modelName: 'broken-model',
-      enabled: true,
-      sortOrder: 0,
-    })
-    const good = container.modelProviders.addModel(provider.id, {
-      modelName: 'good-model',
-      enabled: true,
-      sortOrder: 1,
-    })
     container.settings.update({
       judgeMode: 'algorithm_llm',
-      judgeModelOrder: [broken.id, good.id],
+      judgeModelOrder: [`${provider.id}:broken-model`, `${provider.id}:good-model`],
       llmMaxRetries: 0,
       llmTimeoutSeconds: 10,
     })
@@ -153,19 +143,9 @@ describe('LLM+ 真调模型：顺序、重试与兜底（走真实 HTTP）', () 
       enabled: true,
       sortOrder: 0,
     })
-    const a = container.modelProviders.addModel(provider.id, {
-      modelName: 'a-model',
-      enabled: true,
-      sortOrder: 0,
-    })
-    const b = container.modelProviders.addModel(provider.id, {
-      modelName: 'b-model',
-      enabled: true,
-      sortOrder: 1,
-    })
     container.settings.update({
       judgeMode: 'algorithm_llm',
-      judgeModelOrder: [a.id, b.id],
+      judgeModelOrder: [`${provider.id}:a-model`, `${provider.id}:b-model`],
       llmMaxRetries: 0,
       llmTimeoutSeconds: 10,
     })

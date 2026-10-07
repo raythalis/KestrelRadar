@@ -252,7 +252,7 @@ export default {
     addProvider: '新建供应商',
     editProvider: '编辑供应商',
     deleteProvider: '删除供应商',
-    deleteProviderBody: '要删掉供应商「{name}」吗？它下面的模型清单会一起删掉。',
+    deleteProviderBody: '要删掉供应商「{name}」吗？模型调用顺序里用到它的行会一起消失。',
     empty: '还没有供应商。',
     kindLabel: '类型',
     kind: {
@@ -264,18 +264,15 @@ export default {
     baseUrlInvalid: '接口地址要带 http:// 或 https://',
     apiKey: 'API Key',
     apiKeyHint: '本地 Ollama 一般不用填',
-    hasApiKey: '已配 Key',
     order: {
       title: '模型调用顺序',
       sub: '按顺序依次尝试，前面的失败就用下一个',
       add: '加一行',
       drag: '拖动排序',
       placeholder: '选一个模型',
-      hint: '选项来自上面配置好的供应商。',
+      hint: '选项来自上面各供应商现场报回来的模型清单。',
       save: '保存',
     },
-    addModel: '加一个模型名',
-    noModels: '还没有模型',
   },
   template: {
     builtinDefault: '默认模板',

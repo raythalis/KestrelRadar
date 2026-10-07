@@ -10,8 +10,13 @@ import type {
 import { AppError } from '../../plugins/errors.ts'
 import type { ModelProviderRepo } from './model-provider.repo.ts'
 import type { ModelRepo } from './model.repo.ts'
+import type { RemoteModels } from './remote-models.ts'
 
-export function createModelProviderService(repo: ModelProviderRepo, models: ModelRepo) {
+export function createModelProviderService(
+  repo: ModelProviderRepo,
+  models: ModelRepo,
+  remote: RemoteModels,
+) {
   function mustGetProvider(id: string): ModelProvider {
     const provider = repo.get(id)
     if (!provider) throw AppError.notFound('模型供应商不存在')
@@ -38,6 +43,12 @@ export function createModelProviderService(repo: ModelProviderRepo, models: Mode
     },
 
     listModels: (): Model[] => models.list(),
+
+    /** 现场问供应商有哪些模型；问不到就是空数组（界面上静默不显示这一家） */
+    availableModels: async (id: string): Promise<{ models: string[] }> => {
+      const provider = mustGetProvider(id)
+      return { models: await remote.list(provider, repo.readApiKey(provider.id)) }
+    },
 
     addModel: (providerId: string, input: CreateModelInput): Model => {
       mustGetProvider(providerId)
