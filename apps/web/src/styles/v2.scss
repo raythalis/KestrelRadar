@@ -990,6 +990,16 @@
   inline-size: var(--k2-sidebar-rail-w);
 }
 
+.k2-shell--rail .k2-nav__brand {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.k2-shell--rail .k2-nav__logo {
+  inline-size: 40px;
+  block-size: 40px;
+}
+
 .k2-nav__brand {
   display: flex;
   align-items: center;
@@ -999,6 +1009,9 @@
 }
 
 .k2-nav__logo {
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
   flex: none;
   inline-size: var(--k2-icon-lg);
   block-size: var(--k2-icon-lg);

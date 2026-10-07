@@ -16,6 +16,7 @@ withDefaults(
     brand?: {
       name: string
       /** 品牌标图片地址；不给就只显示文字标 */ logo?: string
+      /** 折叠时只显示的形状标 */ mark?: string
     }
     closeLabel?: string
     /** 折叠把手的无障碍名：收起时是「展开侧栏」，展开时是「收起侧栏」 */
@@ -46,8 +47,15 @@ const ui = useUiStore()
 
     <aside class="k2-nav" :class="{ 'is-open': open }">
       <div v-if="brand" class="k2-nav__brand">
-        <img v-if="brand.logo" class="k2-nav__logo" data-test="app-logo" :src="brand.logo" alt="" />
-        <span class="k2-nav__name" data-test="app-name">{{ brand.name }}</span>
+        <img
+          v-if="brand.logo"
+          class="k2-nav__logo"
+          data-test="app-logo"
+          :src="ui.sidebarCollapsed ? brand.mark : brand.logo"
+          alt=""
+          draggable="false"
+        />
+        <span v-if="!brand.logo" class="k2-nav__name" data-test="app-name">{{ brand.name }}</span>
       </div>
 
       <nav class="k2-nav__items">

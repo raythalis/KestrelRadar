@@ -1,0 +1,9 @@
+{
+  "name": "Kestrel Radar",
+  "short_name": "Kestrel",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0C0E15",
+  "theme_color": "#0C0E15",
+  "icons": [{"src": "/pwa-icon.webp", "sizes": "512x512", "type": "image/webp", "purpose": "any maskable"}]
+}

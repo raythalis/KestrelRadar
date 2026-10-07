@@ -5,4 +5,5 @@
 // 设成空字符串则只显示文字标，不显示图片。
 
 /** 左上角品牌标（顶部导航栏 / 抽屉里共用） */
-export const BRAND_LOGO = '/logo.svg'
+export const BRAND_LOGO = '/kestrel-logo-light.svg'
+export const BRAND_LOGO_DARK = '/kestrel-logo-dark.svg'

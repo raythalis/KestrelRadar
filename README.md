@@ -1,5 +1,7 @@
 # Kestrel
 
+![Kestrel Radar](assets/branding/kestrel-radar-readme-banner.webp)
+
 个人信息监听与事件响应（Personal watching & event response）。
 
 一个自托管的 Web 应用：你告诉它**看哪里**（来源）、**在意什么**（监听）、**发现后怎么办**（动作），

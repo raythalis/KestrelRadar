@@ -7,7 +7,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 
-import { BRAND_LOGO } from '@/brand'
+import { BRAND_LOGO, BRAND_LOGO_DARK } from '@/brand'
 import type { AppNavItem } from '@/components/app/types'
 import ToastHost from '@/components/biz/ToastHost.vue'
 import { THEME_PREFERENCES, applyV2Theme, type ThemePreference } from '@/design/v2/tokens'
@@ -42,7 +42,8 @@ const navItems = computed<AppNavItem[]>(() =>
 // 版本号不放侧栏（后续挪进设置页展示），这里只出名字与品牌标
 const brand = computed(() => ({
   name: t('app.name'),
-  logo: BRAND_LOGO,
+  logo: ui.isDark ? BRAND_LOGO_DARK : BRAND_LOGO,
+  mark: ui.isDark ? "/kestrel-mark-dark.svg" : "/kestrel-mark-light.svg",
 }))
 
 // 顶栏只有一个主题按钮：图标显示当前模式，点一下循环到下一个
