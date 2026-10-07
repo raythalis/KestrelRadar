@@ -1,5 +1,6 @@
 import type {
   CardStat,
+  ModelProvider,
   ChannelType,
   EventSourceRef,
   Incident,
@@ -807,3 +808,41 @@ export const LAZY_FILLER_EVENTS: RecentEvent[] = Array.from({ length: 32 }, (_, 
     readAt: i % 3 === 0 ? null : minutesAgo(1700 + index * 60 - 30),
   } as RecentEvent
 })
+
+/* ---------------------------------------------------------------- 模型页 */
+
+/** 模型页样例数据：供应商 + 各家能拿到的模型清单（内网网关那家拿不到，演示静默） */
+export interface ModelProviderFixture {
+  id: string
+  name: string
+  kind: ModelProvider['kind']
+  baseUrl: string
+  models: string[]
+}
+
+export const MODEL_PROVIDER_FIXTURES: ModelProviderFixture[] = [
+  {
+    id: 'mp1',
+    name: '本机 Ollama',
+    kind: 'ollama',
+    baseUrl: 'http://127.0.0.1:11434',
+    models: ['qwen3:8b', 'llama3.3:70b'],
+  },
+  {
+    id: 'mp2',
+    name: 'DeepSeek 官方',
+    kind: 'openai_compatible',
+    baseUrl: 'https://api.deepseek.com',
+    models: ['deepseek-chat', 'deepseek-reasoner'],
+  },
+  {
+    id: 'mp3',
+    name: '内网网关',
+    kind: 'openai_compatible',
+    baseUrl: 'http://192.168.5.9:4000',
+    models: [],
+  },
+]
+
+/** 默认顺序：一行空内容（与真实页面的初始状态一致） */
+export const MODEL_ORDER_FIXTURE: (string | null)[] = [null]

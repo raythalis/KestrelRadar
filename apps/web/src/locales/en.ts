@@ -250,12 +250,12 @@ export default {
   },
   model: {
     subtitle:
-      'v1.0 just keeps the provider and model list; LLM judging starts working once you enable it under Settings → Judge.',
+      'v1.0 just keeps the provider and model list; judging works once you turn on {llmPlus} under Settings → Judge.',
     addProvider: 'New provider',
     editProvider: 'Edit provider',
     deleteProvider: 'Delete provider',
     deleteProviderBody: 'Delete provider "{name}"? Its model list goes with it.',
-    empty: 'No providers yet. For local Ollama use http://127.0.0.1:11434.',
+    empty: 'No providers yet.',
     kindLabel: 'Kind',
     kind: {
       openai_compatible: 'OpenAI compatible',
@@ -267,6 +267,14 @@ export default {
     apiKey: 'API key',
     apiKeyHint: 'Usually empty for local Ollama',
     hasApiKey: 'key set',
+    order: {
+      title: 'Model order',
+      sub: 'Tried in order; if one fails the next is used',
+      add: 'Add a row',
+      placeholder: 'Pick a model',
+      hint: 'Options come from the providers configured above.',
+      save: 'Save order',
+    },
     addModel: 'Add a model name',
     noModels: 'No models yet',
   },

@@ -24,6 +24,7 @@ import AppShowcase from './style-lab/AppShowcase.vue'
 import PartSamples from './style-lab/PartSamples.vue'
 import FormSamples from './style-lab/FormSamples.vue'
 import GroupSamples from './style-lab/GroupSamples.vue'
+import ModelSamples from './style-lab/ModelSamples.vue'
 import '@/styles/lab.scss'
 import '@/styles/v2.scss'
 
@@ -439,6 +440,16 @@ const chips: { text: string; tone: Tone }[] = [
         分组头给名称、简介、三列计数与启停；三列是发现 / 监听 / 动作，列底是新增。
       </p>
       <GroupSamples />
+    </section>
+
+    <section class="lab__sec">
+      <h2 class="lab__h2">模型页（供应商与模型调用顺序）</h2>
+      <p class="lab__note">
+        供应商卡只留图标、名称、类型胶囊与编辑 /
+        删除；模型调用顺序是一串下拉，按顺序失败重试，最多三行。
+        拿不到模型的供应商在选项里静默缺席，删掉供应商后对应的行自己消失。
+      </p>
+      <ModelSamples />
     </section>
 
     <section class="lab__sec">

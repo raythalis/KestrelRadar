@@ -21,6 +21,9 @@ export const CHANNEL_ICONS: Record<ChannelType, string> = {
   webhook: 'mdi-webhook',
 }
 
+/** 模型供应商 → 图标（v1.0 的供应商卡只留名称、图标、类型胶囊与两个按钮） */
+export const PROVIDER_ICON = 'mdi-brain'
+
 /** 发现来源类型 → 图标（抓不到网站图标时的回落） */
 export const DISCOVERY_ICONS: Record<DiscoveryKind, string> = {
   rss: 'mdi-rss',

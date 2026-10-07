@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n'
 import AppButton from '@/components/app/AppButton.vue'
 import AppInput from '@/components/app/AppInput.vue'
 import ConfirmDialog from '@/components/biz/ConfirmDialog.vue'
+import LlmPlusTag from '@/components/biz/LlmPlusTag.vue'
 import ProviderDialog from '@/components/biz/ProviderDialog.vue'
 import type { ProviderDialogValues } from '@/components/biz/types'
 import { useConfigStore } from '@/stores/config'
@@ -94,7 +95,9 @@ async function confirmDelete(): Promise<void> {
     <div class="k2-page__head">
       <div class="k2-page__lead">
         <h1 class="k2-page__title">{{ t('nav.models') }}</h1>
-        <p class="k2-page__note">{{ t('model.subtitle') }}</p>
+        <i18n-t keypath="model.subtitle" tag="p" class="k2-page__note">
+          <template #llmPlus><LlmPlusTag /></template>
+        </i18n-t>
       </div>
       <div class="k2-page__actions">
         <button
