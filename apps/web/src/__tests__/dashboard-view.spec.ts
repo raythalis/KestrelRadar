@@ -11,6 +11,7 @@ import {
   fetchStatsOverview,
   markEventRead,
 } from '@/api/dashboard'
+import { useDashboardStore } from '@/stores/dashboard'
 import { useToastStore } from '@/stores/toast'
 import i18n from '@/plugins/i18n'
 import vuetify from '@/plugins/vuetify'
@@ -107,6 +108,20 @@ describe('仪表盘页', () => {
 
   afterEach(() => {
     document.body.innerHTML = ''
+  })
+
+  it('已有缓存时重新进入仪表盘仍刷新统计、事件与异常', async () => {
+    const pinia = createPinia()
+    await useDashboardStore(pinia).load()
+    vi.mocked(fetchStatsOverview).mockClear()
+    vi.mocked(fetchRecentEvents).mockClear()
+    vi.mocked(fetchIncidents).mockClear()
+    const wrapper = mount(DashboardView, { global: { plugins: [pinia, vuetify, i18n] } })
+    await flushPromises()
+    expect(fetchStatsOverview).toHaveBeenCalledTimes(1)
+    expect(fetchRecentEvents).toHaveBeenCalledTimes(1)
+    expect(fetchIncidents).toHaveBeenCalledTimes(1)
+    wrapper.unmount()
   })
 
   it('八张卡：数量类给启用数与「n 个已停用」，状态类给数值与副文案', async () => {

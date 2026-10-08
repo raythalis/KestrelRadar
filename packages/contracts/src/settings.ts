@@ -58,9 +58,15 @@ export type SettingKey = keyof Settings
 
 export const SETTINGS_KEYS = Object.keys(settingsSchema.shape) as SettingKey[]
 
+export const RSSHUB_DEFAULT_BASE_URL = 'http://localhost:1200'
+
+/** 空设置只表示未显式填写；实际访问仍走本机 RSSHub。 */
+export function effectiveRsshubBaseUrl(value: string): string {
+  return value.trim() || RSSHUB_DEFAULT_BASE_URL
+}
+
 export const SETTINGS_DEFAULTS: Settings = {
-  // 本机 RSSHub（官方默认端口 1200）：没配过也能直接用相对路由；这个值在设置页显示成 placeholder
-  rsshubBaseUrl: 'http://localhost:1200',
+  rsshubBaseUrl: '',
   rsshubAccessKey: '',
   judgeMode: 'algorithm',
   judgeModelOrder: [],

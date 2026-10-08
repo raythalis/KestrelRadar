@@ -5,6 +5,7 @@ import { createPinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as api from '@/api/config'
+import { useConfigStore } from '@/stores/config'
 import appComponents from '@/plugins/components'
 import i18n from '@/plugins/i18n'
 import vuetify from '@/plugins/vuetify'
@@ -94,6 +95,21 @@ describe('模型页', () => {
     vi.mocked(api.fetchAvailableModels).mockImplementation(async (id: string) =>
       id === 'p1' ? ['qwen3:8b', 'llama3.3:70b'] : [],
     )
+  })
+
+  it('已有缓存时重新进入页面仍请求最新供应商与模型', async () => {
+    vi.mocked(api.fetchConfig).mockResolvedValue(snapshot)
+    const pinia = createPinia()
+    await useConfigStore(pinia).load()
+    vi.mocked(api.fetchConfig).mockClear()
+    vi.mocked(api.fetchAvailableModels).mockClear()
+    const wrapper = mount(ModelsView, {
+      global: { plugins: [pinia, vuetify, i18n, appComponents] },
+    })
+    await flushPromises()
+    expect(api.fetchConfig).toHaveBeenCalledTimes(1)
+    expect(api.fetchAvailableModels).toHaveBeenCalledTimes(2)
+    wrapper.unmount()
   })
 
   it('一个供应商都没有时：只给空态，不显示模型调用顺序', async () => {

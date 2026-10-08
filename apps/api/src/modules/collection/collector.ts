@@ -1,4 +1,5 @@
 import {
+  effectiveRsshubBaseUrl,
   failureCopy,
   operationCodeOf,
   type DiscoveryTestResult,
@@ -82,10 +83,7 @@ export function createCollector(deps: CollectorDeps) {
     const settings = deps.settings.get()
 
     if (discovery.kind === 'rsshub' && !/^https?:\/\//i.test(discovery.target)) {
-      if (!settings.rsshubBaseUrl) {
-        return { error: failureCopy('rsshub.baseMissing'), code: 'rsshub.baseMissing' }
-      }
-      const base = settings.rsshubBaseUrl.replace(/\/+$/, '')
+      const base = effectiveRsshubBaseUrl(settings.rsshubBaseUrl).replace(/\/+$/, '')
       const path = discovery.target.startsWith('/') ? discovery.target : `/${discovery.target}`
       // 单实例：密钥跟着实例地址一起配在全局设置里
       const suffix = settings.rsshubAccessKey

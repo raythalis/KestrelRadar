@@ -38,7 +38,21 @@ Judgment happens **after new items are collected**; changing a rule does not aut
 
 In a group's **Actions** column, use **Add action** and set its name, **Trigger**, **Channel**, and **Message template**. Triggers are **Deliver as soon as collected** and **Daily digest**; the latter also requires **Digest time**. You can select **Merge into one message**, and for a digest you can choose **Include content already delivered instantly**. No notification goes out if no channel is selected or the channel is disabled.
 
-Manage templates under **Settings → Notifications**. The built-in default template is read-only; custom templates can be created, edited, and deleted. Select a template on an action. If none is selected or the selected template was deleted, the backend uses the same built-in default body, not separate bodies for each interface language. Templates support `{{title}}`, `{{summary}}`, `{{url}}`, `{{sourceCount}}`, `{{sources}}`, `{{hitAt}}`, `{{group}}`, `{{badge}}`, and `{{eventCount}}`; values are filled in at delivery time. Template text differs from the message-language setting: changing interface language does not translate your template. Webhook delivery is a JSON POST and uses Bearer credentials if a secret is configured. The request includes rendered text, event title, original URL, source count, number of events in the message, and hit time. The recipient must return 2xx for success.
+Manage templates under **Settings → Notifications**. The built-in default template is read-only; custom templates can be created, edited, and deleted. Select a template on an action. If none is selected or the selected template was deleted, the backend uses the same built-in default body, not separate bodies for each interface language. The following variables are filled in when a custom template is delivered:
+
+| Variable | Value |
+| --- | --- |
+| `{{title}}` | Event title. |
+| `{{summary}}` | Summary of the event's first source, collapsed to one line and truncated with an ellipsis after 120 characters; empty if there are no sources. |
+| `{{url}}` | Event's original URL; empty if unavailable. |
+| `{{sourceCount}}` | Number of sources recorded for the event. |
+| `{{sources}}` | One line per source with its name and URL; sources without a URL show “(no link)”; empty if there are no sources. |
+| `{{hitAt}}` | Time of the event's first item, formatted in the timezone selected under **Settings → General**; empty if the time is unavailable or invalid. |
+| `{{group}}` | Name of the group containing the event. |
+| `{{badge}}` | “有更新 ” or “Update ” according to message language when the event is marked as updated; otherwise empty. |
+| `{{eventCount}}` | Number of events in this message. |
+
+Unrecognized variables remain unchanged in the message, so typos are visible. Template text differs from the message-language setting: changing interface language does not translate your template. Webhook delivery is a JSON POST and uses Bearer credentials if a secret is configured. The request includes rendered text, event title, original URL, source count, number of events in the message, and hit time. The recipient must return 2xx for success.
 
 The same action does not repeatedly deliver an item just because it was collected again. By default, an already-delivered event also is not redelivered merely because it gains another source; only a significant new development recognized by the code may mark it as an update and cause another delivery. A digest takes matches not yet delivered by that action; it does not rescan a specified time interval.
 

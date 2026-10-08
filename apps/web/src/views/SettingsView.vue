@@ -14,7 +14,7 @@ const { t } = useI18n()
 const tab = ref('general')
 
 onMounted(() => {
-  if (!store.snapshot) void store.load()
+  void store.load()
 })
 
 const judgeModeOptions = computed(() =>

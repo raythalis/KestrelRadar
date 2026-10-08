@@ -1,4 +1,4 @@
-import { failureCopy, type StatsRsshub } from '@kestrel/contracts'
+import { effectiveRsshubBaseUrl, failureCopy, type StatsRsshub } from '@kestrel/contracts'
 
 import type { SettingsService } from '../settings/settings.service.ts'
 
@@ -25,16 +25,9 @@ export function createRsshubStatus(deps: RsshubStatusDeps) {
 
   /** probe(force, baseUrl)：baseUrl 传了就探这一串（设置页测没保存的地址），不传用库里存的 */
   async function probe(force = false, baseUrlOverride?: string): Promise<StatsRsshub> {
-    const baseUrl = (baseUrlOverride ?? deps.settings.get().rsshubBaseUrl).replace(/\/+$/, '')
-    if (!baseUrl) {
-      return {
-        configured: false,
-        ok: false,
-        baseUrl: '',
-        message: failureCopy('rsshub.baseMissing'),
-        checkedAt: null,
-      }
-    }
+    const baseUrl = effectiveRsshubBaseUrl(
+      baseUrlOverride ?? deps.settings.get().rsshubBaseUrl,
+    ).replace(/\/+$/, '')
     if (!force && cache && cache.baseUrl === baseUrl && Date.now() - cache.at < cacheMs) {
       return cache.status
     }

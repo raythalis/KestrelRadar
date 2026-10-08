@@ -40,7 +40,7 @@ const chatsError = ref('')
 const pendingDelete = ref<Channel | null>(null)
 
 onMounted(() => {
-  if (!store.snapshot) void store.load()
+  void store.load()
   document.addEventListener('click', closeTypeMenu)
 })
 
