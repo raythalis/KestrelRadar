@@ -142,6 +142,25 @@ describe('仪表盘汇总', () => {
   })
 })
 
+describe('RSSHub 留空使用默认地址', () => {
+  it('留空时仍探默认实例，不把默认地址写进设置', async () => {
+    container.settings.update({ rsshubBaseUrl: '' })
+    const overview = await container.stats.overview()
+    expect(container.settings.get().rsshubBaseUrl).toBe('')
+    expect(overview.rsshub).toMatchObject({
+      configured: true,
+      baseUrl: 'http://localhost:1200',
+    })
+  })
+
+  it('保存空地址后设置仍为空，自定义地址仍优先', () => {
+    container.settings.update({ rsshubBaseUrl: '' })
+    expect(container.settings.get().rsshubBaseUrl).toBe('')
+    container.settings.update({ rsshubBaseUrl: 'http://rsshub:1200' })
+    expect(container.settings.get().rsshubBaseUrl).toBe('http://rsshub:1200')
+  })
+})
+
 describe('推送超时可配', () => {
   it('设置里默认 15 秒，最小 5 秒', async () => {
     expect(container.settings.get().deliveryTimeoutSeconds).toBe(15)

@@ -40,7 +40,7 @@ These defaults are defined in `apps/api/src/config/index.ts`. A relative databas
 - **Retention days**: historical items and events older than this are removed by cleanup; defaults to 90 days. Before reducing it, decide whether you still need older records.
 - **Archive after**: archives an event after this many days without new content; defaults to 14 days. Archiving is separate from deleting historical data.
 - **Freshness window**: explicitly old published content can still be stored, but is not delivered; defaults to 7 days. Set to 0 for no limit.
-- **RSSHub address**: instance address used when a discovery has a relative route; defaults to `http://localhost:1200`. In Docker, localhost refers to Kestrel Radar's own container. If RSSHub is elsewhere, use an address reachable from that container. RSSHub is a separate service; see the [User guide](usage.en.md#what-is-rsshub-and-how-do-i-find-a-route) and [official routes](https://docs.rsshub.app/routes/) for route discovery and testing.
+- **RSSHub address**: if left unset, the field stays empty and shows `http://localhost:1200` as a hint. Collection, the connection test, and the route prefix in a discovery still use that address. An explicitly entered address takes precedence. In Docker, localhost refers to Kestrel Radar's own container. If RSSHub is elsewhere, use an address reachable from that container. RSSHub is a separate service; see the [User guide](usage.en.md#what-is-rsshub-and-how-do-i-find-a-route) and [official routes](https://docs.rsshub.app/routes/) for route discovery and testing.
 - **Access key**: fill only if your RSSHub instance requires one; otherwise leave it empty. **Test connection** probes the current input but does not save it for you.
 
 ### Notifications

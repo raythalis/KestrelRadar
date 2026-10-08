@@ -1,3 +1,5 @@
+import { effectiveRsshubBaseUrl } from '@kestrel/contracts'
+
 import type { SettingsService } from '../settings/settings.service.ts'
 
 export interface RsshubRoutesDeps {
@@ -98,10 +100,9 @@ export function createRsshubRoutes(deps: RsshubRoutesDeps) {
     return routes
   }
 
-  /** 相对路由 → 源站域名；实例没配、路由不认识、元数据里没源站都返回 null */
+  /** 相对路由 → 源站域名；路由不认识或元数据里没源站时返回 null */
   async function resolveHost(target: string): Promise<string | null> {
-    const baseUrl = deps.settings.get().rsshubBaseUrl.trim().replace(/\/+$/, '')
-    if (!baseUrl) return null
+    const baseUrl = effectiveRsshubBaseUrl(deps.settings.get().rsshubBaseUrl).replace(/\/+$/, '')
 
     const path = target.trim().replace(/^\/+/, '').split(/[?#]/)[0] ?? ''
     const segments = path.split('/').filter(Boolean)

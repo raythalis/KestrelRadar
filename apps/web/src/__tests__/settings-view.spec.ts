@@ -258,10 +258,14 @@ describe('设置页', () => {
       checkedAt: '2026-10-05T00:00:00.000Z',
     })
     const wrapper = await mountLoaded('collection')
-    // 实例地址有默认值（本机 1200），没配过也能直接测
+    // 默认地址只作提示，表单留空；测试连接仍使用生效的默认地址
     const address = wrapper.get('[data-test="setting-rsshubBaseUrl"]').element as HTMLInputElement
-    expect(address.value).toBe('http://localhost:1200')
+    expect(address.value).toBe('')
+    expect(address.placeholder).toBe('http://localhost:1200')
     expect(wrapper.get('[data-test="setting-rsshubTest"]').attributes('disabled')).toBeUndefined()
+    await wrapper.get('[data-test="setting-rsshubTest"]').trigger('click')
+    await flushPromises()
+    expect(api.probeRsshub).toHaveBeenCalledWith(true, 'http://localhost:1200')
 
     await wrapper.get('[data-test="setting-rsshubBaseUrl"]').setValue('http://127.0.0.1:1200')
     await flushPromises()

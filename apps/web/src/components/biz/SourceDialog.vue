@@ -1,11 +1,6 @@
-<!-- SourceDialog：数据源（发现）的填表弹窗（业务组件层，v2 零件）。
-     类型在弹窗里选：三种类型共用「启用 + 名称 + 目标 + 采集频率」这套骨架，目标那栏随类型变。
-     RSSHub 全站共用一个实例：
-       · 没配实例地址 → 下拉里这一项灰着，点它不是选类型、而是去配置（出事件，页面负责跳转）；
-       · 配了 → 把它当地址前缀挂在路由输入框前面；前缀只展示，保存的还是路由本身（后端拼前缀）。
-     只出事件，不碰 store、不发请求。 -->
+<!-- SourceDialog：发现的填表弹窗；RSSHub 地址留空时展示默认前缀，只保存相对路由。 -->
 <script setup lang="ts">
-import { isValidDiscoveryTarget } from '@kestrel/contracts'
+import { RSSHUB_DEFAULT_BASE_URL, isValidDiscoveryTarget } from '@kestrel/contracts'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -27,7 +22,7 @@ const props = withDefaults(
     target?: string
     cron?: string
     enabled?: boolean
-    /** 全局设置里的 RSSHub 实例地址；空字符串＝还没配 */
+    /** 全局设置里的 RSSHub 实例地址；空字符串＝使用默认地址 */
     rsshubBaseUrl?: string
     busy?: boolean
     error?: string
@@ -79,19 +74,21 @@ watch(
   { immediate: true },
 )
 
-/** 前缀去掉末尾斜杠后展示；后端拼地址时也这么处理（实例地址有默认值，不会是空的） */
-const rsshubPrefix = computed(() => props.rsshubBaseUrl.trim().replace(/\/+$/, ''))
+/** 只展示实际使用的前缀，保存时仍只提交相对路由。 */
+const rsshubPrefix = computed(() =>
+  (props.rsshubBaseUrl.trim() || RSSHUB_DEFAULT_BASE_URL).replace(/\/+$/, ''),
+)
 
 function kindLabel(value: Kind): string {
   return t(`discovery.kind.${value}`)
 }
 
-/** 前后缀只在 RSSHub 路由这一档显示（实例地址走全局设置，有默认值） */
+/** 前后缀只在 RSSHub 路由这一档显示 */
 const prefix = computed(() => (kind.value === 'rsshub' ? rsshubPrefix.value : ''))
 
 const title = computed(() => (props.name ? t('discovery.editSource') : t('discovery.addSource')))
 
-// 实例地址走全局设置（有默认值），这里只要地址栏填了就算就绪
+// RSSHub 实例地址可留空（实际使用默认地址），这里只要路由栏填了就算就绪
 const submitDisabled = computed(
   () =>
     !name.value.trim() || !target.value.trim() || targetInvalid.value || !checkCron(cron.value).ok,

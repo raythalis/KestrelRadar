@@ -133,6 +133,12 @@ describe('SourceDialog', () => {
     expect(input('source-dialog-target').value).toBe('/bilibili/ranking/all')
   })
 
+  it('RSSHub 地址留空时，路由输入框仍显示本机 1200 的前缀', async () => {
+    mountDialog({ kind: 'rsshub', rsshubBaseUrl: '' })
+    await flushPromises()
+    expect(q('app-input-prefix')?.textContent).toBe('http://localhost:1200')
+  })
+
   it('别的种类不挂前缀', async () => {
     mountDialog({
       kind: 'rss',

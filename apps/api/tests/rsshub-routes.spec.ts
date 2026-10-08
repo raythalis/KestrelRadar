@@ -78,7 +78,17 @@ describe('RSSHub 相对路由反查源站', () => {
     expect(calls[0]).toBe('http://localhost:1200/api/namespace/sspai?key=abc123')
   })
 
-  it('路由不认识 / 元数据里没源站 / 实例没有地址：都返回 null', async () => {
+  it('实例地址留空时仍用本机默认地址反查路由', async () => {
+    const calls: string[] = []
+    const routes = createRsshubRoutes({
+      settings: settings({ rsshubBaseUrl: '' }),
+      fetchImpl: metadataFetch({ '/matrix': { radar: [{ source: ['sspai.com/matrix'] }] } }, calls),
+    })
+    expect(await routes.resolveHost('/sspai/matrix')).toBe('sspai.com')
+    expect(calls).toEqual(['http://localhost:1200/api/namespace/sspai'])
+  })
+
+  it('路由不认识 / 元数据里没源站：都返回 null', async () => {
     const unknown = createRsshubRoutes({
       settings: settings(),
       fetchImpl: metadataFetch({ '/matrix': { radar: [{ source: ['sspai.com/matrix'] }] } }, []),
@@ -90,12 +100,6 @@ describe('RSSHub 相对路由反查源站', () => {
       fetchImpl: metadataFetch({ '/plain': {} }, []),
     })
     expect(await noSource.resolveHost('/demo/plain')).toBeNull()
-
-    const noBase = createRsshubRoutes({
-      settings: settings({ rsshubBaseUrl: '' }),
-      fetchImpl: metadataFetch({ '/matrix': { radar: [{ source: ['sspai.com/matrix'] }] } }, []),
-    })
-    expect(await noBase.resolveHost('/sspai/matrix')).toBeNull()
   })
 
   it('实例连不上：不抛错，安静地返回 null', async () => {

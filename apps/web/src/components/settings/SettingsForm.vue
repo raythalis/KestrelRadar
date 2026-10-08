@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   isHttpUrl,
+  RSSHUB_DEFAULT_BASE_URL,
   SETTINGS_DEFAULTS,
   SETTINGS_KEYS,
   type SettingKey,
@@ -219,7 +220,7 @@ function setBand(field: SettingsField, which: 'high' | 'low', value: number): vo
 const rsshubState = ref<Record<string, { testing?: boolean; ok?: boolean; message?: string }>>({})
 
 function rsshubUrl(field: SettingsField): string {
-  return String(draft.value[field.key] ?? '').trim()
+  return String(draft.value[field.key] ?? '').trim() || RSSHUB_DEFAULT_BASE_URL
 }
 
 async function runRsshubTest(field: SettingsField): Promise<void> {
@@ -316,6 +317,7 @@ function asStringArray(value: unknown): string[] {
             v-model="draft[field.key]"
             class="k2-input"
             :maxlength="field.max"
+            :placeholder="field.key === 'rsshubBaseUrl' ? RSSHUB_DEFAULT_BASE_URL : undefined"
             :data-test="`setting-${field.id ?? field.key}`"
             @input="onTextInput(field)"
           />
