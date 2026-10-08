@@ -1,9 +1,9 @@
 {
   "name": "kestrel-api",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Kestrel 后端：Fastify + Zod + SQLite",
+  "description": "Kestrel Radar 后端：Fastify + Zod + SQLite",
   "scripts": {
     "dev": "node --watch src/index.ts",
     "start": "node src/index.ts",
@@ -12,6 +12,7 @@
     "lint": "oxlint src tests"
   },
   "dependencies": {
+    "@fastify/static": "^10.1.5",
     "@kestrel/contracts": "workspace:*",
     "croner": "^10.0.1",
     "fast-xml-parser": "^5.11.2",
@@ -26,5 +27,6 @@
   },
   "engines": {
     "node": "^22.18.0 || >=24.12.0"
-  }
+  },
+  "license": "GPL-3.0-only"
 }

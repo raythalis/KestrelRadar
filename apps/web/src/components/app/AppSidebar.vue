@@ -52,7 +52,7 @@ const ui = useUiStore()
           class="k2-nav__logo"
           data-test="app-logo"
           :src="ui.sidebarCollapsed ? brand.mark : brand.logo"
-          alt=""
+          alt="Kestrel Radar"
           draggable="false"
         />
         <span v-if="!brand.logo" class="k2-nav__name" data-test="app-name">{{ brand.name }}</span>

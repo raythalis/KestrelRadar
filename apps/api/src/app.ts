@@ -1,6 +1,8 @@
+import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 
 import { API_PREFIX } from '@kestrel/contracts'
+import fastifyStatic from '@fastify/static'
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from 'fastify'
 
 import { buildContainer } from './container.ts'
@@ -19,13 +21,27 @@ export interface BuildAppOptions {
   telegram?: TelegramGateway
   /** 测试用：替掉真网络（图标抓取、RSSHub 探测走它） */
   fetchImpl?: typeof fetch
+  /** 生产托管：指向前端构建产物（apps/web/dist）。给了就一个进程同时提供界面与 API */
+  staticDir?: string
 }
 
 export async function buildApp(options: BuildAppOptions): Promise<FastifyInstance> {
   const db = openDatabase(options.dbPath)
   const app = Fastify({ logger: options.logger ?? false })
 
-  registerErrorHandler(app)
+  // 生产形态：界面与 API 同一个进程、同源，不需要反代，也不会有跨域
+  const staticDir =
+    options.staticDir && existsSync(options.staticDir) ? options.staticDir : undefined
+  if (options.staticDir && !staticDir) {
+    app.log.warn(`静态目录不存在，本次只提供 API：${options.staticDir}`)
+  }
+
+  registerErrorHandler(app, { spaFallback: Boolean(staticDir) })
+
+  if (staticDir) {
+    await app.register(fastifyStatic, { root: staticDir, index: ['index.html'] })
+    app.log.info(`界面托管自 ${staticDir}`)
+  }
 
   const container = buildContainer(db, {
     log: (level, message) => {

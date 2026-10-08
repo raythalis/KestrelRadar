@@ -1,5 +1,5 @@
 import type { ApiErrorCode, ApiErrorDetails, ValidationRule } from '@kestrel/contracts'
-import { validationRuleForIssue } from '@kestrel/contracts'
+import { API_PREFIX, validationRuleForIssue } from '@kestrel/contracts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { ZodError } from 'zod'
 
@@ -70,8 +70,23 @@ function logClientError(request: FastifyRequest, status: number, code: ApiErrorC
   request.log.warn({ code, status, method: request.method, url: request.url }, 'request failed')
 }
 
-/** 统一的错误出口：错误码 + 人话消息，绝不把堆栈抛给调用方 */
-export function registerErrorHandler(app: FastifyInstance): void {
+/** 只要不是 /api、也不是要具体文件（带扩展名），就当它是前端页面路由 */
+function isPageRoute(request: FastifyRequest): boolean {
+  const path = request.url.split('?')[0] ?? ''
+  if (path.startsWith(API_PREFIX)) return false
+  return !/\.[a-z0-9]+$/i.test(path)
+}
+
+/**
+ * 统一的错误出口：错误码 + 人话消息，绝不把堆栈抛给调用方。
+ *
+ * spaFallback：开了静态托管时，没匹配上的页面路由整条交给前端（回 index.html），
+ * 不然用户在应用里刷新一次就吃到 404。
+ */
+export function registerErrorHandler(
+  app: FastifyInstance,
+  options: { spaFallback?: boolean } = {},
+): void {
   const send = (
     reply: FastifyReply,
     status: number,
@@ -124,5 +139,10 @@ export function registerErrorHandler(app: FastifyInstance): void {
     return send(reply, 500, 'INTERNAL_ERROR', '服务器内部错误')
   })
 
-  app.setNotFoundHandler((_request, reply) => send(reply, 404, 'NOT_FOUND', '没有这个接口'))
+  app.setNotFoundHandler((request, reply) => {
+    if (options.spaFallback && request.method === 'GET' && isPageRoute(request)) {
+      return reply.sendFile('index.html')
+    }
+    return send(reply, 404, 'NOT_FOUND', '没有这个接口')
+  })
 }

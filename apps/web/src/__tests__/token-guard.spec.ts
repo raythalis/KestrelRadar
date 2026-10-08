@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { resolve, sep } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
@@ -33,7 +33,11 @@ function walk(dir: string, out: string[] = []): string[] {
   return out
 }
 
-const rel = (full: string): string => full.slice(srcDir.length + 1)
+const rel = (full: string): string =>
+  full
+    .slice(srcDir.length + 1)
+    .split(sep)
+    .join('/')
 
 /** 旧名引用：`--k-…`，排除正式名 `--k2-*` */
 function legacyNamesIn(text: string): string[] {

@@ -1,6 +1,7 @@
 # 仓库统一按 LF 存：Windows 编辑器（记事本 / VS Code）保存时不再把整棵树改成 CRLF，
 # 否则 git 会显示一堆「只差行尾」的改动，真正的改动被淹没。
 * text=auto eol=lf
+*.bat text eol=crlf
 
 # 二进制/资源文件别做换行转换
 *.png binary

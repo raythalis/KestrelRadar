@@ -45,13 +45,12 @@ describe('AppShell', () => {
     i18n.global.locale.value = 'zh-CN'
   })
 
-  it('渲染品牌标、应用名与五个导航入口', () => {
+  it('renders the brand mark and five navigation entries', () => {
     const { wrapper } = mountShell()
-    expect(wrapper.get('[data-test="app-name"]').text()).toContain('Kestrel')
-    // 品牌标走 brand.ts 的路径；换 logo 只改那一处
     expect(wrapper.get('[data-test="app-logo"]').attributes('src')).toBe(BRAND_LOGO)
+    expect(wrapper.get('[data-test="app-logo"]').attributes('alt')).toBe('Kestrel Radar')
     for (const name of ['dashboard', 'config', 'channels', 'models', 'settings']) {
-      expect(wrapper.find(`[data-test="${`nav-${name}`}"]`).exists()).toBe(true)
+      expect(wrapper.find(`[data-test="nav-${name}"]`).exists()).toBe(true)
     }
     expect(wrapper.get('[data-test="nav-config"]').text()).toBe('配置管理')
   })

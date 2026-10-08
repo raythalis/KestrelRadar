@@ -21,7 +21,7 @@ import type { JudgmentRepo } from '../judgment/judgment.repo.ts'
 import type { MonitorRepo } from '../monitors/monitor.repo.ts'
 import type { SettingsService } from '../settings/settings.service.ts'
 import type { TemplateService } from '../templates/template.service.ts'
-import type { TelegramChat, TelegramGateway } from './telegram.ts'
+import type { TelegramGateway } from './telegram.ts'
 import type { ChannelBatcher } from './batch.ts'
 import type { DeliveryRepo } from './delivery.repo.ts'
 import type { DeliverySender } from './sender.ts'
@@ -314,14 +314,14 @@ export function createDeliveryService(deps: DeliveryDeps) {
       if (!channel) throw AppError.notFound('渠道不存在，可能刚被删掉')
       const text =
         deps.settings.get().language === 'en'
-          ? '[Kestrel] Test message: this channel is connected.'
-          : '【Kestrel】测试消息：这个渠道已经连通。'
+          ? '[Kestrel Radar] Test message: this channel is connected.'
+          : '【Kestrel Radar】测试消息：这个渠道已经连通。'
       try {
         await deps.sender.send({
           channel,
           secret: deps.channels.getSecret(channelId),
           text,
-          title: 'Kestrel 测试',
+          title: 'Kestrel Radar 测试',
           url: null,
           sourceCount: 0,
           eventCount: 0,

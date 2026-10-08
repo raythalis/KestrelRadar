@@ -40,7 +40,7 @@ const confirmOpen = ref(false)
 const groupOpen = ref(false)
 
 /** RSSHub */
-const rsshub = ref('http://192.168.5.100:1200')
+const rsshub = ref('http://127.0.0.1:1200')
 const rsshubState = ref<'idle' | 'testing' | 'ok' | 'fail'>('idle')
 
 function testRsshub(): void {

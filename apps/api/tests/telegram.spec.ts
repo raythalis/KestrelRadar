@@ -2,11 +2,11 @@ import type { Channel } from '@kestrel/contracts'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildContainer, type Container } from '../src/container.ts'
-import { openDatabase } from '../src/db/index.ts'
+
 import { createDeliverySender } from '../src/modules/delivery/dispatcher.ts'
 import { DeliveryError, createWebhookSender } from '../src/modules/delivery/sender.ts'
 import { createTelegramGateway } from '../src/modules/delivery/telegram.ts'
-import { createTempDb } from './helpers/temp-db.ts'
+import { createTempDb, openTestDatabase } from './helpers/temp-db.ts'
 import { createTestApp } from './helpers/test-app.ts'
 
 interface Call {
@@ -152,7 +152,7 @@ describe('读取会话走服务层', () => {
     const db = createTempDb()
     cleanup = db.cleanup
     calls = []
-    container = buildContainer(openDatabase(db.path), {
+    container = buildContainer(openTestDatabase(db.path), {
       telegram: createTelegramGateway({
         fetchImpl: fakeFetch(calls, [
           { ok: true, result: [{ message: { chat: { id: 42, first_name: 'Ray' } } }] },

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildContainer, type Container } from '../src/container.ts'
-import { openDatabase } from '../src/db/index.ts'
+
 import {
   RSS_THREE_ITEMS,
   RSS_TWO_ITEMS,
@@ -9,7 +9,7 @@ import {
   PAGE_WITHOUT_FEED,
 } from './helpers/feed-fixtures.ts'
 import { startFeedServer, type FeedServer } from './helpers/feed-server.ts'
-import { createTempDb } from './helpers/temp-db.ts'
+import { createTempDb, openTestDatabase } from './helpers/temp-db.ts'
 
 let server: FeedServer
 let container: Container
@@ -18,7 +18,7 @@ let cleanupDb: () => void
 beforeEach(async () => {
   const db = createTempDb()
   cleanupDb = db.cleanup
-  container = buildContainer(openDatabase(db.path))
+  container = buildContainer(openTestDatabase(db.path))
   server = await startFeedServer({
     '/rss': { body: RSS_TWO_ITEMS },
     '/page': { body: PAGE_WITH_FEED_LINK, contentType: 'text/html; charset=utf-8' },

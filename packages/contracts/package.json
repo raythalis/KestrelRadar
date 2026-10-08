@@ -1,6 +1,6 @@
 {
   "name": "@kestrel/contracts",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "前后端共享的类型与校验契约（唯一来源）",
@@ -15,5 +15,6 @@
   },
   "devDependencies": {
     "typescript": "~6.0.0"
-  }
+  },
+  "license": "GPL-3.0-only"
 }

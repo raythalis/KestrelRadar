@@ -36,7 +36,6 @@ function mountLab() {
 
 describe('style-lab 结构守卫', () => {
   const wrapper = mountLab()
-  const html = (): string => wrapper.html()
 
   it('页面装配了五个样例区与全部小节标题', () => {
     const titles = wrapper.findAll('.lab__h2').map((h) => h.text())
@@ -116,11 +115,10 @@ describe('style-lab 结构守卫', () => {
     const chevron = panel.find(
       '.k2-col__head-toggle, .k2-group__toggle, [data-test="group-toggle"]',
     )
-    if (chevron.exists()) {
-      await chevron.trigger('click')
-      await flushPromises()
-      expect(panel.html().length).not.toBe(firstHtmlBefore)
-    }
+    expect(chevron.exists()).toBe(true)
+    await chevron.trigger('click')
+    await flushPromises()
+    expect(panel.html().length).not.toBe(firstHtmlBefore)
   })
 
   it('主题三态能切换', async () => {

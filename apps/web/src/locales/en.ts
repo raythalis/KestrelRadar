@@ -56,7 +56,7 @@ export default {
       parseFailed: 'Not a valid feed; try an RSSHub route',
     },
     discovery: {
-      missing: 'This data source no longer exists',
+      missing: 'This discovery no longer exists',
     },
     collection: {
       failed: 'Collection failed',
@@ -82,7 +82,7 @@ export default {
     },
   },
   app: {
-    name: 'Kestrel',
+    name: 'Kestrel Radar',
   },
   tags: {
     meta: '{count}/{max}',
@@ -148,21 +148,21 @@ export default {
     },
   },
   column: {
-    discoveries: 'Data sources',
+    discoveries: 'Discoveries',
     monitors: 'Monitors',
     actions: 'Actions',
     desc: {
-      discoveries: 'Collect from external data sources',
+      discoveries: 'Collect from external discoveries',
       monitors: 'Filter content by rules',
       actions: 'Notify or handle the results',
     },
     empty: {
-      discoveries: 'No data sources yet',
+      discoveries: 'No discoveries yet',
       monitors: 'No monitors yet',
       actions: 'No actions yet',
     },
     emptyHint: {
-      discoveries: 'Add a data source to start collecting',
+      discoveries: 'Add a discovery to start collecting',
       monitors: 'Add a monitor rule',
       actions: 'Add a notification action',
     },
@@ -171,13 +171,13 @@ export default {
     testRunning: 'Testing…',
     testOk: 'Test ok, {n} items collected',
     testEmpty: 'Reachable, but no items were found',
-    add: 'Add data source',
-    delete: 'Delete data source',
-    deleteBody: 'Only this data source is removed; its items and events are kept.',
+    add: 'Add discovery',
+    delete: 'Delete discovery',
+    deleteBody: 'Only this discovery is removed; its items and events are kept.',
     test: 'Test collection',
     nextRun: 'Next collection: ',
-    addSource: 'New data source',
-    editSource: 'Edit data source',
+    addSource: 'New discovery',
+    editSource: 'Edit discovery',
     targetInvalid:
       'Use an http:// or https:// address; an RSSHub route reads like /namespace/route',
     targetHint: {
@@ -379,15 +379,16 @@ export default {
       delivery: 'Delivery settings',
     },
     cardNote: {
-      region: 'Controls the display language of the Kestrel interface and how times are shown.',
+      region:
+        'Controls the display language of the Kestrel Radar interface and how times are shown.',
       judgeRules:
         'Controls how content is scored in the first pass. Every item lands in one of the score bands.',
       model: 'Controls model review requests for grey-zone content.',
       filters: 'Configures the filtering rules for monitors',
-      collect: 'Controls collection concurrency, request timeout and retries for data sources.',
+      collect: 'Controls collection concurrency, request timeout and retries for discoveries.',
       retention: 'Controls how long history is kept, and when old events and items are archived.',
       rsshub:
-        'Configures the RSSHub instance Kestrel uses. Data sources only need a route path; Kestrel joins it with the address here.',
+        'Configures the RSSHub instance Kestrel Radar uses. Discoveries only need a route path; Kestrel Radar joins it with the address here.',
       delivery:
         'Configures the language notifications use, how many can be delivered per day, and the timeout for a single delivery.',
     },
@@ -442,7 +443,7 @@ export default {
       rsshubAccessKey: 'Access key',
     },
     hint: {
-      locale: 'Sets the display language of the Kestrel interface',
+      locale: 'Controls the display language of the Kestrel Radar interface',
       timezone: 'Used for time display and scheduled work',
       judgeMode: 'Score with the built-in algorithm, or call the model to review grey-zone items',
       llmTimeoutSeconds: 'How long a single model request may take',
@@ -453,8 +454,8 @@ export default {
       globalExcludeKeywords:
         'Every monitor filters through these first; press Enter to add, click the × on a tag to remove',
       concurrency:
-        'How many data sources are collected at once; higher means more load on the sources and this machine',
-      requestTimeoutSeconds: 'How long a data source may stay silent before it counts as failed',
+        'How many discoveries are collected at once; higher means more load on the sources and this machine',
+      requestTimeoutSeconds: 'How long a discovery may stay silent before it counts as failed',
       maxRetries: 'How many times a failed collection is retried',
       retentionDays: 'Items and events older than this are cleaned up',
       eventArchiveDays: 'Events with no new source or content for this many days are archived',
@@ -493,7 +494,7 @@ export default {
       evening: 'Good evening',
     },
     metrics: {
-      discoveries: 'Data sources',
+      discoveries: 'Discoveries',
       monitors: 'Monitors',
       actions: 'Actions',
       channels: 'Channels',

@@ -8,7 +8,7 @@
  * - 例外只有两处：语言名按自身语言写（中文 / English），以及只在开发环境挂载的 /style-lab。
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { join, relative, sep } from 'node:path'
 
 import { API_ERROR_CODES, OPERATION_CODES, VALIDATION_RULES } from '@kestrel/contracts'
 import { describe, expect, it } from 'vitest'
@@ -146,7 +146,7 @@ describe('源码里不许写死文案', () => {
   it('组件、页面、store 里不出现中文（语言名与 style-lab 除外）', () => {
     const offenders: string[] = []
     for (const file of sourceFiles(SRC_ROOT)) {
-      const relativePath = relative(SRC_ROOT, file)
+      const relativePath = relative(SRC_ROOT, file).split(sep).join('/')
       if (relativePath.startsWith('views/style-lab/')) continue
       if (relativePath === 'views/StyleLabView.vue') continue
       const cleaned = stripComments(readFileSync(file, 'utf-8')).replace(LANGUAGE_NAME_ALLOWED, '')

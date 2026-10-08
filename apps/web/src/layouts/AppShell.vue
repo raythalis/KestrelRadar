@@ -43,7 +43,7 @@ const navItems = computed<AppNavItem[]>(() =>
 const brand = computed(() => ({
   name: t('app.name'),
   logo: ui.isDark ? BRAND_LOGO_DARK : BRAND_LOGO,
-  mark: ui.isDark ? "/kestrel-mark-dark.svg" : "/kestrel-mark-light.svg",
+  mark: ui.isDark ? '/kestrel-mark-dark.svg' : '/kestrel-mark-light.svg',
 }))
 
 // 顶栏只有一个主题按钮：图标显示当前模式，点一下循环到下一个

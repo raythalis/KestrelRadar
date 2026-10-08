@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { buildContainer, type Container } from '../src/container.ts'
 import { buildFingerprint } from '../src/modules/collection/fingerprint.ts'
 import { normalizeUrl, titleSimilarity } from '../src/modules/events/similarity.ts'
-import { openDatabase } from '../src/db/index.ts'
-import { createTempDb } from './helpers/temp-db.ts'
+
+import { createTempDb, openTestDatabase } from './helpers/temp-db.ts'
 
 interface SeedItem {
   title: string
@@ -16,7 +16,7 @@ interface SeedItem {
 
 function container(): { container: Container; cleanup: () => void } {
   const db = createTempDb()
-  return { container: buildContainer(openDatabase(db.path)), cleanup: db.cleanup }
+  return { container: buildContainer(openTestDatabase(db.path)), cleanup: db.cleanup }
 }
 
 function seedGroup(

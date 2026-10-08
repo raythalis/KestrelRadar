@@ -42,9 +42,9 @@ describe('AppInput', () => {
 
   it('输入会更新 modelValue', async () => {
     const wrapper = mountInput()
-    await wrapper.get('input').setValue('http://192.168.5.100:1200')
+    await wrapper.get('input').setValue('http://127.0.0.1:1200')
     const emitted = wrapper.emitted('update:modelValue') ?? []
-    expect(emitted[emitted.length - 1]).toEqual(['http://192.168.5.100:1200'])
+    expect(emitted[emitted.length - 1]).toEqual(['http://127.0.0.1:1200'])
   })
 
   it('带动作按钮时（试抓这类）点它会把 action 抛出去', async () => {
@@ -56,8 +56,11 @@ describe('AppInput', () => {
   })
 
   it('固定前缀只展示、不进值', () => {
-    const wrapper = mountInput({ modelValue: '/bilibili/ranking/all', prefix: 'http://nas:1200' })
-    expect(wrapper.get('.k2-inputgroup__prefix').text()).toBe('http://nas:1200')
+    const wrapper = mountInput({
+      modelValue: '/bilibili/ranking/all',
+      prefix: 'http://127.0.0.1:1200',
+    })
+    expect(wrapper.get('.k2-inputgroup__prefix').text()).toBe('http://127.0.0.1:1200')
     expect((wrapper.get('input').element as HTMLInputElement).value).toBe('/bilibili/ranking/all')
   })
 

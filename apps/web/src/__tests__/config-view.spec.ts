@@ -180,9 +180,12 @@ function mountView() {
 }
 
 async function mountLoaded() {
-  vi.mocked(cardStatsApi.fetchCardStats).mockResolvedValue(
-    new Proxy({}, { get: () => ({}) }) as never,
-  )
+  vi.mocked(cardStatsApi.fetchCardStats).mockResolvedValue({
+    windowDays: 7,
+    discoveries: {},
+    monitors: {},
+    actions: {},
+  })
   vi.mocked(api.fetchConfig).mockResolvedValue(snapshot)
   const wrapper = mountView()
   await flushPromises()
@@ -363,9 +366,12 @@ describe('配置管理页', { timeout: 20000 }, () => {
   })
 
   it('监听卡把跟随全局当前生效的模式写出来：全局是 LLM+ 就写 LLM+', async () => {
-    vi.mocked(cardStatsApi.fetchCardStats).mockResolvedValue(
-      new Proxy({}, { get: () => ({}) }) as never,
-    )
+    vi.mocked(cardStatsApi.fetchCardStats).mockResolvedValue({
+      windowDays: 7,
+      discoveries: {},
+      monitors: {},
+      actions: {},
+    })
     vi.mocked(api.fetchConfig).mockResolvedValue({
       ...snapshot,
       settings: { ...SETTINGS_DEFAULTS, judgeMode: 'algorithm_llm' },

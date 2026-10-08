@@ -26,7 +26,7 @@ const GLOBAL_MODE = 'algorithm_llm' as const
 
 /**
  * 卡片样例 = 真实 Biz Card + 真实所在容器。
- * 数据源 / 监听 / 动作三张卡在生产页面里长在分组面板的三列插槽里，
+ * 发现 / 监听 / 动作三张卡在生产页面里长在分组面板的三列插槽里，
  * 所以这里也挂真 GroupPanel（列头、列底新增、折叠都由它给），不自己拼三列。
  */
 const { t } = useI18n()
@@ -90,7 +90,7 @@ const channelCount = computed(() => channels.length)
 
 <template>
   <div class="lab-parts">
-    <div class="lab__h3">数据源 / 监听 / 动作 · 分组面板里的三列</div>
+    <div class="lab__h3">发现 / 监听 / 动作 · 分组面板里的三列</div>
     <p class="lab__meta">
       这三张卡在生产页面里长在分组面板的三列插槽里：列头、列底的新增按钮、折叠都由面板负责。
       样例给面板的只是 group / counts / expanded 三个 prop，卡片本体和插槽内容和生产一致。

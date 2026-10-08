@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useToastStore } from '@/stores/toast'
 import * as api from '@/api/config'
 import i18n from '@/plugins/i18n'
+import appComponents from '@/plugins/components'
 import vuetify from '@/plugins/vuetify'
 import ChannelsView from '@/views/ChannelsView.vue'
 
@@ -60,14 +61,12 @@ const snapshot: ConfigSnapshot = {
 // 这里统一用 DOMWrapper 从 document 取，VTU 的 trigger / classes / text 都照常用。
 const dv = (test: string): DOMWrapper<Element> =>
   new DOMWrapper(document.querySelector(`[data-test="${test}"]`) as Element)
-const dvAll = (test: string): DOMWrapper<Element>[] =>
-  [...document.querySelectorAll(`[data-test="${test}"]`)].map((el) => new DOMWrapper(el))
 
 function mountView() {
   return mount(ChannelsView, {
     // 弹窗走真组件 + teleport：挂到 document body，别替身（替身后点击不会触达组件）
     attachTo: document.body,
-    global: { plugins: [createPinia(), vuetify, i18n] },
+    global: { plugins: [createPinia(), vuetify, i18n, appComponents] },
   })
 }
 

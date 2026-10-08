@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 
 import EventRow from '@/components/biz/EventRow.vue'
+import i18n from '@/plugins/i18n'
 import vuetify from '@/plugins/vuetify'
 
 function event(overrides: Partial<RecentEvent> = {}): RecentEvent {
@@ -25,7 +26,7 @@ function event(overrides: Partial<RecentEvent> = {}): RecentEvent {
 }
 
 function render(props: { event: RecentEvent; time?: string }) {
-  return mount(EventRow, { props, global: { plugins: [vuetify] } })
+  return mount(EventRow, { props, global: { plugins: [vuetify, i18n] } })
 }
 
 describe('EventRow', () => {
@@ -87,6 +88,8 @@ describe('EventRow', () => {
     await wrapper.trigger('click')
     const emitted = wrapper.emitted('open')
     expect(emitted).toHaveLength(1)
-    expect((emitted?.[0]?.[0] as RecentEvent).id).toBe('e1')
+    const emittedEvent = emitted?.[0]?.[0]
+    expect(emittedEvent).toBeDefined()
+    expect((emittedEvent as RecentEvent).id).toBe('e1')
   })
 })

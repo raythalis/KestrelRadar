@@ -30,7 +30,7 @@ function mountSidebar(open = false) {
   return {
     router,
     wrapper: mount(AppSidebar, {
-      props: { items, open, brand: { name: 'Kestrel' } },
+      props: { items, open, brand: { name: 'Kestrel Radar' } },
       global: { plugins: [createPinia(), vuetify, router] },
     }),
   }

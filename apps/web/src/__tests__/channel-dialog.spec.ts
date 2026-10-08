@@ -162,14 +162,14 @@ describe('ChannelDialog', () => {
     await wrapper.setProps({
       chats: [
         { id: '1231487971', title: '我自己' },
-        { id: '1001', title: 'Kestrel 测试群' },
+        { id: '1001', title: 'Kestrel Radar 测试群' },
       ],
     })
     await flushPromises()
     const options = [...document.querySelectorAll('[data-test="channel-dialog-chats"] button')]
     expect(options.map((option) => option.textContent?.trim())).toEqual([
       '我自己 · 1231487971',
-      'Kestrel 测试群 · 1001',
+      'Kestrel Radar 测试群 · 1001',
     ])
     await click(options[1] as HTMLButtonElement)
     expect(input('channel-dialog-chat-id').value).toBe('1001')

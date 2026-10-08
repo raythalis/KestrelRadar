@@ -63,7 +63,7 @@ export async function fetchText(
         headers: {
           accept:
             'application/rss+xml, application/atom+xml, application/xml, text/xml, text/html;q=0.9, */*;q=0.5',
-          'user-agent': 'Kestrel/0.1 (+https://github.com/raythalis/kestrel)',
+          'user-agent': 'Kestrel Radar/1.0 (+https://github.com/raythalis/KestrelRadar)',
           ...options.headers,
         },
       })

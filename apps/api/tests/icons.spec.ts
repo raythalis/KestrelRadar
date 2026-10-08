@@ -7,10 +7,10 @@ import Fastify from 'fastify'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildContainer, type Container } from '../src/container.ts'
-import { openDatabase } from '../src/db/index.ts'
+
 import { registerIconRoutes } from '../src/modules/icons/icon.routes.ts'
 import { createIconService } from '../src/modules/icons/icon.service.ts'
-import { createTempDb } from './helpers/temp-db.ts'
+import { createTempDb, openTestDatabase } from './helpers/temp-db.ts'
 
 /** 一张 1x1 的 PNG，够过文件头检查 */
 const PNG = Buffer.from(
@@ -37,7 +37,7 @@ function imageFetch(body: Buffer | null): typeof fetch {
 }
 
 function build(fetchImpl: typeof fetch): Container {
-  return buildContainer(openDatabase(dbPath), { iconDir, fetchImpl })
+  return buildContainer(openTestDatabase(dbPath), { iconDir, fetchImpl })
 }
 
 function seedDiscovery(
@@ -76,10 +76,10 @@ describe('图标地址解析', () => {
     expect(icons.hostOf('https://example.com/feed.xml', 'rss')).toBe('example.com')
     expect(icons.hostOf('https://News.YCombinator.com/rss', 'rss')).toBe('news.ycombinator.com')
     expect(icons.hostOf('example.com/feed.xml', 'rss')).toBe('example.com')
-    expect(icons.hostOf('http://192.168.5.100:1200/x', 'rss')).toBeNull()
+    expect(icons.hostOf('http://127.0.0.1:1200/x', 'rss')).toBeNull()
     expect(icons.hostOf('http://rsshub:1200/github/trending', 'rss')).toBeNull()
     expect(icons.hostOf('/github/trending/daily/any', 'rsshub')).toBeNull()
-    expect(icons.hostOf('http://nas.local/feed', 'rss')).toBeNull()
+    expect(icons.hostOf('http://example.local/feed', 'rss')).toBeNull()
   })
 })
 
@@ -110,7 +110,7 @@ describe('图标抓取', () => {
 
   it('内网地址与 RSSHub 相对路由：不联网，也不报错', async () => {
     const container = build(imageFetch(PNG))
-    const id = seedDiscovery(container, 'D', 'http://192.168.5.100:1200/feed')
+    const id = seedDiscovery(container, 'D', 'http://127.0.0.1:1200/feed')
     expect(await container.icons?.refresh(id, { waitMs: 3000 })).toBeNull()
     expect(calls).toEqual([])
   })

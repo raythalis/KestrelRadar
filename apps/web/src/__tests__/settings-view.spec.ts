@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as cardStatsApi from '@/api/cardStats'
 import * as api from '@/api/config'
+import appComponents from '@/plugins/components'
 import i18n from '@/plugins/i18n'
 import vuetify from '@/plugins/vuetify'
 import SettingsView from '@/views/SettingsView.vue'
@@ -47,14 +48,12 @@ const snapshot: ConfigSnapshot = {
 // 这里统一用 DOMWrapper 从 document 取，VTU 的 trigger / classes / text 都照常用。
 const dv = (test: string): DOMWrapper<Element> =>
   new DOMWrapper(document.querySelector(`[data-test="${test}"]`) as Element)
-const dvAll = (test: string): DOMWrapper<Element>[] =>
-  [...document.querySelectorAll(`[data-test="${test}"]`)].map((el) => new DOMWrapper(el))
 
 function mountView() {
   return mount(SettingsView, {
     // 弹窗走真组件 + teleport：挂到 document body，别替身（替身后点击不会触达组件）
     attachTo: document.body,
-    global: { plugins: [createPinia(), vuetify, i18n] },
+    global: { plugins: [createPinia(), vuetify, i18n, appComponents] },
   })
 }
 
@@ -119,7 +118,7 @@ describe('设置页', () => {
     expect(wrapper.find('[data-test="pane-general"]').exists()).toBe(false)
     expect(wrapper.get('[data-test="about-version"]').text()).toBe('test')
     const repo = wrapper.get('[data-test="about-repository"]')
-    expect(repo.attributes('href')).toBe('https://github.com/raythalis/kestrel')
+    expect(repo.attributes('href')).toBe('https://github.com/raythalis/KestrelRadar')
     expect(repo.attributes('target')).toBe('_blank')
   })
 
@@ -254,7 +253,7 @@ describe('设置页', () => {
     vi.mocked(api.probeRsshub).mockResolvedValue({
       configured: true,
       ok: true,
-      baseUrl: 'http://192.168.5.100:1200',
+      baseUrl: 'http://127.0.0.1:1200',
       message: '实例连通',
       checkedAt: '2026-10-05T00:00:00.000Z',
     })
@@ -264,13 +263,13 @@ describe('设置页', () => {
     expect(address.value).toBe('http://localhost:1200')
     expect(wrapper.get('[data-test="setting-rsshubTest"]').attributes('disabled')).toBeUndefined()
 
-    await wrapper.get('[data-test="setting-rsshubBaseUrl"]').setValue('http://192.168.5.100:1200')
+    await wrapper.get('[data-test="setting-rsshubBaseUrl"]').setValue('http://127.0.0.1:1200')
     await flushPromises()
     await wrapper.get('[data-test="setting-rsshubTest"]').trigger('click')
     await flushPromises()
 
     // 拿的是草稿里的地址（还没保存）
-    expect(api.probeRsshub).toHaveBeenCalledWith(true, 'http://192.168.5.100:1200')
+    expect(api.probeRsshub).toHaveBeenCalledWith(true, 'http://127.0.0.1:1200')
     const result = wrapper.get('[data-test="rsshub-test-result"]')
     expect(result.text()).toContain('实例连通')
     expect(result.text()).not.toContain(':1200')

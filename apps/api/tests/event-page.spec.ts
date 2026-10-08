@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildContainer, type Container } from '../src/container.ts'
 import { buildFingerprint } from '../src/modules/collection/fingerprint.ts'
-import { openDatabase } from '../src/db/index.ts'
-import { createTempDb } from './helpers/temp-db.ts'
+
+import { createTempDb, openTestDatabase } from './helpers/temp-db.ts'
 import { createTestApp } from './helpers/test-app.ts'
 
 /**
@@ -13,7 +13,7 @@ import { createTestApp } from './helpers/test-app.ts'
  */
 
 const HOUR = 60 * 60 * 1000
-const NOW = new Date('2026-10-07T12:00:00.000Z')
+const NOW = new Date(Date.now() - 60_000)
 
 let container: Container
 let cleanupDb: () => void
@@ -23,7 +23,7 @@ beforeEach(() => {
   const db = createTempDb()
   cleanupDb = db.cleanup
   dbPath = db.path
-  container = buildContainer(openDatabase(db.path))
+  container = buildContainer(openTestDatabase(db.path))
 })
 
 afterEach(() => cleanupDb())

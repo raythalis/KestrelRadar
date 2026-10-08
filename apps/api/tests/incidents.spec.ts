@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildContainer, type Container } from '../src/container.ts'
-import { openDatabase } from '../src/db/index.ts'
+
 import { RSS_TWO_ITEMS, PAGE_WITHOUT_FEED } from './helpers/feed-fixtures.ts'
 import { startFeedServer, type FeedServer } from './helpers/feed-server.ts'
-import { createTempDb } from './helpers/temp-db.ts'
+import { createTempDb, openTestDatabase } from './helpers/temp-db.ts'
 import { createTestApp } from './helpers/test-app.ts'
 
 /** 一个合法的订阅源，但里面没有条目 —— 「通是通了，但没内容」 */
@@ -24,7 +24,7 @@ let cleanupDb: () => void
 beforeEach(async () => {
   const db = createTempDb()
   cleanupDb = db.cleanup
-  container = buildContainer(openDatabase(db.path))
+  container = buildContainer(openTestDatabase(db.path))
   server = await startFeedServer({
     '/rss': { body: RSS_TWO_ITEMS },
     '/empty': { body: EMPTY_FEED },

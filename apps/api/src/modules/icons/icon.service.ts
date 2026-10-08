@@ -112,7 +112,7 @@ export function createIconService(deps: IconServiceDeps) {
         try {
           const response = await doFetch(new URL(path, `${protocol}://${host}`), {
             signal: AbortSignal.timeout(timeoutMs),
-            headers: { accept: 'image/*,*/*;q=0.8', 'user-agent': 'Kestrel/1.0 (+favicon)' },
+            headers: { accept: 'image/*,*/*;q=0.8', 'user-agent': 'Kestrel Radar/1.0 (+favicon)' },
           })
           if (!response.ok) continue
           const body = Buffer.from(await response.arrayBuffer())

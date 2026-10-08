@@ -39,12 +39,12 @@ describe('GroupPanel', () => {
     const wrapper = mountPanel()
     expect(wrapper.get('[data-test="group-name"]').text()).toBe('AI 圈')
     expect(wrapper.get('[data-test="group-description"]').text()).toBe('模型发布与开源项目')
-    // 三列计数：文案形如「数据源 2 / 监听 1 / 动作 0」
+    // 三列计数：文案形如「发现 2 / 监听 1 / 动作 0」
     const counts = wrapper.get('[data-test="group-counts"]').text()
-    expect(counts).toContain('数据源')
+    expect(counts).toContain('发现')
     expect(counts).toContain('监听')
     expect(counts).toContain('动作')
-    expect(counts).toMatch(/数据源\D*2/)
+    expect(counts).toMatch(/发现\D*2/)
     expect(counts).toMatch(/监听\D*1/)
   })
 
@@ -66,7 +66,7 @@ describe('GroupPanel', () => {
     const wrapper = mountPanel({ expanded: true })
     expect(wrapper.get('[data-test="group-name"]').text()).toBe('AI 圈')
     const head = wrapper.get('[data-test="column-discoveries"] .k2-col__head').text()
-    expect(head).toContain('数据源')
+    expect(head).toContain('发现')
     expect(head).toContain('2')
   })
 

@@ -108,10 +108,10 @@
 /* 标签（tag）：摆关键词这类短词，比状态芯片更轻、更小，不带圆点 */
 .k2-chip--tag {
   /* 词本身很长时别撑破输入框：最多占满一行，超出省略（完整内容看 title） */
-  max-inline-size: 100%;
+  max-inline-size: none;
   block-size: auto;
   padding-block: 1px;
-  padding-inline: var(--k2-s-2);
+  padding-inline: 0;
   border-radius: var(--k2-r-sm);
   background: var(--k2-c-surface2);
   box-shadow: inset 0 0 0 1px var(--k2-c-border-soft);
@@ -1013,8 +1013,9 @@
   user-select: none;
   -webkit-user-drag: none;
   flex: none;
-  inline-size: var(--k2-icon-lg);
-  block-size: var(--k2-icon-lg);
+  inline-size: 224px;
+  block-size: 40px;
+  max-inline-size: 100%;
 }
 
 .k2-nav__name {

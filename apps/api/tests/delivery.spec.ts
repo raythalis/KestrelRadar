@@ -8,10 +8,10 @@ import {
   type DeliverySender,
 } from '../src/modules/delivery/sender.ts'
 import { buildFingerprint } from '../src/modules/collection/fingerprint.ts'
-import { openDatabase } from '../src/db/index.ts'
-import { createTempDb } from './helpers/temp-db.ts'
 
-const T0 = '2026-10-01T02:00:00.000Z'
+import { createTempDb, openTestDatabase } from './helpers/temp-db.ts'
+
+const T0 = new Date(Date.now() - 60_000).toISOString()
 
 interface SentMessage {
   channelId: string
@@ -39,7 +39,7 @@ function setup(): void {
   cleanup = db.cleanup
   const recorder = recordingSender()
   sent = recorder.sent
-  container = buildContainer(openDatabase(db.path), {
+  container = buildContainer(openTestDatabase(db.path), {
     sender: recorder.sender,
     // 测试里不想等 3 秒的合并窗口
     batcher: createChannelBatcher(recorder.sender, 5),
@@ -164,7 +164,7 @@ describe('投递失败：原始说法留在异常里当副信息', () => {
       fetchImpl: (async () => new Response('boom', { status: 500 })) as unknown as typeof fetch,
       timeoutSeconds: 1,
     })
-    const c = buildContainer(openDatabase(db.path), {
+    const c = buildContainer(openTestDatabase(db.path), {
       sender: failing,
       batcher: createChannelBatcher(failing, 5),
     })

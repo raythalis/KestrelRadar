@@ -1,22 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildContainer, type Container } from '../src/container.ts'
-import { openDatabase } from '../src/db/index.ts'
+
 import { createDiscoveryRepo } from '../src/modules/discoveries/discovery.repo.ts'
 import { isValidCron, nextRunAt } from '../src/modules/collection/scheduler.ts'
 import { RSS_TWO_ITEMS } from './helpers/feed-fixtures.ts'
 import { startFeedServer, type FeedServer } from './helpers/feed-server.ts'
-import { createTempDb } from './helpers/temp-db.ts'
+import { createTempDb, openTestDatabase } from './helpers/temp-db.ts'
 
 let server: FeedServer
 let container: Container
-let connection: ReturnType<typeof openDatabase>
+let connection: ReturnType<typeof openTestDatabase>
 let cleanupDb: () => void
 
 beforeEach(async () => {
   const db = createTempDb()
   cleanupDb = db.cleanup
-  connection = openDatabase(db.path)
+  connection = openTestDatabase(db.path)
   container = buildContainer(connection)
   server = await startFeedServer({ '/rss': { body: RSS_TWO_ITEMS } })
   container.settings.update({

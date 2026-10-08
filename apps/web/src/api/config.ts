@@ -18,7 +18,6 @@ import type {
   Monitor,
   Settings,
   StatsRsshub,
-  TelegramChat,
   TelegramChatsResult,
   UpdateActionInput,
   UpdateChannelInput,

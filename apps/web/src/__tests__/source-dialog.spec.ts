@@ -46,13 +46,13 @@ describe('SourceDialog', () => {
     await flushPromises()
     expect(input('source-dialog-name').value).toBe('B 站排行')
     expect(input('source-dialog-target').value).toBe('/bilibili/ranking/all')
-    expect(document.body.textContent).toContain('编辑数据源')
+    expect(document.body.textContent).toContain('编辑发现')
   })
 
   it('类型在弹窗里选', async () => {
     mountDialog()
     await flushPromises()
-    expect(document.body.textContent).toContain('新建数据源')
+    expect(document.body.textContent).toContain('新建发现')
     expect(q('source-dialog-kind')).toBeTruthy()
   })
 
@@ -107,7 +107,7 @@ describe('SourceDialog', () => {
       kind: 'rss',
       target: 'https://example.com/feed.xml',
       cron: '0 * * * *',
-      rsshubBaseUrl: 'http://192.168.5.100:1200',
+      rsshubBaseUrl: 'http://127.0.0.1:1200',
     })
     await flushPromises()
     await openMenu('source-dialog-kind')
@@ -124,11 +124,11 @@ describe('SourceDialog', () => {
     mountDialog({
       kind: 'rsshub',
       target: '/bilibili/ranking/all',
-      rsshubBaseUrl: 'http://192.168.5.100:1200/',
+      rsshubBaseUrl: 'http://127.0.0.1:1200/',
     })
     await flushPromises()
     const prefix = q('app-input-prefix')
-    expect(prefix?.textContent).toBe('http://192.168.5.100:1200')
+    expect(prefix?.textContent).toBe('http://127.0.0.1:1200')
     expect(prefix?.querySelector('input')).toBeNull()
     expect(input('source-dialog-target').value).toBe('/bilibili/ranking/all')
   })
@@ -137,7 +137,7 @@ describe('SourceDialog', () => {
     mountDialog({
       kind: 'rss',
       target: 'https://example.com/feed.xml',
-      rsshubBaseUrl: 'http://192.168.5.100:1200',
+      rsshubBaseUrl: 'http://127.0.0.1:1200',
     })
     await flushPromises()
     expect(q('app-input-prefix')).toBeNull()
@@ -218,7 +218,7 @@ describe('SourceDialog', () => {
     const wrapper = mountDialog({
       name: 'B 站排行',
       target: '/bilibili/ranking/all',
-      rsshubBaseUrl: 'http://192.168.5.100:1200',
+      rsshubBaseUrl: 'http://127.0.0.1:1200',
     })
     await flushPromises()
     input('source-dialog-name').value = '改了一半'

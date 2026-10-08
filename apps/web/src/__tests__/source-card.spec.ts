@@ -1,7 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it } from 'vitest'
 
-import AppSwitch from '@/components/app/AppSwitch.vue'
 import SourceCard from '@/components/biz/SourceCard.vue'
 import appComponents from '@/plugins/components'
 import i18n from '@/plugins/i18n'

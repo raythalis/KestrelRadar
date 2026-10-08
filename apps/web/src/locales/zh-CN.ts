@@ -56,7 +56,7 @@ export default {
       parseFailed: '不是有效的订阅源，建议改用 RSSHub 路由',
     },
     discovery: {
-      missing: '这个数据源不存在',
+      missing: '这个发现不存在',
     },
     collection: {
       failed: '采集失败',
@@ -82,7 +82,7 @@ export default {
     },
   },
   app: {
-    name: 'Kestrel',
+    name: 'Kestrel Radar',
   },
   tags: {
     meta: '{count}/{max}',
@@ -149,21 +149,21 @@ export default {
     },
   },
   column: {
-    discoveries: '数据源',
+    discoveries: '发现',
     monitors: '监听',
     actions: '动作',
     desc: {
-      discoveries: '采集外部数据源',
+      discoveries: '采集外部发现',
       monitors: '按规则筛选内容',
       actions: '对结果通知或处理',
     },
     empty: {
-      discoveries: '还没有数据源',
+      discoveries: '还没有发现',
       monitors: '还没有监听',
       actions: '还没有动作',
     },
     emptyHint: {
-      discoveries: '添加一个数据源开始采集',
+      discoveries: '添加一个发现开始采集',
       monitors: '添加一条监听规则',
       actions: '添加一个通知动作',
     },
@@ -172,13 +172,13 @@ export default {
     testRunning: '测试采集中…',
     testOk: '测试采集成功，采集到 {n} 条',
     testEmpty: '连接正常，但未获取到内容',
-    add: '添加数据源',
-    delete: '删除数据源',
-    deleteBody: '只删这条数据源本身，它的历史条目与事件一律保留。',
+    add: '添加发现',
+    delete: '删除发现',
+    deleteBody: '只删这条发现本身，它的历史条目与事件一律保留。',
     test: '测试采集',
     nextRun: '下次采集：',
-    addSource: '新建数据源',
-    editSource: '编辑数据源',
+    addSource: '新建发现',
+    editSource: '编辑发现',
     targetInvalid: '目标要带 http:// 或 https://；RSSHub 路由可以写成 /命名空间/路由',
     targetHint: {
       rsshub: '例如 /bilibili/ranking/all',
@@ -377,14 +377,14 @@ export default {
       delivery: '投递设置',
     },
     cardNote: {
-      region: '控制 Kestrel 界面的显示语言和时间显示方式。',
+      region: '控制 Kestrel Radar 界面的显示语言和时间显示方式。',
       judgeRules: '控制内容如何通过评分进行初步判定。内容会根据得分进入不同判定区间。',
       model: '控制灰区内容的模型复核请求。',
       filters: '配置监听的过滤规则',
-      collect: '控制数据源的采集并发、请求超时和失败重试。',
+      collect: '控制发现的采集并发、请求超时和失败重试。',
       retention: '控制历史数据保存多久，以及旧事件和内容如何进入归档状态。',
       rsshub:
-        '配置 Kestrel 使用的 RSSHub 实例。数据源中只需要填写路由路径，Kestrel 会使用这里的地址进行拼接。',
+        '配置 Kestrel Radar 使用的 RSSHub 实例。发现中只需要填写路由路径，Kestrel Radar 会使用这里的地址进行拼接。',
       delivery: '配置通知使用的语言、每天最多投递多少条，以及单条投递的超时时间。',
     },
     subtitle: '每组保存后生效',
@@ -438,7 +438,7 @@ export default {
       rsshubAccessKey: '访问密钥',
     },
     hint: {
-      locale: '设定 Kestrel 界面的显示语言',
+      locale: '设定 Kestrel Radar 界面的显示语言',
       timezone: '用于时间显示和定时任务',
       judgeMode: '使用纯算法判定，或在灰区中调用模型进行复核',
       llmTimeoutSeconds: '单次模型请求最多等待多久',
@@ -446,8 +446,8 @@ export default {
       llmFallbackMode: '模型达到重试次数上限后，决定这条内容是降级到纯算法还是采取其他处理方式',
       globalExcludeKeywords:
         '所有监听都会先使用这些词进行过滤；输入后按回车添加，点击标签上的叉删除',
-      concurrency: '同时采集的数据源数量；并发越高，对源站和本机资源的压力越大',
-      requestTimeoutSeconds: '单个数据源多久没有响应就视为失败',
+      concurrency: '同时采集的发现数量；并发越高，对源站和本机资源的压力越大',
+      requestTimeoutSeconds: '单个发现多久没有响应就视为失败',
       maxRetries: '采集失败后重新尝试的次数',
       retentionDays: '超过此时间的条目和事件会被清理',
       eventArchiveDays: '事件在指定天数内没有新来源或新内容后自动归档',
@@ -482,7 +482,7 @@ export default {
       evening: '晚上好',
     },
     metrics: {
-      discoveries: '数据源',
+      discoveries: '发现',
       monitors: '监听',
       actions: '动作',
       channels: '通知渠道',

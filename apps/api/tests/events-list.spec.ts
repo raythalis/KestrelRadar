@@ -2,10 +2,10 @@ import { API_PREFIX } from '@kestrel/contracts'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildContainer, type Container } from '../src/container.ts'
-import { openDatabase } from '../src/db/index.ts'
+
 import { RSS_TWO_ITEMS } from './helpers/feed-fixtures.ts'
 import { startFeedServer, type FeedServer } from './helpers/feed-server.ts'
-import { createTempDb } from './helpers/temp-db.ts'
+import { createTempDb, openTestDatabase } from './helpers/temp-db.ts'
 import { createTestApp } from './helpers/test-app.ts'
 
 /**
@@ -23,7 +23,7 @@ beforeEach(async () => {
   const db = createTempDb()
   cleanupDb = db.cleanup
   dbPath = db.path
-  container = buildContainer(openDatabase(db.path))
+  container = buildContainer(openTestDatabase(db.path))
   server = await startFeedServer({ '/rss': { body: RSS_TWO_ITEMS } })
   container.settings.update({
     rsshubBaseUrl: server.baseUrl,

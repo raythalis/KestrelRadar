@@ -2,10 +2,10 @@ import { createServer } from 'node:http'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildContainer, type Container } from '../src/container.ts'
-import { openDatabase } from '../src/db/index.ts'
+
 import { RSS_TWO_ITEMS } from './helpers/feed-fixtures.ts'
 import { startFeedServer, type FeedServer } from './helpers/feed-server.ts'
-import { createTempDb } from './helpers/temp-db.ts'
+import { createTempDb, openTestDatabase } from './helpers/temp-db.ts'
 
 /** 一个 OpenAI 兼容的假供应商：名单里的模型一律 503，其余正常回答 yes；记下每次请求 */
 async function startLlmServer(failing: string[]) {
@@ -48,7 +48,7 @@ let cleanupDb: () => void
 const logs: string[] = []
 
 function build(): Container {
-  return buildContainer(openDatabase(createTempDb().path), {
+  return buildContainer(openTestDatabase(createTempDb().path), {
     log: (_level, message) => logs.push(message),
   })
 }

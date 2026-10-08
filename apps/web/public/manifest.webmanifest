@@ -1,6 +1,6 @@
 {
   "name": "Kestrel Radar",
-  "short_name": "Kestrel",
+  "short_name": "Kestrel Radar",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0C0E15",

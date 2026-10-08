@@ -1,8 +1,8 @@
 {
   "name": "kestrel",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "repository": "https://github.com/raythalis/kestrel",
+  "repository": "https://github.com/raythalis/KestrelRadar",
   "description": "个人信息监听与事件响应（monorepo 根）",
   "packageManager": "pnpm@12.8.1",
   "engines": {
@@ -15,9 +15,11 @@
     "test:unit": "pnpm -r --if-present test:unit",
     "lint": "pnpm -r --if-present lint",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "start": "pnpm --filter kestrel-api start"
   },
   "devDependencies": {
     "prettier": "3.9.6"
-  }
+  },
+  "license": "GPL-3.0-only"
 }

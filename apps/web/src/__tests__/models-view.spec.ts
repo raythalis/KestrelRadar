@@ -10,7 +10,7 @@ import i18n from '@/plugins/i18n'
 import vuetify from '@/plugins/vuetify'
 import ModelsView from '@/views/ModelsView.vue'
 
-const { pushToast } = vi.hoisted(() => ({ pushToast: vi.fn() }))
+const { pushToast } = vi.hoisted(() => ({ pushToast: vi.fn<() => void>() }))
 vi.mock('@/stores/toast', () => ({ useToastStore: () => ({ push: pushToast }) }))
 vi.mock('@/api/config')
 // 卡片汇总只是卡片背面：不 mock 的话那次请求在 jsdom 里不落地，装载就永远等不齐

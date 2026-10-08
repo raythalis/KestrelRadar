@@ -102,7 +102,9 @@ describe('IncidentCard', () => {
     await wrapper.find('[data-test="incident-dismiss"]').trigger('click')
     const emitted = wrapper.emitted('dismiss')
     expect(emitted).toHaveLength(1)
-    expect((emitted?.[0]?.[0] as Incident).id).toBe('i1')
+    const emittedIncident = emitted?.[0]?.[0]
+    expect(emittedIncident).toBeDefined()
+    expect((emittedIncident as Incident).id).toBe('i1')
     expect(wrapper.props('incident').status).toBe('open')
   })
 

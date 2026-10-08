@@ -1,14 +1,11 @@
-# 设计文档索引
+# 设计规范
 
-界面「长什么样、为什么这么长」，正式规则都在本目录。**代码是实现的真相**，这里放的是规则与基准。
-各篇只做入口，不在这里复述内容；同一事实只有一处写全。
+Kestrel Radar 正式页面的有效视觉与交互规则在这里；产品怎么使用见[使用手册](../usage.md)。组件演示页 `/style-lab` 仅在开发环境可用，不是正式页面的信息架构。
 
-- `foundation.md` —— Design System 的 Foundation 层规范（分层、token 归属、组件前缀）
-- `v2-direction.md` —— 当前视觉方向：v2 完整 token 体系（独立预览层）
-- `product-pages.md` —— 正式页面的设计规则（Design Lab 不是产品）
-- `ux-writing.md` —— 文案规则：UI 自解释
-- `fonts.md` —— 字体：选型、自托管文件与用法约束
-- `plan-p5-theme-design.md` —— 主题与 logo 方案（P5，未实施）
+- [Foundation](foundation.md)：当前 token 的职责与设计层次。
+- [视觉设计](visual-design.md)：现行色彩、排版、间距、布局、主题与组件用法。
+- [正式页面](product-pages.md)：页面任务、信息层级与组件演示的边界。
+- [界面文案](ux-writing.md)：自解释、状态与错误文案。
+- [字体](fonts.md)：字体栈、字形资源及维护。
 
-色值与主题 token 的唯一来源是 `apps/web/src/design/tokens/`（色值在 `color.ts`）；
-样式落在 `apps/web/src/styles/v2.scss`（新一代）与 `main.scss`（旧一代，尚未迁完）。
+视觉数值以 `apps/web/src/design/v2/tokens.ts` 为唯一实现来源；样式消费层为 `apps/web/src/styles/v2.scss`。旧阶段的设计过程记录保留在本地 `.ai/records/`，不作为公开规范。

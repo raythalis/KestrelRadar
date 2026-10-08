@@ -839,7 +839,7 @@ export const MODEL_PROVIDER_FIXTURES: ModelProviderFixture[] = [
     id: 'mp3',
     name: '内网网关',
     kind: 'openai_compatible',
-    baseUrl: 'http://192.168.5.9:4000',
+    baseUrl: 'http://127.0.0.1:4000',
     models: [],
   },
 ]
