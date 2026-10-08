@@ -4,6 +4,7 @@ import { SETTINGS_DEFAULTS } from '@kestrel/contracts'
 import { createPinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { useConfigStore } from '@/stores/config'
 import { useToastStore } from '@/stores/toast'
 import * as api from '@/api/config'
 import i18n from '@/plugins/i18n'
@@ -90,6 +91,20 @@ describe('通知渠道页', () => {
     }
     vi.mocked(api.testChannel).mockReset()
     vi.mocked(api.readTelegramChats).mockReset()
+  })
+
+  it('已有缓存时重新进入页面仍向后端取最新渠道', async () => {
+    vi.mocked(api.fetchConfig).mockResolvedValue(snapshot)
+    const pinia = createPinia()
+    const store = useConfigStore(pinia)
+    await store.load()
+    vi.mocked(api.fetchConfig).mockClear()
+    const wrapper = mount(ChannelsView, {
+      global: { plugins: [pinia, vuetify, i18n, appComponents] },
+    })
+    await flushPromises()
+    expect(api.fetchConfig).toHaveBeenCalledTimes(1)
+    wrapper.unmount()
   })
 
   it('列出渠道：名称与类型', async () => {

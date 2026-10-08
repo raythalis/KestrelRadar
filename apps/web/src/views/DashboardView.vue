@@ -42,7 +42,7 @@ const store = useDashboardStore()
 const { t, te } = useI18n()
 
 onMounted(() => {
-  if (!store.stats) void store.load()
+  void store.load()
 })
 
 /** 数量类副文案只有三种说法：全部启用 / 全部停用 / n 个已停用 */

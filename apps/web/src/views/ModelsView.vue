@@ -30,7 +30,7 @@ const order = ref<ModelOrderRow[]>([null])
 const savingOrder = ref(false)
 
 onMounted(async () => {
-  if (!store.snapshot) await store.load()
+  await store.load()
   const saved = store.settings.judgeModelOrder ?? []
   order.value = saved.length > 0 ? [...saved] : [null]
   await loadRemoteModels()

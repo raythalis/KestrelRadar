@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as cardStatsApi from '@/api/cardStats'
 import * as api from '@/api/config'
+import { useConfigStore } from '@/stores/config'
 import appComponents from '@/plugins/components'
 import i18n from '@/plugins/i18n'
 import vuetify from '@/plugins/vuetify'
@@ -88,6 +89,19 @@ describe('设置页', () => {
       vi.mocked(fn).mockReset()
       vi.mocked(fn).mockResolvedValue(undefined as never)
     }
+  })
+
+  it('已有缓存时重新进入设置仍请求最新配置', async () => {
+    vi.mocked(api.fetchConfig).mockResolvedValue(snapshot)
+    const pinia = createPinia()
+    await useConfigStore(pinia).load()
+    vi.mocked(api.fetchConfig).mockClear()
+    const wrapper = mount(SettingsView, {
+      global: { plugins: [pinia, vuetify, i18n, appComponents] },
+    })
+    await flushPromises()
+    expect(api.fetchConfig).toHaveBeenCalledTimes(1)
+    wrapper.unmount()
   })
 
   it('二级 tab 都在，切到哪个就显示哪一组设置', async () => {
