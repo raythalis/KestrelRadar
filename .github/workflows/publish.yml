@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Published image version to mirror from GHCR (for backfills)'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -12,6 +18,7 @@ permissions:
 jobs:
   verify:
     name: Verify release source
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +37,8 @@ jobs:
       - run: pnpm build
 
   publish:
-    name: Build and publish GHCR
+    name: Build and publish GHCR and Docker Hub
+    if: github.event_name == 'push'
     needs: verify
     runs-on: ubuntu-latest
     steps:
@@ -41,10 +49,16 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/login-action@v3
+        with:
+          username: raythalis
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ghcr.io/raythalis/kestrelradar
+          images: |
+            ghcr.io/raythalis/kestrelradar
+            raythalis/kestrelradar
           tags: |
             type=semver,pattern={{version}}
             type=raw,value=latest
@@ -55,3 +69,40 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  mirror:
+    name: Mirror existing GHCR image to Docker Hub
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/login-action@v3
+        with:
+          username: raythalis
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Install crane
+        run: |
+          curl --fail --location --silent --show-error \
+            https://github.com/google/go-containerregistry/releases/download/v0.22.1/go-containerregistry_Linux_x86_64.tar.gz \
+            --output crane.tar.gz
+          tar -xzf crane.tar.gz crane
+          sudo install -m 0755 crane /usr/local/bin/crane
+      - name: Copy pinned image and verify digest
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+          source="ghcr.io/raythalis/kestrelradar:$VERSION"
+          dest="raythalis/kestrelradar:$VERSION"
+          source_digest=$(crane digest "$source")
+          crane copy "$source" "$dest"
+          test "$(crane digest "$dest")" = "$source_digest"
+          if [ "$(crane digest ghcr.io/raythalis/kestrelradar:latest)" = "$source_digest" ]; then
+            crane copy "$source" raythalis/kestrelradar:latest
+            test "$(crane digest raythalis/kestrelradar:latest)" = "$source_digest"
+          fi
