@@ -1,11 +1,23 @@
 import 'vuetify/styles'
-import '@mdi/font/css/materialdesignicons.css'
 
 import { createVuetify } from 'vuetify'
 import { aliases, mdi } from 'vuetify/iconsets/mdi'
 import { en, zhHans } from 'vuetify/locale'
 
-// Kestrel 主色：青蓝（red-tailed 猎隼不会有的颜色，避免和常见的 indigo 中台撞脸）
+import {
+  DEFAULT_THEME,
+  V2_BREAKPOINTS,
+  V2_THEMES,
+  V2_TYPE,
+  vuetifyColors,
+} from '@/design/v2/tokens'
+
+// 色值不写在这里：design/v2/tokens.ts 是全项目唯一的 token source，Vuetify 主题由它生成。
+const themes = Object.fromEntries(
+  V2_THEMES.map((theme) => [theme.id, { dark: theme.dark, colors: vuetifyColors(theme.dark) }]),
+)
+
+// Foundation → Vuetify：密度、圆角、控件高度都跟 tokens 走，组件里不再逐个覆盖。
 export default createVuetify({
   locale: {
     locale: 'zhHans',
@@ -18,42 +30,31 @@ export default createVuetify({
     sets: { mdi },
   },
   theme: {
-    defaultTheme: 'kestrelDark',
-    themes: {
-      kestrelLight: {
-        dark: false,
-        colors: {
-          background: '#f6f7f9',
-          surface: '#ffffff',
-          primary: '#0b7285',
-          secondary: '#5c6b73',
-          accent: '#d9480f',
-          info: '#1971c2',
-          success: '#2f9e44',
-          warning: '#e8590c',
-          error: '#c92a2a',
-        },
-      },
-      kestrelDark: {
-        dark: true,
-        colors: {
-          background: '#11161a',
-          surface: '#161d23',
-          primary: '#22b8cf',
-          secondary: '#8fa3ad',
-          accent: '#ff922b',
-          info: '#4dabf7',
-          success: '#51cf66',
-          warning: '#ffa94d',
-          error: '#ff6b6b',
-        },
-      },
+    defaultTheme: DEFAULT_THEME,
+    themes,
+  },
+  // 断点跟同一份 token 对齐
+  display: {
+    thresholds: {
+      xs: 0,
+      sm: V2_BREAKPOINTS.sm,
+      md: V2_BREAKPOINTS.md,
+      lg: V2_BREAKPOINTS.lg,
+      xl: V2_BREAKPOINTS.xl,
     },
   },
+  // 圆角不在这里配（Vuetify 的 rounded 只认自己的档位，写 8px/12px 会变成不存在的类）：
+  // 统一在 styles/components.scss 的「Vuetify 对齐」一节里，用 --k2-r-* 覆盖一遍。
   defaults: {
-    VCard: { variant: 'flat', rounded: 'lg' },
-    VBtn: { variant: 'flat' },
-    VTextField: { variant: 'outlined', density: 'comfortable' },
-    VSelect: { variant: 'outlined', density: 'comfortable' },
+    VCard: { variant: 'flat', elevation: 0 },
+    VBtn: { variant: 'text', density: 'comfortable' },
+    // 输入框用 compact = 40px，跟 --k2-field-h（44）之间由 CSS 的 min-height 拉平
+    VTextField: { variant: 'outlined', density: 'compact', hideDetails: 'auto' },
+    VTextarea: { variant: 'outlined', density: 'compact', hideDetails: 'auto' },
+    VSelect: { variant: 'outlined', density: 'compact', hideDetails: 'auto' },
+    VCombobox: { variant: 'outlined', density: 'compact', hideDetails: 'auto' },
+    VChip: { size: V2_TYPE.caption },
+    VSwitch: { density: 'compact', hideDetails: 'auto', color: 'primary' },
+    VDialog: { scrim: true },
   },
 })

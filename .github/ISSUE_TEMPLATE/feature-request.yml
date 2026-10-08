@@ -1,0 +1,37 @@
+name: Feature request
+description: Suggest an idea or improvement for Kestrel Radar
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the user problem and desired outcome, rather than prescribing an implementation. Do not include passwords, tokens, cookies, private URLs, or personal data.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Tell us what you are trying to do and what is difficult today.
+      placeholder: I want to ..., but currently ...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+      description: Describe the outcome or behavior you would find useful.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any workaround or alternative approach you have tried.
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add examples or screenshots if they help explain the request. Redact private information.
+    validations:
+      required: false

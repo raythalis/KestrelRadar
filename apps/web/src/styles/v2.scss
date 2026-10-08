@@ -1,0 +1,3764 @@
+// Design System · 视觉方向 v2 —— 组件层（独立于 v1，预览用）
+//
+// 规则全部收在 .k2 作用域内，不覆盖任何现有选择器。
+// **只消费 --k2-* 变量**（见 design/v2/tokens.ts），不引用任何 --k-*。
+// 语义色按「实色 / 柔和底 / 柔和底上的文字色」三件套使用，不再现算颜色。
+
+.k2 {
+  color: var(--k2-c-text);
+  font-family: var(--k2-font-sans);
+  font-size: var(--k2-fs-body);
+  line-height: var(--k2-lh-normal);
+
+  /* 语义色默认中性；具体卡片用 .k2-t-* 覆盖这三个变量 */
+  --c: var(--k2-c-text-muted);
+  --c-soft: var(--k2-c-surface3);
+  --c-ink: var(--k2-c-text-muted);
+}
+
+/* ---------- 语义色三件套 ---------- */
+.k2-t-success {
+  --c: var(--k2-c-success);
+  --c-soft: var(--k2-c-success-soft);
+  --c-ink: var(--k2-c-success-ink);
+}
+.k2-t-warning {
+  --c: var(--k2-c-warning);
+  --c-soft: var(--k2-c-warning-soft);
+  --c-ink: var(--k2-c-warning-ink);
+}
+.k2-t-danger {
+  --c: var(--k2-c-danger);
+  --c-soft: var(--k2-c-danger-soft);
+  --c-ink: var(--k2-c-danger-ink);
+}
+.k2-t-info {
+  --c: var(--k2-c-info);
+  --c-soft: var(--k2-c-info-soft);
+  --c-ink: var(--k2-c-info-ink);
+}
+.k2-t-primary {
+  --c: var(--k2-c-primary);
+  --c-soft: var(--k2-c-primary-soft);
+  --c-ink: var(--k2-c-primary-ink);
+}
+.k2-t-neutral {
+  --c: var(--k2-c-text-muted);
+  --c-soft: var(--k2-c-surface3);
+  --c-ink: var(--k2-c-text-muted);
+}
+
+/* ---------- 图标容器：柔和底 + 该色图标（替掉原来左侧的色条）---------- */
+.k2-tile {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--k2-tile);
+  block-size: var(--k2-tile);
+  border-radius: var(--k2-r-md);
+  background: var(--c-soft);
+  /* 图标用柔和底上的深色版，保证小图标也看得清（实色只留给图表与渐变） */
+  color: var(--c-ink);
+  overflow: hidden;
+  font-size: var(--k2-fs-subtitle);
+}
+
+/* 网站图标（后端抓回来的图）撑满图标位：外站 favicon 有的给到 512px，
+   不限定尺寸会把整块图标位撑成一张大图 */
+.k2-tile__img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
+/* 抓到网站图标时把底色让出来：图标自己带形状，垫一层色块反而脏 */
+.k2-tile--bare {
+  background: transparent;
+}
+
+.k2-tile--sm {
+  inline-size: var(--k2-tile-sm);
+  block-size: var(--k2-tile-sm);
+  border-radius: var(--k2-r-sm);
+  font-size: var(--k2-fs-bodyLg);
+}
+
+/* ---------- 芯片 ---------- */
+.k2-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+  block-size: var(--k2-chip-h);
+  padding-inline: var(--k2-s-3);
+  border-radius: var(--k2-r-full);
+  background: var(--c-soft);
+  color: var(--c-ink);
+  font-size: var(--k2-fs-caption);
+  font-weight: var(--k2-fw-medium);
+  white-space: nowrap;
+}
+
+.k2-chip__dot {
+  inline-size: 6px;
+  block-size: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* 标签（tag）：摆关键词这类短词，比状态芯片更轻、更小，不带圆点 */
+.k2-chip--tag {
+  /* 词本身很长时别撑破输入框：最多占满一行，超出省略（完整内容看 title） */
+  max-inline-size: none;
+  block-size: auto;
+  padding-block: 1px;
+  padding-inline: 0;
+  border-radius: var(--k2-r-sm);
+  background: var(--k2-c-surface2);
+  box-shadow: inset 0 0 0 1px var(--k2-c-border-soft);
+  color: var(--k2-c-text-muted);
+  font-weight: var(--k2-fw-regular);
+}
+
+/* 标签里的词：占据剩下的宽度，放不下就省略；小叉永远不压扁 */
+.k2-chip__text {
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---------- 卡片 ---------- */
+.k2-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-4);
+  padding: var(--k2-card-pad);
+  background: var(--k2-c-surface);
+  border: 1px solid var(--k2-c-border-soft);
+  border-radius: var(--k2-r-xl);
+  box-shadow: var(--k2-shadow-sm);
+  transition:
+    box-shadow var(--k2-motion-base) var(--k2-motion-ease),
+    transform var(--k2-motion-base) var(--k2-motion-ease),
+    border-color var(--k2-motion-base) var(--k2-motion-ease);
+}
+
+/* 消费级的味道主要来自这一层：卡片顶部一道极淡的品牌色晕 */
+.k2-card--wash {
+  background-image: var(--k2-grad-wash);
+}
+
+.k2-card--sm {
+  padding: var(--k2-card-pad-sm);
+  border-radius: var(--k2-r-lg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-card--interactive {
+    cursor: pointer;
+  }
+  .k2-card--interactive:hover {
+    box-shadow: var(--k2-shadow-md);
+    transform: translateY(calc(var(--k2-lift) * -1));
+  }
+}
+
+/* 选中态：品牌色描边 + 抬起 */
+.k2-card--current {
+  border-color: var(--k2-c-primary);
+  box-shadow: var(--k2-shadow-md);
+}
+
+/* 指标卡这类不需要浮起来的容器 */
+.k2-card--flat {
+  box-shadow: var(--k2-shadow-xs);
+  background: var(--k2-c-surface2);
+}
+
+.k2-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--k2-s-4);
+  min-inline-size: 0;
+}
+
+.k2-card__heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-1);
+  min-inline-size: 0;
+  flex: 1;
+}
+
+.k2-card__title {
+  overflow: hidden;
+  font-size: var(--k2-fs-bodyLg);
+  font-weight: var(--k2-fw-semibold);
+  line-height: var(--k2-lh-tight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.k2-card__sub {
+  font-size: var(--k2-fs-body);
+  line-height: var(--k2-lh-snug);
+  color: var(--k2-c-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.k2-card__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+  /* 卡被拉高时把脚线压到底，同排卡片才对得齐 */
+  margin-block-start: auto;
+}
+
+.k2-card__sep {
+  block-size: 1px;
+  background: var(--k2-c-border-soft);
+  border: 0;
+}
+
+/* ---------- 数值排版：关键数字走等宽字，单位缩小 ---------- */
+.k2-num {
+  font-family: var(--k2-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--k2-fs-h1);
+  font-weight: var(--k2-fw-bold);
+  line-height: var(--k2-lh-tight);
+  letter-spacing: var(--k2-ls-tight);
+}
+
+.k2-num--sm {
+  font-size: var(--k2-fs-title);
+  font-weight: var(--k2-fw-semibold);
+}
+
+/* 数值位放的是短词而不是数字（如 RSSHub 的「连通」）：等宽字体只服务数字，词回 sans */
+.k2-num--text {
+  font-family: var(--k2-font-sans);
+  /* 数值位放的是词（「连通」这种）：比大数字小一号，词不该有数字的重量 */
+  font-size: var(--k2-fs-h2);
+}
+
+.k2-unit {
+  margin-inline-start: var(--k2-s-1);
+  font-family: var(--k2-font-sans);
+  font-size: var(--k2-fs-caption);
+  font-weight: var(--k2-fw-regular);
+  color: var(--k2-c-text-muted);
+}
+
+.k2-metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-2);
+}
+
+.k2-metric__label {
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+.k2-metric__line {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--k2-s-4);
+}
+
+/* 数值下面一小段品牌渐变短条：英雄数值的强调位 */
+.k2-metric__accent {
+  inline-size: 28px;
+  block-size: 4px;
+  border-radius: var(--k2-r-full);
+  background: var(--k2-grad-brand);
+}
+
+/* ---------- 迷你柱状图 ---------- */
+.k2-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--k2-s-1);
+  block-size: var(--k2-s-8);
+}
+
+.k2-bars__bar {
+  inline-size: var(--k2-s-1);
+  border-radius: var(--k2-r-full);
+  /* 历史柱统一用品牌色淡描，只有「今天」那根带语义色，避免八张卡各一色显花 */
+  background: color-mix(in srgb, var(--k2-c-primary) 26%, transparent);
+}
+
+.k2-bars__bar--on {
+  background: var(--c);
+}
+
+/* ---------- 列表行 ---------- */
+.k2-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.k2-row {
+  display: grid;
+  grid-template-columns: var(--k2-tile) 1fr auto;
+  align-items: center;
+  gap: var(--k2-s-4);
+  min-block-size: var(--k2-row-h);
+  padding-inline: var(--k2-s-3);
+  margin-inline: calc(var(--k2-s-2) * -1);
+  border-radius: var(--k2-r-md);
+  transition: background var(--k2-motion-fast) var(--k2-motion-ease);
+}
+
+.k2-row + .k2-row {
+  box-shadow: inset 0 1px 0 var(--k2-c-border-soft);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-row:hover {
+    background: var(--k2-c-wash-hover);
+  }
+}
+
+.k2-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-1);
+  min-inline-size: 0;
+}
+
+.k2-row__title {
+  font-size: var(--k2-fs-body);
+  font-weight: var(--k2-fw-medium);
+}
+
+.k2-row__sub {
+  font-size: var(--k2-fs-caption);
+  line-height: var(--k2-lh-snug);
+  color: var(--k2-c-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.k2-row__side {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-3);
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+/* ---------- 按钮与文字链：一张卡最多一个实心主操作 ---------- */
+.k2-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--k2-s-2);
+  block-size: var(--k2-control-h);
+  padding-inline: var(--k2-s-4);
+  border: 1px solid transparent;
+  border-radius: var(--k2-r-md);
+  font-family: inherit;
+  font-size: var(--k2-fs-body);
+  font-weight: var(--k2-fw-medium);
+  cursor: pointer;
+  transition:
+    background var(--k2-motion-fast) var(--k2-motion-ease),
+    border-color var(--k2-motion-fast) var(--k2-motion-ease);
+}
+
+.k2-btn--sm {
+  block-size: var(--k2-control-h-sm);
+  padding-inline: var(--k2-s-3);
+  font-size: var(--k2-fs-caption);
+}
+
+.k2-btn--primary {
+  background: var(--k2-c-primary);
+  color: var(--k2-c-on-primary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-btn--primary:hover {
+    background: var(--k2-c-primary-hover);
+  }
+}
+
+.k2-btn--primary:active {
+  background: var(--k2-c-primary-active);
+}
+
+.k2-btn--ghost {
+  background: transparent;
+  border-color: var(--k2-c-border);
+  color: var(--k2-c-text);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-btn--ghost:hover {
+    background: var(--k2-c-wash-hover);
+  }
+}
+
+.k2-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k2-s-1);
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--k2-c-primary);
+  font-family: inherit;
+  font-size: var(--k2-fs-body);
+  cursor: pointer;
+}
+
+/* ---------- 表单零件：字段行 / 输入 / 文本域 / 下拉 / 开关行 / 标签输入 / 采集时间 ----------
+   弹窗与设置页共用。字段行只管排版（标签在上、说明在下），控件自己带描边与高度。 */
+.k2-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-2);
+  min-inline-size: 0;
+}
+
+/* 设置项的标题要比说明重一档：标题正文色 + 正文字号 + 中粗，说明保持淡色小字 */
+.k2-field__label {
+  color: var(--k2-c-text);
+  font-size: var(--k2-fs-body);
+  font-weight: var(--k2-fw-medium);
+}
+
+.k2-field__hint {
+  color: var(--k2-c-text-faint);
+  font-size: var(--k2-fs-caption);
+}
+
+/* 校验与保存失败的提示：就贴在控件下面，不用页面级的提示条 */
+.k2-field__error {
+  display: block;
+  margin-block-start: var(--k2-s-2);
+  color: var(--k2-c-danger-ink);
+  font-size: var(--k2-fs-caption);
+}
+
+/* 分组说明与下面表单之间多留一档呼吸：卡片默认 16px（--k2-s-4），这里加到 24px */
+.k2-set > .k2-card__head {
+  margin-block-end: var(--k2-s-2);
+}
+
+/* ---------- Toast：右下角浮层（窄屏贴底），带倒计时条 ---------- */
+.k2-toasts {
+  position: fixed;
+  inset-block-end: var(--k2-s-6);
+  inset-inline-end: var(--k2-s-6);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-2);
+  inline-size: min(360px, calc(100vw - var(--k2-s-6) * 2));
+  pointer-events: none;
+}
+
+.k2-toast {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--k2-s-2);
+  overflow: hidden;
+  padding: var(--k2-s-3) var(--k2-s-4);
+  background: var(--k2-c-surface);
+  border: 1px solid var(--k2-c-border);
+  /* 左侧一道语义色，语气一眼可辨（颜色来自 .k2-t-*） */
+  border-inline-start: 3px solid var(--c, var(--k2-c-border));
+  border-radius: var(--k2-r-lg);
+  box-shadow: var(--k2-shadow-lg);
+  color: var(--k2-c-text);
+  font-size: var(--k2-fs-body);
+  line-height: var(--k2-lh-snug);
+  pointer-events: auto;
+}
+
+.k2-toast__icon {
+  flex: none;
+  margin-block-start: 1px;
+  font-size: 18px;
+  color: var(--c-ink, var(--k2-c-text-muted));
+}
+
+.k2-toast__text {
+  flex: 1;
+  min-inline-size: 0;
+  /* 长错误原文允许折行，但不许把浮层撑宽 */
+  overflow-wrap: anywhere;
+}
+
+.k2-toast__close {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 22px;
+  block-size: 22px;
+  margin: -2px -6px 0 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--k2-r-sm);
+  color: var(--k2-c-text-faint);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-toast__close:hover {
+    background: var(--k2-c-wash-hover);
+    color: var(--k2-c-text);
+  }
+}
+
+/* 倒计时条：宽度按自己的 duration 线性收完，悬停时冻住 */
+.k2-toast__bar {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  inline-size: 100%;
+  block-size: 2px;
+  background: var(--c, var(--k2-c-border));
+  transform-origin: left center;
+  animation-name: k2-toast-life;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-toast:hover .k2-toast__bar {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes k2-toast-life {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.k2-toast-enter-active,
+.k2-toast-leave-active {
+  transition:
+    opacity var(--k2-motion-base) var(--k2-motion-ease),
+    transform var(--k2-motion-base) var(--k2-motion-ease);
+}
+
+.k2-toast-enter-from,
+.k2-toast-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.k2-toast-leave-active {
+  position: absolute;
+}
+
+/* RSSHub 测试结果：成功绿、失败红（要盖掉 hint 的淡色，所以用双类提高优先级） */
+.k2-field__hint.k2-testresult--ok {
+  color: var(--k2-c-success-ink);
+}
+
+.k2-field__hint.k2-testresult--bad {
+  color: var(--k2-c-danger-ink);
+}
+
+/* 每组设置卡自己的脚部：左边是失败提示，右边是重置与保存 */
+.k2-set__foot {
+  justify-content: flex-end;
+  gap: var(--k2-s-3);
+}
+
+.k2-set__foot .k2-field__error {
+  margin-block-start: 0;
+  margin-inline-end: auto;
+}
+
+.k2-field__err {
+  color: var(--k2-c-danger-ink);
+  font-size: var(--k2-fs-caption);
+}
+
+/* 必填的那颗星 */
+.k2-field__req {
+  margin-inline-start: 2px;
+  color: var(--k2-c-danger-ink);
+}
+
+/* 字段里的一行：输入框占满，后面可以跟一个动作按钮 */
+.k2-field__row {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+  min-inline-size: 0;
+}
+
+/* 输入行：输入框 + 固定前缀 + 右端清空叉（叉浮在行内，不占布局） */
+.k2-inputwrap {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0;
+  min-inline-size: 0;
+}
+
+.k2-inputwrap > .k2-select {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/* 清空叉：有内容才出现，点了把值清空 */
+.k2-inputwrap__clear {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: var(--k2-s-2);
+  display: inline-grid;
+  place-items: center;
+  inline-size: 28px;
+  block-size: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--k2-r-full);
+  background: none;
+  color: var(--k2-c-text-faint);
+  translate: 0 -50%;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-inputwrap__clear:hover {
+    background: var(--k2-c-wash-hover);
+    color: var(--k2-c-text);
+  }
+}
+
+/* 有叉时给文字让出位置，别顶到叉下面 */
+.k2-inputwrap.is-clearable .k2-input,
+.k2-inputwrap.is-clearable .k2-select {
+  padding-inline-end: 40px;
+}
+
+/* 四种控件共用一副骨架：同一高度、同一描边、同一圆角 */
+.k2-input,
+.k2-textarea,
+.k2-select,
+.k2-tags {
+  inline-size: 100%;
+  border: 1px solid var(--k2-c-border);
+  border-radius: var(--k2-r-md);
+  background: var(--k2-c-surface);
+  box-shadow: var(--k2-shadow-xs);
+  color: var(--k2-c-text);
+  font-family: inherit;
+  font-size: var(--k2-fs-body);
+  transition:
+    border-color var(--k2-motion-fast) var(--k2-motion-ease),
+    background var(--k2-motion-fast) var(--k2-motion-ease);
+}
+
+.k2-input {
+  block-size: var(--k2-field-h);
+  padding-inline: var(--k2-s-4);
+}
+
+.k2-input::placeholder,
+.k2-textarea::placeholder {
+  color: var(--k2-c-text-faint);
+}
+
+/* 机器串（路由、表达式）走等宽；中文一律留 sans */
+.k2-input--mono,
+.k2-textarea--mono {
+  font-family: var(--k2-font-mono);
+  font-size: var(--k2-fs-caption);
+}
+
+/* 报错态：只把描边换成危险色，字段行下面那句由 .k2-field__err 说 */
+.k2-input--err,
+.k2-textarea--err {
+  border-color: var(--k2-c-danger);
+}
+
+.k2-textarea {
+  min-block-size: 96px;
+  padding: var(--k2-s-3) var(--k2-s-4);
+  line-height: var(--k2-lh-normal);
+  resize: vertical;
+}
+
+/* 下拉：触发器和输入框同一副骨架，右侧一个箭头；选项面板复用 .k2-menu */
+.k2-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--k2-s-3);
+  block-size: var(--k2-field-h);
+  padding-inline: var(--k2-s-4);
+  text-align: start;
+  cursor: pointer;
+}
+
+.k2-select__ph {
+  color: var(--k2-c-text-faint);
+}
+
+.k2-select__caret {
+  flex: none;
+  color: var(--k2-c-text-faint);
+}
+
+/* 开关行：标签与说明在左，开关贴右 */
+.k2-switchrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--k2-s-4);
+  min-block-size: var(--k2-field-h);
+}
+
+.k2-switchrow__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-1);
+  min-inline-size: 0;
+}
+
+/* 标签输入：一张会长高的框，里面排芯片，末尾跟一个没有描边的输入位 */
+.k2-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--k2-s-2);
+  min-block-size: var(--k2-field-h);
+  padding: var(--k2-s-2) var(--k2-s-3);
+}
+
+/* 标签输入里的标签：文字整段看得见（不给省略号），一条装不下就自己换行，容器跟着长高 */
+.k2-tags .k2-chip--tag {
+  block-size: auto;
+  min-block-size: var(--k2-chip-h);
+  max-inline-size: 100%;
+  padding-block: 2px;
+}
+
+.k2-tags .k2-chip__text {
+  flex: 1 1 auto;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+
+.k2-tags__input {
+  /* 基准给 12ch：标签占满一行时输入框自己换到下一行，而不是硬撑出去 */
+  flex: 1 1 12ch;
+  min-inline-size: 0;
+  block-size: calc(var(--k2-field-h) - 2 * var(--k2-s-2));
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+/* 采集时间：一排预设 + 表达式输入 + 下次时间 */
+.k2-sched {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--k2-s-2);
+}
+
+.k2-preset {
+  block-size: var(--k2-control-h-sm);
+  padding-inline: var(--k2-s-3);
+  border: 1px solid var(--k2-c-border);
+  border-radius: var(--k2-r-full);
+  background: var(--k2-c-surface);
+  color: var(--k2-c-text-muted);
+  font-family: inherit;
+  font-size: var(--k2-fs-caption);
+  cursor: pointer;
+  transition:
+    background var(--k2-motion-fast) var(--k2-motion-ease),
+    border-color var(--k2-motion-fast) var(--k2-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-preset:hover {
+    background: var(--k2-c-wash-hover);
+  }
+}
+
+/* ---------- 栅格 ---------- */
+.k2-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--k2-gap);
+}
+
+/* 切换亮暗时先关掉过渡、强制重排再打开：否则主题切换会被 box-shadow 动画拖住。
+   预览页在写变量前后加/去 .k2-instant（同步强制重排，不依赖 rAF）。 */
+.k2-instant,
+.k2-instant * {
+  transition: none !important;
+}
+
+/* 触摸端不做位移，只加深阴影 */
+@media (hover: none) {
+  .k2-card--interactive:hover {
+    transform: none;
+  }
+}
+
+/* ---------- 键盘焦点：所有可点元素共用一圈焦点环 ---------- */
+.k2-btn:focus-visible,
+.k2-link:focus-visible,
+.k2-input:focus-visible,
+.k2-textarea:focus-visible,
+.k2-select:focus-visible,
+.k2-preset:focus-visible,
+.k2-card--interactive:focus-visible {
+  outline: 3px solid var(--k2-c-focus-ring);
+  outline-offset: 2px;
+}
+
+/* 标签输入是一张框，焦点落在里面的输入位，环要画在框上 */
+.k2-tags:focus-within {
+  outline: 3px solid var(--k2-c-focus-ring);
+  outline-offset: 2px;
+}
+
+/* 静态演示用：预览页要把焦点环摊开看，不能等键盘聚焦 */
+.k2-focus-demo {
+  outline: 3px solid var(--k2-c-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---------- 禁用态：底与文字都用专门的色，不靠降透明度 ---------- */
+.k2-btn--disabled,
+.k2-btn:disabled {
+  background: var(--k2-c-disabled-bg);
+  border-color: transparent;
+  color: var(--k2-c-disabled-text);
+  cursor: not-allowed;
+}
+
+.k2-input:disabled,
+.k2-textarea:disabled,
+.k2-select:disabled,
+/* ---------- 加载骨架：底色 + 一道扫光 ---------- */
+.k2-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--k2-c-skeleton);
+  border-radius: var(--k2-r-xs);
+}
+
+.k2-skeleton--line {
+  block-size: var(--k2-s-3);
+}
+
+.k2-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--k2-c-skeleton-sheen), transparent);
+  /* 扫光时长是组件自己的常数，不属于 token 阶 */
+  animation: k2-sheen 1.4s var(--k2-motion-ease) infinite;
+}
+
+@keyframes k2-sheen {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* ---------- 进度 / 占比条：底色轨道 + 语义色填充 ---------- */
+.k2-track {
+  block-size: var(--k2-s-2);
+  border-radius: var(--k2-r-full);
+  background: var(--k2-c-track);
+  overflow: hidden;
+}
+
+.k2-track__fill {
+  block-size: 100%;
+  border-radius: var(--k2-r-full);
+  background: var(--c);
+}
+
+/* ---------- 关联高亮：桌面端点一项，同组其他项一起亮 ---------- */
+.k2-mark {
+  background: var(--k2-c-mark);
+  box-shadow: inset 0 0 0 1px var(--k2-c-mark-border);
+  border-radius: var(--k2-r-xs);
+}
+
+/* 鼠标停在一张监听 / 动作卡上时，同一组里跟它有关联的卡片（含它自己）一起亮：
+   监听 ↔ 动作两个方向都算。样式取 style-lab 那套关联高亮（.k2-mark 的淡底 + 一圈内描边），
+   卡片自己有圆角和外框，所以这里只借它这两个声明。触屏点一下不该留下高亮，故只在有鼠标的设备生效 */
+@media (hover: hover) and (pointer: fine) {
+  .k2-flip.is-linked .k2-card {
+    background: var(--k2-c-mark);
+    box-shadow: inset 0 0 0 1px var(--k2-c-mark-border);
+  }
+}
+
+/* ---------- 遮罩（弹窗底）---------- */
+/* ---------- 图标尺寸三档 ---------- */
+.k2-icon--sm {
+  font-size: var(--k2-icon-sm);
+}
+
+.k2-icon--md {
+  font-size: var(--k2-icon-md);
+}
+
+.k2-icon--lg {
+  font-size: var(--k2-icon-lg);
+}
+
+/* ---------- 外壳骨架：浮起侧栏 + 顶栏 + 内容区 ----------
+   侧栏那一列用 auto 跟着卡片自己的宽度走：宽度是能过渡的属性，收起动画不依赖
+   网格列宽的插值（老浏览器不支持时也只是不animate，不会塌版）。 */
+.k2-shell {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: var(--k2-topbar-h) 1fr;
+  gap: var(--k2-s-3);
+  padding: var(--k2-s-3);
+  border-radius: var(--k2-r-lg);
+  background: var(--k2-c-surface2);
+  transition: grid-template-columns var(--k2-motion-base) var(--k2-motion-ease);
+}
+
+.k2-shell__topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-3);
+  padding-inline: var(--k2-s-5);
+  border-radius: var(--k2-r-md);
+  background: var(--k2-c-surface);
+  box-shadow: var(--k2-shadow-xs);
+}
+
+/* ---------- 侧栏：浮起的圆角卡片，收起成图标轨道 ---------- */
+/* 组件根的包裹层退出布局：外壳是网格，隔一层 div 的话侧栏就不是网格项，
+   高度只按内容撑（几百像素），下面留一大截空 —— 收起来看着「没到窗口底」。
+   display: contents 后，遮罩 / 侧栏 / 底部导航直接当外壳的子元素定位。 */
+.k2-nav-wrap {
+  display: contents;
+}
+
+.k2-nav {
+  position: relative;
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-2);
+  inline-size: var(--k2-sidebar-w);
+  padding: var(--k2-s-3);
+  border-radius: var(--k2-r-lg);
+  background: var(--k2-c-surface);
+  box-shadow: var(--k2-shadow-sm);
+  transition: inline-size var(--k2-motion-base) var(--k2-motion-ease);
+}
+
+/* 收起：整块收成图标轨道宽度 */
+.k2-shell--rail .k2-nav {
+  inline-size: var(--k2-sidebar-rail-w);
+}
+
+.k2-shell--rail .k2-nav__brand {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.k2-shell--rail .k2-nav__logo {
+  inline-size: 40px;
+  block-size: 40px;
+}
+
+.k2-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-3);
+  block-size: var(--k2-control-h);
+  padding-inline: var(--k2-s-2);
+}
+
+.k2-nav__logo {
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  flex: none;
+  inline-size: 224px;
+  block-size: 40px;
+  max-inline-size: 100%;
+}
+
+.k2-nav__name {
+  overflow: hidden;
+  font-size: var(--k2-fs-title);
+  font-weight: var(--k2-fw-semibold);
+  color: var(--k2-c-text);
+  white-space: nowrap;
+  transition: opacity var(--k2-motion-fast) var(--k2-motion-ease);
+}
+
+.k2-nav__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-1);
+}
+
+.k2-nav__item {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-3);
+  block-size: var(--k2-control-h);
+  padding-inline: var(--k2-s-2);
+  border: 0;
+  border-radius: var(--k2-r-sm);
+  background: transparent;
+  color: var(--k2-c-text-muted);
+  font-size: var(--k2-fs-body);
+  text-align: start;
+  /* 导航项是 <a>，不写这条会带上浏览器默认下划线 */
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background var(--k2-motion-fast) var(--k2-motion-ease),
+    color var(--k2-motion-fast) var(--k2-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-nav__item:hover {
+    background: var(--k2-c-wash-hover);
+    color: var(--k2-c-text);
+  }
+}
+
+.k2-nav__item.is-active {
+  background: var(--k2-c-primary-soft);
+  color: var(--k2-c-primary-ink);
+}
+
+.k2-nav__icon {
+  flex: none;
+  font-size: var(--k2-icon-md);
+}
+
+.k2-nav__label {
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity var(--k2-motion-fast) var(--k2-motion-ease);
+}
+
+/* 收起：文字让位，图标位置钉住（卡片内边距、条目内边距都不动）。
+   必须整条退出布局：只靠 overflow 裁切、宽度不够时会露出半个字 */
+.k2-shell--rail .k2-nav__label,
+.k2-shell--rail .k2-nav__name {
+  inline-size: 0;
+  opacity: 0;
+}
+
+/* 侧栏底部的说明行：一直是次级小字 */
+.k2-nav__foot {
+  overflow: hidden;
+  padding-inline: var(--k2-s-2);
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-faint);
+  white-space: nowrap;
+}
+
+/* 折叠把手：贴在侧栏右上角边缘，一半在卡片里一半在外 */
+.k2-nav__handle {
+  position: absolute;
+  inset-block-start: var(--k2-s-3);
+  inset-inline-end: calc(var(--k2-s-2) * -1);
+  display: grid;
+  place-items: center;
+  inline-size: var(--k2-s-6);
+  block-size: var(--k2-s-6);
+  padding: 0;
+  border: 1px solid var(--k2-c-border);
+  border-radius: var(--k2-r-full);
+  background: var(--k2-c-surface);
+  color: var(--k2-c-text-muted);
+  box-shadow: var(--k2-shadow-xs);
+  cursor: pointer;
+  transition:
+    background var(--k2-motion-fast) var(--k2-motion-ease),
+    color var(--k2-motion-fast) var(--k2-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-nav__handle:hover {
+    background: var(--k2-c-surface3);
+    color: var(--k2-c-text);
+  }
+}
+
+.k2-nav__handle .mdi {
+  font-size: var(--k2-icon-sm);
+  transition: transform var(--k2-motion-base) var(--k2-motion-ease);
+}
+
+.k2-shell--rail .k2-nav__handle .mdi {
+  transform: rotate(180deg);
+}
+
+/* 页面本体不要外边距：浏览器默认给 body 8px，外壳靠高度撑时页面会多出一条滚动量，
+   滚到底就露出 8px 的缝，侧栏看着永远差一点没到窗口底边。 */
+html,
+body {
+  margin: 0;
+}
+
+/* ---------- 应用外壳：铺满视口 + 内容区自己滚 ---------- */
+/* 用 fixed + inset:0，不用 100dvh：外壳外层还套着 v-app 的容器，靠高度撑对不齐视口四边 */
+.k2-shell--app {
+  position: fixed;
+  inset: 0;
+  block-size: auto;
+  /* 底部不留 padding：侧栏一直接到窗口底边（顶/左右仍留 12px，保持浮起卡片的感觉） */
+  padding: var(--k2-s-3) var(--k2-s-3) 0;
+  border-radius: 0;
+  background: var(--k2-c-bg);
+}
+
+.k2-shell__content {
+  grid-column: 2;
+  grid-row: 2;
+  min-block-size: 0;
+  /* 滚动条占位恒定预留：内容长短不再改变可用宽度，页面不会左右抖 */
+  scrollbar-gutter: stable;
+  overflow-y: auto;
+  padding: var(--k2-page-pad);
+}
+
+.k2-shell__spacer {
+  flex: 1;
+}
+
+.k2-shell__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+}
+
+/* 抽屉开关只有窄屏要：桌面藏掉。
+   这里必须带上 .k2-iconbtn 一起选，否则会被下面 .k2-iconbtn 的 display: inline-grid 盖掉
+   （同权重、后写的赢），桌面上就会多出一个打不开抽屉的汉堡按钮。 */
+@media (min-width: 1184px) {
+  .k2-iconbtn.k2-shell__menu {
+    display: none;
+  }
+}
+
+.k2-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  padding: 0;
+  border: 0;
+  background: var(--k2-c-overlay);
+}
+
+/* ---------- 页面：页头 + 分区标题 ---------- */
+/* 默认 1120 上限并居中；窗口比它窄时等于铺满 */
+.k2-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-5);
+  margin-inline: auto;
+  max-inline-size: var(--k2-w-default);
+}
+
+/* 需要更窄或更宽的页面自己换一档：窄页（表单类）与宽页（列表类） */
+.k2-page--narrow {
+  max-inline-size: var(--k2-w-narrow);
+}
+
+.k2-page--wide {
+  max-inline-size: var(--k2-w-wide);
+}
+
+.k2-page__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--k2-s-4);
+}
+
+.k2-page__title {
+  font-size: var(--k2-fs-h2);
+  font-weight: var(--k2-fw-semibold);
+  letter-spacing: var(--k2-ls-tight);
+}
+
+.k2-page__note {
+  font-size: var(--k2-fs-body);
+  color: var(--k2-c-text-muted);
+}
+
+.k2-sec__title {
+  font-size: var(--k2-fs-bodyLg);
+  font-weight: var(--k2-fw-semibold);
+}
+
+.k2-sec {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-3);
+}
+
+/* 两栏：最近事件 + 异常记录（窄屏上下排） */
+.k2-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--k2-gap);
+  align-items: start;
+}
+
+/* 活跃区两栏：左宽右窄（异常卡比事件列表窄一点），与参考稿一致；
+   窄屏收单列由下面 @media 里的 .k2-cols 规则负责（同优先级、写在后面） */
+.k2-cols--activity {
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: var(--k2-s-4);
+}
+
+.k2-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.k2-card__note {
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+/* 异常卡里的错误原文：正文字号、正常字色，别弱化成副文案 */
+.k2-card__message {
+  margin: 0;
+  font-size: var(--k2-fs-body);
+  color: var(--k2-c-text);
+}
+
+/* 卡片里的一行行清单：行与行之间用内阴影分线，卡片自身不描边 */
+.k2-list {
+  overflow: hidden;
+}
+
+.k2-list__row {
+  padding: var(--k2-s-4);
+}
+
+.k2-list__row + .k2-list__row {
+  box-shadow: inset 0 1px 0 var(--k2-c-border-soft);
+}
+
+.k2-list__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.k2-list__side {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-end;
+}
+
+.k2-list__chevron {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: var(--k2-icon-lg);
+  block-size: var(--k2-icon-lg);
+  border-radius: var(--k2-r-full);
+  color: var(--k2-c-text-faint);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-list__row:hover .k2-list__chevron {
+    background: var(--k2-c-surface3);
+    color: var(--k2-c-text);
+  }
+}
+
+.k2-list__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-4);
+  padding: var(--k2-s-3) var(--k2-s-4);
+  box-shadow: inset 0 1px 0 var(--k2-c-border-soft);
+}
+
+.k2-list__skeleton {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-4);
+}
+
+/* 骨架条：一块配图形（方块）、两块配文字（标题粗短、副文案细长） */
+.k2-skeleton--sub {
+  inline-size: 38%;
+  block-size: var(--k2-fs-caption);
+}
+
+/* 整行都是链接时：别带下划线，也别换色 */
+a.k2-row--link {
+  color: var(--k2-c-text);
+  text-decoration: none;
+}
+
+@media (max-width: 1183px) {
+  .k2-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* 上下排之后两个面板要拉开一点：16px 挤成一块，20px 才有「两张卡」的分界 */
+  .k2-cols--activity {
+    gap: var(--k2-s-5);
+  }
+}
+
+.k2-shell__body {
+  padding: var(--k2-s-5);
+  background: var(--k2-c-bg);
+}
+
+/* ---------- 开关：卡片正面的启用状态 ---------- */
+.k2-switch {
+  position: relative;
+  flex: none;
+  inline-size: 44px;
+  block-size: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--k2-r-full);
+  background: var(--k2-c-track);
+  cursor: pointer;
+  transition: background var(--k2-motion-fast) var(--k2-motion-ease);
+}
+
+.k2-switch__dot {
+  position: absolute;
+  inset-block-start: 3px;
+  inset-inline-start: 3px;
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: 50%;
+  background: var(--k2-c-surface);
+  box-shadow: var(--k2-shadow-knob);
+  transition: transform var(--k2-motion-base) var(--k2-motion-ease);
+}
+
+.k2-switch--on {
+  background: var(--k2-c-primary);
+}
+
+.k2-switch--on .k2-switch__dot {
+  transform: translateX(18px);
+}
+
+.k2-switch:disabled {
+  background: var(--k2-c-disabled-bg);
+  cursor: not-allowed;
+}
+
+.k2-switch:disabled .k2-switch__dot {
+  box-shadow: none;
+}
+
+/* ---------- 卡面上的图标按钮与小菜单 ---------- */
+.k2-iconbtn {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--k2-control-h-sm);
+  block-size: var(--k2-control-h-sm);
+  padding: 0;
+  border: 0;
+  border-radius: var(--k2-r-sm);
+  background: transparent;
+  color: var(--k2-c-text-muted);
+  cursor: pointer;
+  transition: background var(--k2-motion-fast) var(--k2-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-iconbtn:hover {
+    background: var(--k2-c-wash-hover);
+    color: var(--k2-c-text);
+  }
+}
+
+/* 页头的主操作（新建这类）用实心 */
+.k2-iconbtn--primary {
+  background: var(--k2-c-primary);
+  color: var(--k2-c-on-primary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-iconbtn--primary:hover {
+    background: var(--k2-c-primary-hover);
+    color: var(--k2-c-on-primary);
+  }
+}
+
+/* 危险动作（删除这类）挂这个修饰类：平时就显红，悬停给一层红底 */
+.k2-iconbtn--danger {
+  color: var(--k2-c-danger-ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-iconbtn--danger:hover {
+    background: var(--k2-c-danger-soft);
+    color: var(--k2-c-danger-ink);
+  }
+}
+
+/* 到上限这类「还能看见但点不动」的按钮：留着位置，只是不再响应 */
+.k2-iconbtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-iconbtn:disabled:hover {
+    background: transparent;
+    color: var(--k2-c-text-muted);
+  }
+}
+
+/* 低权重危险：平时保持中性，悬停才显危险色（列表里的关闭 / 忽视） */
+@media (hover: hover) and (pointer: fine) {
+  .k2-iconbtn--danger-hover:hover {
+    background: var(--k2-c-danger-soft);
+    color: var(--k2-c-danger-ink);
+  }
+}
+
+/* 长列表限高滚动：仪表盘等长列表在卡片内侧滚，避免把整页撑长、两列高度失衡 */
+.k2-scroll {
+  max-block-size: min(460px, 50vh);
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--k2-c-border) transparent;
+}
+
+/* 长列表（如全球时区）在面板内侧限高滚动：直接限在面板上会和 Vuetify 的开合动画冲突，面板会渲染成一条 */
+/* 重置那一块：危险按钮 + 就地结果 */
+.k2-menu__scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-block-size: min(320px, 30vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--k2-c-border) transparent;
+}
+
+.k2-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--k2-s-2);
+  background: var(--k2-c-surface);
+  border: 1px solid var(--k2-c-border-soft);
+  border-radius: var(--k2-r-lg);
+  box-shadow: var(--k2-shadow-lg);
+}
+
+.k2-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-3);
+  padding: var(--k2-s-2) var(--k2-s-3);
+  border: 0;
+  border-radius: var(--k2-r-sm);
+  background: none;
+  color: var(--k2-c-text);
+  font-family: inherit;
+  font-size: var(--k2-fs-body);
+  text-align: start;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-menu__item:hover {
+    background: var(--k2-c-wash-hover);
+  }
+}
+
+.k2-menu__item--danger {
+  color: var(--k2-c-danger-ink);
+}
+
+/* 菜单里暂时不能点的项（例：停用的源不给试抓）：灰掉、不响应悬停 */
+.k2-menu__item:disabled {
+  color: var(--k2-c-disabled-text);
+  cursor: not-allowed;
+}
+
+/* 菜单项右侧的一句附注（例：RSSHub 没配时的「前往配置」） */
+.k2-menu__hint {
+  margin-inline-start: auto;
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+/* 这一项当前看起来不可选，但点它是去做别的（例：去配 RSSHub） */
+.k2-menu__item--muted {
+  color: var(--k2-c-disabled-text);
+}
+
+/* 菜单里去做别的事（不是选中某一项）：用品牌色标出来，例：去新建通知渠道 */
+.k2-menu__item--accent {
+  color: var(--k2-c-primary-ink);
+}
+
+/* 菜单里的分隔线：把「去别处做点什么」和上面的选项分开 */
+.k2-menu__sep {
+  margin-block: var(--k2-s-1);
+  border: 0;
+  border-block-start: 1px solid var(--k2-c-border-soft);
+}
+
+/* 「LLM+」模式名：星芒 + 绿色；名字只由 LlmPlusTag 画，外面用 .k2-mode-line 包一层对齐 */
+.k2-mode-line {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k2-s-1);
+  min-inline-size: 0;
+}
+
+.k2-llmplus {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  /* LLM+ 自己的绿（比 success 亮一点），只有这一处用 */
+  color: var(--k2-c-llm-plus);
+  font-weight: var(--k2-fw-medium);
+  white-space: nowrap;
+}
+
+.k2-llmplus .mdi {
+  font-size: var(--k2-fs-caption);
+}
+
+/* 带前缀的输入框（例：RSSHub 实例地址 + 路由）：前缀只展示，不进值 */
+.k2-inputgroup {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow: hidden;
+}
+
+.k2-inputgroup__prefix {
+  /* 前缀（例如 RSSHub 的站点地址）能让步：窄屏先把它压短并省略，
+     路由输入框始终留得住宽度（完整前缀看 title） */
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  padding-inline: var(--k2-s-3);
+  color: var(--k2-c-text-muted);
+  font-family: var(--k2-font-mono);
+  font-size: var(--k2-fs-body);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.k2-inputgroup .k2-input {
+  /* 前缀越短，这里越宽：路由至少拿六成 */
+  flex: 1 1 60%;
+  min-inline-size: 0;
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+
+/* 窄屏：前缀和输入各占一行，长前缀不再把输入挤没 */
+@media (max-width: 1183px) {
+  .k2-inputwrap.k2-inputgroup {
+    flex-direction: column;
+    align-items: stretch;
+    overflow: visible;
+  }
+
+  .k2-inputgroup__prefix {
+    flex: none;
+    padding-block: var(--k2-s-2);
+    border: 1px solid var(--k2-c-border);
+    border-block-end: 0;
+    border-start-start-radius: var(--k2-r-md);
+    border-start-end-radius: var(--k2-r-md);
+    background: var(--k2-c-surface2);
+  }
+
+  .k2-inputgroup .k2-input {
+    flex: none;
+    border-start-start-radius: var(--k2-r-md);
+    border-start-end-radius: var(--k2-r-md);
+  }
+
+  /* 清空叉跟着输入那一行居中：只有前缀分行的组合框才需要——
+     基准规则是按整块居中，前缀自占一行时整块的中心已经不在输入那一行了。
+     translate 必须显式归零：基准规则里那个 -50% 是配「上边 50%」用的，
+     这里改成从下边定位，再留着它就会把叉顶上去半个身位。 */
+  .k2-inputwrap.k2-inputgroup.is-clearable .k2-inputwrap__clear {
+    inset-block-start: auto;
+    inset-block-end: calc((var(--k2-field-h) - 28px) / 2);
+    translate: none;
+  }
+}
+
+/* ---------- 翻卡：整卡点击翻面，正反面同一高度 ---------- */
+/* 翻卡：正面留在文档流里撑高度（它是内容多的那一面），背面绝对定位盖在下面。
+   卡片高度随正面内容走，正面文字换行变多也不会被裁；背面再满也不会溢出去压到下面的「添加」按钮。
+   底线高度在 .k2-flip__inner（220），矮卡靠卡脚贴底补齐。
+   注意：3D 容器不能用 grid/flex 叠两面（浏览器会把 3D 压平、翻面就失效）。 */
+.k2-flip {
+  perspective: 1200px;
+}
+
+.k2-flip__inner {
+  position: relative;
+  /* 三种卡片同高：底线取最高的那一种正面自然高度（动作卡带头 + 渠道 + 模板 + 卡脚 ≈ 210px），
+     留一点余量到 220。高度由正面撑出来（正面自己也带这条底线），背面只负责铺满，不参与撑高。 */
+  min-block-size: 220px;
+  transform-style: preserve-3d;
+  transition: transform var(--k2-motion-base) var(--k2-motion-ease);
+}
+
+.k2-flip--back .k2-flip__inner {
+  transform: rotateY(180deg);
+}
+
+.k2-flip__face {
+  display: flex;
+  flex-direction: column;
+  backface-visibility: hidden;
+}
+
+/* 正面在文档流里：卡片多高由它的内容决定（底线与 .k2-flip__inner 一致） */
+.k2-flip__face--front {
+  min-block-size: 220px;
+}
+
+/* 背面绝对定位铺满正面：它比正面矮，盖在下面，内容再多也不撑高卡片 */
+.k2-flip__face--back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+
+/* ---------- 分组面板与三列 ---------- */
+.k2-group {
+  overflow: hidden;
+  background: var(--k2-c-surface);
+  border: 1px solid var(--k2-c-border-soft);
+  border-radius: var(--k2-r-xl);
+  box-shadow: var(--k2-shadow-sm);
+}
+
+.k2-group__head {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-4);
+  padding: var(--k2-s-4) var(--k2-s-6);
+  background-image: var(--k2-grad-wash);
+  box-shadow: inset 0 -1px 0 var(--k2-c-border-soft);
+}
+
+.k2-group__name {
+  overflow: hidden;
+  font-size: var(--k2-fs-subtitle);
+  font-weight: var(--k2-fw-semibold);
+  /* 名字长了在窄屏会折行，看着像跟简介分了家：固定一行、超出省略 */
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.k2-group__title {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.k2-group__desc {
+  overflow: hidden;
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.k2-group__counts {
+  display: flex;
+  flex: none;
+  gap: var(--k2-s-2);
+}
+
+.k2-group__body {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--k2-s-4);
+  padding: var(--k2-s-6);
+}
+
+.k2-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-3);
+  min-inline-size: 0;
+}
+
+.k2-col__head {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+.k2-col__add {
+  display: flex;
+  margin-block-start: auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--k2-s-2);
+  block-size: var(--k2-touch-h);
+  border: 1px dashed var(--k2-c-border);
+  border-radius: var(--k2-r-lg);
+  background: transparent;
+  color: var(--k2-c-text-muted);
+  font-family: inherit;
+  font-size: var(--k2-fs-body);
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-col__add:hover {
+    background: var(--k2-c-wash-hover);
+    color: var(--k2-c-text);
+  }
+}
+
+/* ---------- 弹窗与选择器（新增渠道那种） ---------- */
+.k2-dialog {
+  display: flex;
+  flex-direction: column;
+  max-block-size: calc(100dvh - var(--k2-s-8) * 2);
+  padding: var(--k2-s-6);
+  /* 正文要从内边距里让出 5px 给焦点圈（见 .k2-dialog__body），这里相应收 5px：
+     两者的和还是原来的 24px，字段的视觉位置一分不变 */
+  padding-inline: calc(var(--k2-s-6) - 5px);
+  background: var(--k2-c-surface);
+  border-radius: var(--k2-r-2xl);
+  box-shadow: var(--k2-shadow-xl);
+}
+
+.k2-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-5);
+  /* 字段多到一屏放不下时正文自己滚，标题和按钮始终留在原位 */
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--k2-c-border) transparent;
+  /* 焦点圈画在框外 3px + 偏移 2px，滚动容器（手机档正文会滚）会把它左右切掉：
+     正文自己留出这块位置，不给负外边距（负的会把正文撑得比弹窗还宽） */
+  padding-inline: 5px;
+}
+
+/* 卡脚在有富余高度时贴到卡片底边（三种卡片同高，矮的那种靠它对齐） */
+.k2-card__foot {
+  margin-block-start: auto;
+}
+
+/* ---------- 通知渠道卡：左侧色条 + 图标 + 类型 / 目标 + 测试圆点 ---------- */
+.k2-chan {
+  position: relative;
+  cursor: pointer;
+}
+
+/* 左侧色条＝渠道状态，颜色跟着 tone 类（k2-t-success / warning / danger / neutral）走 */
+
+/* 停用只淡卡头（图标 + 名称 + 类型）：卡脚那行小字和两个按钮保持原样，测试按钮也还在 */
+.k2-chan.is-off .k2-tile,
+.k2-chan.is-off .k2-row__title,
+.k2-chan.is-off .k2-row__sub {
+  opacity: 0.6;
+}
+
+.k2-chan__spacer {
+  flex: 1;
+}
+
+/* ---------- 设置卡：一张卡一件事，行＝左边标签右边控件 ---------- */
+.k2-sets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-4);
+}
+
+.k2-set__spacer {
+  flex: 1;
+}
+
+.k2-set__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--k2-s-4);
+}
+
+.k2-set__label {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+  inline-size: 240px;
+}
+
+.k2-set__control {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/* 通知页里的模板列表：和上面的设置卡片同一套骨格，一个模板占一行 */
+.k2-tpl + .k2-tpl {
+  border-block-start: 1px solid var(--k2-c-border-soft);
+}
+
+.k2-tpl__head {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+  min-block-size: var(--k2-control-h);
+}
+
+.k2-tpl__content {
+  margin: 0 0 var(--k2-s-4);
+  padding: var(--k2-s-3) var(--k2-s-4);
+  border-radius: var(--k2-r-md);
+  background: var(--k2-c-surface2);
+  color: var(--k2-c-text-muted);
+  font-family: var(--k2-font-mono);
+  font-size: var(--k2-fs-caption);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* 「新建渠道」按钮：先选类型的小菜单挂在它下面 */
+.k2-chan__new {
+  position: relative;
+}
+
+.k2-chan__new .k2-menu {
+  position: absolute;
+  inset-block-start: calc(100% + var(--k2-s-2));
+  inset-inline-end: 0;
+  z-index: 20;
+  min-inline-size: 180px;
+}
+
+/* 卡脚的测试按钮：状态直接写在这个按钮的类上（未测／测试中／连通／有警告／失败） */
+.k2-chan__test {
+  flex: none;
+  /* 按钮组贴到卡脚右端，左边只留最近推送那行字 */
+  margin-inline-start: auto;
+}
+
+.k2-chan__test.k2-chan__probe--testing {
+  opacity: 0.7;
+}
+
+.k2-chan__test.k2-chan__probe--ok {
+  border-color: var(--k2-c-success);
+  color: var(--k2-c-success);
+}
+
+.k2-chan__test.k2-chan__probe--warn {
+  border-color: var(--k2-c-warning);
+  color: var(--k2-c-warning);
+}
+
+.k2-chan__test.k2-chan__probe--fail {
+  border-color: var(--k2-c-danger);
+  color: var(--k2-c-danger);
+}
+
+/* 弹窗脚：取消在左、主操作贴右 */
+.k2-dialog__foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--k2-s-3);
+  margin-block-start: var(--k2-s-6);
+  /* 同上：按钮跟字段同一条左 / 右边缘 */
+  padding-inline: 5px;
+}
+
+/* 弹窗脚里的弹簧：把取消与主操作分别顶到两端 */
+.k2-dialog__gap {
+  flex: 1;
+}
+
+/* 确认框里的影响面：将要删掉 / 会保留 两块清单 */
+.k2-dialog__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-2);
+}
+
+.k2-dialog__section-title {
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+.k2-dialog__list {
+  margin: 0;
+  padding-inline-start: var(--k2-s-5);
+  font-size: var(--k2-fs-body);
+}
+
+/* 确认框点名的对象：走危险色，一眼知道删的是谁 */
+.k2-dialog__subject {
+  color: var(--k2-c-danger-ink);
+}
+
+/* 关键词标签上的移除小叉 */
+.k2-chip__x {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 14px;
+  block-size: 14px;
+  margin-inline-end: -2px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--k2-r-full);
+  background: none;
+  color: var(--k2-c-text-faint);
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-chip__x:hover {
+    background: var(--k2-c-wash-hover);
+    color: var(--k2-c-text);
+  }
+}
+
+/* 按钮里的转圈（保存中）：环用当前文字色，不引新颜色 */
+.k2-spin {
+  inline-size: 14px;
+  block-size: 14px;
+  border: 2px solid currentColor;
+  border-block-start-color: transparent;
+  border-radius: 50%;
+  animation: k2-spin 0.7s linear infinite;
+}
+
+@keyframes k2-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .k2-spin {
+    animation: none;
+  }
+
+  /* 倒计时条不动，但浮层还是按定时自己消失 */
+  .k2-toast__bar {
+    animation: none;
+    opacity: 0.35;
+  }
+
+  .k2-toast-enter-active,
+  .k2-toast-leave-active {
+    transition: none;
+  }
+}
+
+.k2-dialog__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--k2-s-4);
+  margin-block-end: var(--k2-s-5);
+  /* 跟正文让出的那 5px 对齐：标题和字段的左边缘还是一条线 */
+  padding-inline: 5px;
+}
+
+/* ---------- 空状态 ---------- */
+.k2-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--k2-s-3);
+  padding: var(--k2-s-9) var(--k2-s-6);
+  text-align: center;
+}
+
+.k2-empty__title {
+  font-size: var(--k2-fs-bodyLg);
+  font-weight: var(--k2-fw-semibold);
+}
+
+.k2-empty__sub {
+  max-inline-size: 46ch;
+  font-size: var(--k2-fs-body);
+  color: var(--k2-c-text-muted);
+}
+
+/* ---------- 高低分线（可拖动，配颜色区域与说明） ---------- */
+.k2-line {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-3);
+}
+
+.k2-line__drift {
+  position: relative;
+  block-size: 6px;
+  border-radius: var(--k2-r-full);
+  background: var(--k2-c-surface3);
+}
+
+.k2-line__drift-fill {
+  position: absolute;
+  inset-block: 0;
+  border-radius: var(--k2-r-full);
+  background: var(--k2-c-info-soft);
+}
+
+.k2-line__bar {
+  position: relative;
+  display: flex;
+  block-size: 56px;
+  overflow: hidden;
+  border-radius: var(--k2-r-md);
+  box-shadow: inset 0 0 0 1px var(--k2-c-border-soft);
+}
+
+.k2-line__seg--drop {
+  background: var(--k2-c-danger-soft);
+}
+
+.k2-line__seg--mid {
+  background: var(--k2-c-surface3);
+}
+
+.k2-line__seg--hit {
+  background: var(--k2-c-success-soft);
+}
+
+.k2-line__handle {
+  position: absolute;
+  inset-block: 0;
+  inline-size: 10px;
+  margin-inline-start: -5px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--k2-r-full);
+  background: var(--k2-c-surface);
+  box-shadow:
+    var(--k2-shadow-sm),
+    inset 0 0 0 2px var(--k2-c-primary);
+  cursor: ew-resize;
+}
+
+.k2-line__seg-label {
+  position: absolute;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+.k2-line__scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-faint);
+}
+
+/* ---------- 危险操作按钮：柔和底 + 深色字，两个主题都稳过对比度 ---------- */
+.k2-btn--danger {
+  background: var(--k2-c-danger-soft);
+  border-color: var(--k2-c-danger-ink);
+  color: var(--k2-c-danger-ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-btn--danger:hover {
+    filter: brightness(0.96);
+  }
+}
+
+/* ---------- 四列网格（指标卡一行四张） ---------- */
+.k2-grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1183px) {
+  .k2-grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---------- 可点击的行：hover 才叠色、才出现箭头 ---------- */
+.k2-row--link {
+  /* 可点击的列表行：图标 / 正文 / 侧信息 / 收尾箭头，四列 */
+  grid-template-columns: var(--k2-tile) minmax(0, 1fr) auto auto;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-row--link:hover {
+    background: var(--k2-c-wash-hover);
+  }
+}
+
+/* ---------- 分线组件的说明文字 ---------- */
+.k2-line__note {
+  margin: 0;
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+/* ---------- 页头右侧的动作区（按钮组） ---------- */
+.k2-page__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--k2-s-2);
+  margin-inline-start: auto;
+}
+
+/* ---------- 页头左边的标题块（标题 + 一句说明） ---------- */
+.k2-page__lead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+/* ---------- 页面级提示条（试抓结果、加载失败这类） ---------- *
+ *  颜色跟着 tone 类走（k2-t-ok / k2-t-warn / k2-t-danger…） */
+.k2-alert {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+  padding: var(--k2-s-3) var(--k2-s-4);
+  border-radius: var(--k2-r-md);
+  background: var(--c-soft, var(--k2-c-surface2));
+  color: var(--c-ink, var(--k2-c-text));
+  font-size: var(--k2-fs-body);
+}
+
+/* ---------- 列切换标签（窄屏用，桌面不出现） ---------- */
+.k2-tabs {
+  display: none;
+  align-items: center;
+  gap: var(--k2-s-4);
+  padding-inline: var(--k2-s-4);
+  box-shadow: inset 0 -1px 0 var(--k2-c-border-soft);
+}
+
+.k2-tabs__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+  padding-block: var(--k2-s-2);
+  border: 0;
+  border-block-end: 2px solid transparent;
+  background: none;
+  color: var(--k2-c-text-muted);
+  font-family: inherit;
+  font-size: var(--k2-fs-body);
+  cursor: pointer;
+}
+
+.k2-tabs__item--on {
+  border-block-end-color: var(--k2-c-primary);
+  color: var(--k2-c-text);
+}
+
+.k2-tabs__count {
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-faint);
+}
+
+/* ---------- 设置页：全局排除词管理器 ---------- */
+/* RSSHub 连接测试那一格（唯一的用途）：与输入框同排的按钮 + 就地结果 */
+.k2-words__add {
+  display: flex;
+  gap: var(--k2-s-2);
+  align-items: center;
+}
+
+/* ---------- 设置页：高低分线可视化条（可拖） ---------- */
+.k2-band {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-3);
+  inline-size: 100%;
+  padding-block: var(--k2-s-3);
+}
+
+.k2-band__track {
+  position: relative;
+  block-size: 40px;
+  border-radius: var(--k2-r-md);
+  background: var(--k2-c-surface2);
+}
+
+.k2-band__zone {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+}
+
+.k2-band__zone--drop {
+  border-start-start-radius: var(--k2-r-md);
+  border-end-start-radius: var(--k2-r-md);
+  background: var(--k2-c-danger-soft);
+}
+
+.k2-band__zone--gray {
+  background: var(--k2-c-warning-soft);
+}
+
+.k2-band__zone--hit {
+  border-start-end-radius: var(--k2-r-md);
+  border-end-end-radius: var(--k2-r-md);
+  background: var(--k2-c-success-soft);
+}
+
+.k2-band__handle {
+  position: absolute;
+  inset-block: -9px;
+  inline-size: 18px;
+  margin-inline-start: -9px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: grab;
+}
+
+.k2-band__grip {
+  display: block;
+  inline-size: 4px;
+  block-size: 58px;
+  margin-inline: auto;
+  border-radius: var(--k2-r-full);
+  background: var(--k2-c-text);
+}
+
+.k2-band__handle:focus-visible .k2-band__grip {
+  box-shadow: 0 0 0 3px var(--k2-c-focus-ring);
+}
+
+.k2-band__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--k2-s-2) var(--k2-s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.k2-band__legenditem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+.k2-band__swatch {
+  inline-size: 10px;
+  block-size: 10px;
+  border-radius: var(--k2-r-xs);
+}
+
+.k2-band__legenditem--drop .k2-band__swatch {
+  background: var(--k2-c-danger);
+}
+
+.k2-band__legenditem--gray .k2-band__swatch {
+  background: var(--k2-c-warning);
+}
+
+.k2-band__legenditem--hit .k2-band__swatch {
+  background: var(--k2-c-success);
+}
+
+.k2-band__legenditem--float .k2-band__swatch {
+  border: 1px dashed var(--k2-c-border);
+  background: transparent;
+}
+
+/* ---------- 设置页：左侧二级菜单 + 右侧分类内容 ---------- */
+.k2-sets-layout {
+  display: grid;
+  grid-template-columns: 216px minmax(0, 1fr);
+  gap: var(--k2-s-6);
+  align-items: start;
+}
+
+.k2-subnav {
+  position: sticky;
+  top: var(--k2-s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-1);
+  padding: var(--k2-s-2);
+  border: 1px solid var(--k2-c-border-soft);
+  border-radius: var(--k2-r-lg);
+  background: var(--k2-c-surface);
+}
+
+.k2-subnav__item {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-3);
+  padding: var(--k2-s-3);
+  border: 0;
+  border-radius: var(--k2-r-md);
+  background: none;
+  color: var(--k2-c-text-muted);
+  font-family: inherit;
+  font-size: var(--k2-fs-body);
+  text-align: start;
+  cursor: pointer;
+}
+
+.k2-subnav__item .mdi {
+  inline-size: 20px;
+  font-size: 20px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-subnav__item:hover {
+    background: var(--k2-c-wash-hover);
+    color: var(--k2-c-text);
+  }
+}
+
+.k2-subnav__item--on {
+  background: var(--k2-c-primary-soft);
+  color: var(--k2-c-primary-ink);
+  font-weight: 600;
+}
+
+.k2-sets-pane {
+  min-inline-size: 0;
+  /* 卡与卡之间统一 16px（跟 .k2-sets 里的间距一样）；
+     消息模板卡不在 .k2-sets 里，靠这一层把它跟上面的卡隔开 */
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-4);
+}
+
+@media (max-width: 1183px) {
+  /* 窄屏：浮层贴底、占满两侧，避开底部安全区 */
+  .k2-toasts {
+    inset-inline: var(--k2-s-4);
+    inset-block-end: calc(var(--k2-s-4) + env(safe-area-inset-bottom));
+    inline-size: auto;
+  }
+
+  .k2-sets-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--k2-s-4);
+  }
+
+  .k2-subnav {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .k2-subnav__item {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  /* 窄屏设置项：一律上下排（标签与说明在上、控件在下），不再左右分栏。
+     桌面那套 240px 的标签栏在手机上会把控件挤成半截，也会把长标签压成两行。 */
+  .k2-set__row {
+    flex-direction: column;
+    gap: var(--k2-s-2);
+  }
+
+  .k2-set__label {
+    inline-size: 100%;
+  }
+}
+
+/* ---------- 翻卡里的卡片零件 ---------- */
+/* 卡片正文一律 sans；等宽只留给 URL / 路由 / 裸 cron 表达式 */
+.k2-card__detail {
+  overflow: hidden;
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.k2-card__detail--mono {
+  font-family: var(--k2-font-mono);
+}
+
+/* 没选渠道这类「这行本身有问题」：只在这一行用警示色说 */
+.k2-card__detail--warn {
+  color: var(--k2-c-warning-ink);
+}
+
+/* 采集计划两行：上一行人话（或「自定义时间」），下一行下次采集时间 */
+.k2-card__when {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-inline-size: 0;
+}
+
+.k2-card__when-plan {
+  overflow: hidden;
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.k2-card__when-next {
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-faint);
+}
+
+/* 卡片里的一条行容器（渠道名 + 状态标签这类） */
+.k2-card__row {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+  min-inline-size: 0;
+}
+
+/* 关键词排：匹配方式 + 标签 + 超出数量 */
+.k2-card__tags {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+  overflow: hidden;
+}
+/* 关键词标签按原样排，不缩不折：放不下的由卡片组件收成 +N；
+   只有「一个标签本身就比整行还长」这种极端情况才压到一行内、用省略号
+   （min-inline-size: 0 是必须的：flex 项默认最小宽度是内容宽度，会顶破 max-inline-size） */
+.k2-card__tags .k2-chip--tag {
+  display: inline-block;
+  flex: 0 0 auto;
+  min-inline-size: 0;
+  /* 上限由组件量出来（--k2-tag-max）；没量出来时按整行宽 */
+  max-inline-size: var(--k2-tag-max, 100%);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.k2-card__taglabel {
+  flex: none;
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+.k2-card__tagmore {
+  color: var(--k2-c-text-faint);
+}
+
+/* 卡脚一行文字：不换行、不把旁边的信息挤掉 */
+.k2-card__meta {
+  flex: none;
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+  white-space: nowrap;
+}
+
+.k2-card__flipbtn {
+  margin-inline-start: auto;
+}
+
+/* ---------- 翻卡背面：一组「标签 + 值」 ----------
+   两列并排（竖排会把卡片撑高一大截）；一句话说明这类长文本用 --wide 跨满整行，
+   并且最多两行——卡片高度因此有上限，不会被一条长报错顶起来 */
+/* 空列：新增入口同时兼作空状态（标题 + 一句提示） */
+.k2-col__add--empty {
+  /* 空列时它就是这一列的内容，紧贴列头；否则会被 auto 推到列底、上面空一大片 */
+  margin-block-start: 0;
+  flex-direction: column;
+  gap: 2px;
+  block-size: auto;
+  min-block-size: 96px;
+  padding: var(--k2-s-4);
+  text-align: center;
+}
+
+.k2-col__add-sub {
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-faint);
+}
+
+/* ---------- 窄屏覆盖（<900）：必须放在最后 ---------- */
+/* 之前这段夹在文件中间，后面的桌面规则按书写顺序把它盖掉了，
+   结果窄屏下标签栏不显示、分组还是三列——所有 display / grid-template-columns
+   这类同权重声明都会被后写的桌面值赢走。窄屏覆盖统一放文件末尾。 */
+/* ---------- 窄屏（<1184）：侧栏变抽屉，底部一条导航 ---------- */
+/* 1184 = 内容区最小 900 + 展开侧栏 248 + 外壳左右留白 24 + 栅格间距 12，
+   这样桌面档永远保得住 900，不需要再强制收起侧栏 */
+@media (max-width: 1183px) {
+  .k2-shell--app {
+    grid-template-columns: 1fr;
+    padding: 0;
+    gap: 0;
+  }
+
+  .k2-shell__topbar {
+    grid-column: 1;
+    grid-row: 1;
+    border-radius: 0;
+    padding-inline: var(--k2-s-3);
+  }
+
+  .k2-shell__menu {
+    display: inline-grid;
+  }
+
+  .k2-nav {
+    position: fixed;
+    z-index: 40;
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: var(--k2-sidebar-w);
+    border-radius: 0 var(--k2-r-lg) var(--k2-r-lg) 0;
+    transform: translateX(-100%);
+    transition: transform var(--k2-motion-base) var(--k2-motion-ease);
+  }
+
+  /* 抽屉显隐只看 is-open。收起状态只影响抽屉里的内容样式（下面那段），
+     不能拿它当「打开」——否则桌面收起后缩到窄屏，抽屉会自己冒出来还关不掉。
+     宽度也要在这里盖回完整档，不然会变成 72 宽的图标轨道。 */
+  .k2-shell--rail .k2-nav,
+  .k2-nav.is-open {
+    inline-size: var(--k2-sidebar-w);
+  }
+
+  .k2-nav.is-open {
+    transform: none;
+  }
+
+  /* 抽屉里始终是完整导航：收起状态只影响桌面那根图标轨道，这几个要让回来 */
+  .k2-shell--rail .k2-nav__label,
+  .k2-shell--rail .k2-nav__name {
+    inline-size: auto;
+    opacity: 1;
+  }
+
+  .k2-nav__handle {
+    display: none;
+  }
+
+  .k2-shell__content {
+    grid-column: 1;
+    grid-row: 2;
+    padding: var(--k2-page-pad-mobile);
+  }
+
+  /* 触摸端：能点的一律不低于 48 */
+  .k2-nav__item,
+  .k2-nav__handle,
+  .k2-iconbtn,
+  .k2-preset {
+    min-block-size: var(--k2-touch-h);
+    min-inline-size: var(--k2-touch-h);
+  }
+
+  /* 配置页：三列在窄屏改成「一次看一列」，靠上面的标签切换 */
+  .k2-tabs {
+    display: flex;
+    /* 三列标签在窄屏一行放不下就整块换行，别把「数据源 / Data sources」拆成两行、
+       也不要把计数挤到另一行去 */
+    flex-wrap: wrap;
+  }
+
+  .k2-tabs__item {
+    flex: 0 1 auto;
+  }
+
+  .k2-group__body {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--k2-s-4);
+  }
+
+  .k2-col {
+    display: none;
+  }
+
+  .k2-col--on {
+    display: flex;
+  }
+
+  /* 摘要行在窄屏排成两行：箭头 + 名称/简介 + 开关/更多在上，三个计数整行落到下面，
+     别让它们和名称互相挤（名称有 min-inline-size: 0，会自己省略） */
+  .k2-group__head {
+    flex-wrap: wrap;
+    row-gap: var(--k2-s-2);
+  }
+
+  .k2-group__counts {
+    order: 1;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+  }
+
+  /* 翻卡在窄屏每行都变高一点（触摸尺寸让卡头和卡脚各高一档），
+     同高底线跟着抬：不然卡片不够装，正面那行模板文字会被压扁 */
+  .k2-flip__inner {
+    min-block-size: 240px;
+  }
+
+  /* 弹窗＝从底部升起的一整块：贴底、左右满宽、只在上面留圆角。
+     Vuetify 给弹窗写了「宽度减 48、行内 max-width」，宽度和上限都得压过去。
+     .k2-sheet 是活跃区那个「全部事件」弹窗（.k2-modal）的外壳，待遇和其它弹窗一致 */
+  .k2-dialog,
+  .k2-sheet {
+    align-self: flex-end;
+    inline-size: 100% !important;
+    max-inline-size: none !important;
+    max-block-size: 88dvh;
+    margin: 0;
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+  }
+
+  /* 外壳满宽贴底后，卡片本身的圆角也只留上面；列表让位给头/工具条/底栏，
+     内容多了在列表里滚（不再用桌面的固定 450px） */
+  .k2-sheet .k2-modal {
+    max-block-size: 88dvh;
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+  }
+
+  .k2-sheet .k2-modal__list {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    block-size: auto;
+    max-block-size: none;
+  }
+
+  /* 正文自己滚：头尾固定，长表单在手机上滚得动 */
+  .k2-dialog__head,
+  .k2-dialog__foot {
+    flex: none;
+  }
+
+  .k2-dialog__body {
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* 弹窗自己有内边距，滚动条会离右边一段；手机上干脆不显示它 */
+    scrollbar-width: none;
+  }
+
+  .k2-dialog__body::-webkit-scrollbar {
+    inline-size: 0;
+    block-size: 0;
+  }
+
+  /* 标签里的小叉不被压扁 */
+  .k2-chip__x {
+    flex: none;
+  }
+}
+
+/* ---------- B2：App 组件 V2 化后需要的形状 ---------- */
+
+/* AppEmptyState：图标与 actions 一行排开 */
+.k2-empty__icon {
+  color: var(--k2-c-text-faint);
+}
+
+.k2-empty__actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--k2-s-3);
+}
+
+/* AppSkeleton：分组、行、以及 V2 缺的三种形状 */
+.k2-skeleton-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-3);
+}
+
+.k2-skeleton--title {
+  block-size: var(--k2-s-4);
+}
+
+.k2-skeleton--block {
+  flex: 1 1 auto;
+  min-block-size: var(--k2-s-9);
+  border-radius: var(--k2-r-md);
+}
+
+.k2-skeleton--dot {
+  flex: none;
+  inline-size: var(--k2-s-3);
+  block-size: var(--k2-s-3);
+  border-radius: 50%;
+}
+
+.k2-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-3);
+}
+
+.k2-skeleton-row__lines {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--k2-s-2);
+}
+
+/* list 首列方块：与生产列表骨架同尺寸（图标级方块） */
+.k2-skeleton--lead {
+  flex: none;
+  inline-size: var(--k2-icon-lg);
+  block-size: var(--k2-icon-lg);
+  border-radius: var(--k2-r-md);
+}
+
+/* list 紧凑档：行距更紧，副行走短粗条 */
+.k2-skeleton-row--compact {
+  gap: var(--k2-s-2);
+  align-items: flex-start;
+}
+
+/* card 的方块组：内容行之后追加的一排方块 */
+.k2-skeleton-cells {
+  display: flex;
+  gap: var(--k2-s-3);
+}
+
+.k2-skeleton--cell {
+  flex: none;
+  inline-size: var(--k2-icon-lg);
+  block-size: var(--k2-icon-lg);
+  border-radius: var(--k2-r-md);
+}
+
+/* AppStatus：柔底 / 纯文字 / 可点 / 进行中 四种形态（语义色由 .k2-t-* 提供） */
+.k2-chip--soft {
+  background: var(--c-soft);
+  color: var(--c-ink);
+}
+
+.k2-chip--plain {
+  block-size: auto;
+  padding-inline: 0;
+  background: none;
+  color: var(--c);
+}
+
+.k2-chip--action {
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-chip--action:hover {
+    filter: brightness(0.97);
+  }
+}
+
+.k2-chip.is-busy .k2-chip__dot {
+  animation: k2-blink 1s var(--k2-motion-ease) infinite;
+}
+
+@keyframes k2-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* AppTabs：标签文字不折行 */
+.k2-tabs__label {
+  white-space: nowrap;
+}
+
+/* ---------- 定高面板（最近事件 / 异常记录两栏）---------- */
+/* 头部固定、内容区自己滚、底部可选一条入口；两栏同高，长短不一也不互相拉高。 */
+.k2-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--k2-c-border-soft);
+  border-radius: var(--k2-r-lg);
+  background: var(--k2-c-surface);
+  box-shadow: var(--k2-shadow-sm);
+}
+
+.k2-panel__head {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-3);
+  min-inline-size: 0;
+  padding: var(--k2-s-3) var(--k2-s-4);
+  box-shadow: inset 0 -1px 0 var(--k2-c-border-soft);
+}
+
+.k2-panel__body {
+  flex: 1;
+  min-block-size: 0;
+}
+
+/* 面板内侧滚动：直接限在面板上会和页面的滚动打架，所以只让内容区滚。
+   注意不要写 overscroll-behavior: contain —— 内容没超出窗口时，鼠标停在列表上
+   应该把滚动交给页面；只有内容真的超出（异常列表）才在卡片内滚 */
+.k2-panel__body--scroll {
+  /* 内容窗口固定高度 450px：最近事件与异常记录两个面板都用这一档
+     （最近事件的那 450 不含底栏，有底栏时底栏加在下面）。
+     列表不到就留白、超过就在卡片内滚；面板高度跟着内容走，两栏一样高，不用视口高度去撑。
+     flex: none：高度是定值，不参与拉伸（否则 flex:1 会把 block-size 顶掉，又变回按内容走） */
+  flex: none;
+  block-size: 450px;
+  overflow: hidden auto;
+  overscroll-behavior: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--k2-c-border) transparent;
+}
+
+.k2-panel__foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--k2-s-2) var(--k2-s-4) var(--k2-s-3);
+}
+
+/* ================================================================
+   活跃区（仪表盘右栏）：面板 / 事件行 / 异常卡 / 来源标签
+   参考稿是 8.5~11px 的密集排版，这里用现有字阶里最接近的一档
+   （caption 12）近似适配，层级靠字重与颜色拉开，不写死字号、不加新 token；
+   行高、内边距这类只影响本组件的密度值留在组件内部。
+   ================================================================ */
+
+/* ---------- 面板 ---------- */
+.k2-panel__mark {
+  flex: none;
+  inline-size: 3px;
+  block-size: 15px;
+  border-radius: var(--k2-r-full);
+  background: var(--c-ink, var(--k2-c-primary));
+}
+
+/* 头部：左侧一组（标题行 + 口径说明行），右侧动作整体垂直居中，高 77px（同参考） */
+.k2-panel__head {
+  align-items: center;
+  gap: var(--k2-s-4);
+  min-block-size: 84px;
+  padding: var(--k2-s-5) var(--k2-s-4) var(--k2-s-3);
+}
+
+.k2-panel__heading {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--k2-s-2);
+  min-inline-size: 0;
+}
+
+.k2-panel__head .k2-sec__title {
+  font-size: var(--k2-fs-body);
+  font-weight: var(--k2-fw-regular);
+  line-height: var(--k2-lh-tight);
+  letter-spacing: -0.015em;
+}
+
+/* 头部右侧的安静按钮（参考里的「筛选」：白底、浅描边、圆角 8） */
+.k2-panel__quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k2-s-1);
+  block-size: 29px;
+  padding: 0 var(--k2-s-3);
+  border: 1px solid var(--k2-c-border);
+  border-radius: var(--k2-r-xs);
+  background: var(--k2-c-surface);
+  color: var(--k2-c-text-muted);
+  font: inherit;
+  font-size: var(--k2-fs-caption);
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-panel__quiet:hover {
+    background: var(--k2-c-surface2);
+    color: var(--k2-c-text);
+  }
+}
+
+/* 选中了某个来源：按钮跟着变品牌色（参考稿的 active 态） */
+.k2-panel__quiet--on {
+  border-color: var(--k2-c-primary-soft);
+  background: var(--k2-c-primary-soft);
+  color: var(--k2-c-primary-ink);
+}
+
+/* 头部右侧的文字入口（参考里的「查看全部」） */
+.k2-panel__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k2-s-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--k2-c-primary);
+  font: inherit;
+  font-size: var(--k2-fs-caption);
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-panel__link:hover {
+    color: var(--k2-c-primary-hover);
+  }
+}
+
+/* 计数徽章：跟随面板色调（异常面板自动变红） */
+.k2-panel__badge {
+  flex: none;
+  min-inline-size: 22px;
+  padding: 1px var(--k2-s-2);
+  border-radius: var(--k2-r-full);
+  background: var(--c-soft, var(--k2-c-primary-soft));
+  color: var(--c-ink, var(--k2-c-primary));
+  text-align: center;
+  font-size: var(--k2-fs-caption);
+  font-weight: var(--k2-fw-bold);
+  line-height: var(--k2-lh-snug);
+}
+
+.k2-panel__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--k2-s-3);
+  margin-inline-start: auto;
+}
+
+.k2-panel__actions .k2-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k2-s-1);
+  font-size: var(--k2-fs-caption);
+}
+
+/* 说明这一栏的口径，另起一行、不抢标题 */
+.k2-panel__sub {
+  flex-basis: 100%;
+  margin-inline-start: var(--k2-s-3);
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-faint);
+}
+
+/* 底部是一条整宽入口（不是浮在中间的胶囊） */
+.k2-panel__foot {
+  display: block;
+  padding: 0;
+  border-block-start: 1px solid var(--k2-c-border-soft);
+  background: var(--k2-c-surface2);
+}
+
+.k2-panel__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--k2-s-1);
+  inline-size: 100%;
+  padding: var(--k2-s-3) var(--k2-s-4);
+  border: 0;
+  background: none;
+  color: var(--k2-c-primary);
+  font: inherit;
+  font-size: var(--k2-fs-caption);
+  font-weight: var(--k2-fw-semibold);
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-panel__more:hover {
+    background: var(--k2-c-surface3);
+  }
+}
+
+/* 底部入口里的补充信息（参考里是「还有 N 条」那种半截提示） */
+/* ---------- 浮层（筛选 / +N 来源）---------- */
+/* 挂在 body 上（VMenu teleport），所以不能写在 .k2-panel 作用域里 */
+.k2-pop {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-2);
+  inline-size: 240px;
+  padding: var(--k2-s-2);
+  border: 1px solid var(--k2-c-border);
+  border-radius: var(--k2-r-lg);
+  background: var(--k2-c-surface);
+  box-shadow: var(--k2-shadow-lg);
+}
+
+.k2-pop__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--k2-s-2);
+  padding: var(--k2-s-1) var(--k2-s-1) var(--k2-s-3) var(--k2-s-2);
+}
+
+.k2-pop__heading {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--k2-s-1);
+  min-inline-size: 0;
+}
+
+.k2-pop__title {
+  font-size: var(--k2-fs-caption);
+  font-weight: var(--k2-fw-semibold);
+  color: var(--k2-c-text);
+}
+
+.k2-pop__note {
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-faint);
+}
+
+.k2-pop__close {
+  flex: none;
+  inline-size: 24px;
+  block-size: 24px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--k2-r-xs);
+  background: var(--k2-c-surface2);
+  color: var(--k2-c-text-muted);
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-pop__close:hover {
+    background: var(--k2-c-surface3);
+    color: var(--k2-c-text);
+  }
+}
+
+/* 来源列表：最多 4 条的高度（每条 34px），再多在浮层里滚 */
+.k2-pop__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-block-size: 136px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--k2-c-border) transparent;
+}
+
+.k2-pop__item {
+  display: flex;
+  flex: none; /* 不参与压缩：超过 4 条时要真的滚，而不是把每条压扁 */
+  align-items: center;
+  gap: var(--k2-s-2);
+  block-size: 34px;
+  padding-inline: var(--k2-s-2);
+  border-radius: var(--k2-r-xs);
+  color: var(--k2-c-text);
+  font-size: var(--k2-fs-caption);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-pop__item:hover {
+    background: var(--k2-c-wash-hover);
+  }
+}
+
+.k2-pop__item .v-icon {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--k2-c-text-faint);
+}
+
+/* 选项（筛选）：圆点 + 名称 + 条数 */
+.k2-pop__options {
+  display: flex;
+  flex-direction: column;
+  /* 最多 4 条的高度（每条 35px），来源多了在浮层里滚——和 +N 那份浮层一个口径 */
+  max-block-size: 140px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-block: var(--k2-s-1);
+  border-block: 1px solid var(--k2-c-border-soft);
+  scrollbar-width: thin;
+  scrollbar-color: var(--k2-c-border) transparent;
+}
+
+.k2-pop__option {
+  display: grid;
+  flex: none; /* 不参与压缩：超过 4 条时要真的滚，而不是把每条压扁 */
+  grid-template-columns: 16px 1fr auto;
+  align-items: center;
+  gap: var(--k2-s-2);
+  block-size: 35px;
+  padding-inline: var(--k2-s-2);
+  border: 0;
+  border-radius: var(--k2-r-xs);
+  background: none;
+  color: var(--k2-c-text-muted);
+  font: inherit;
+  font-size: var(--k2-fs-caption);
+  text-align: start;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-pop__option:hover {
+    background: var(--k2-c-wash-hover);
+  }
+}
+
+.k2-pop__option--on {
+  background: var(--k2-c-primary-soft);
+  color: var(--k2-c-primary-ink);
+  font-weight: var(--k2-fw-semibold);
+}
+
+.k2-pop__radio {
+  inline-size: 14px;
+  block-size: 14px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--k2-c-border);
+  border-radius: var(--k2-r-full);
+}
+
+.k2-pop__option--on .k2-pop__radio {
+  border-color: var(--k2-c-primary);
+}
+
+.k2-pop__radio > span {
+  inline-size: 7px;
+  block-size: 7px;
+  border-radius: var(--k2-r-full);
+}
+
+.k2-pop__option--on .k2-pop__radio > span {
+  background: var(--k2-c-primary);
+}
+
+.k2-pop__count {
+  color: var(--k2-c-text-faint);
+  font-size: var(--k2-fs-caption);
+  font-weight: var(--k2-fw-medium);
+}
+
+.k2-pop__reset {
+  block-size: 31px;
+  border: 0;
+  border-radius: var(--k2-r-xs);
+  background: none;
+  color: var(--k2-c-text-muted);
+  font: inherit;
+  font-size: var(--k2-fs-caption);
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-pop__reset:hover {
+    background: var(--k2-c-wash-hover);
+  }
+}
+
+/* ---------- 「查看全部事件」弹窗 ---------- */
+.k2-modal {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--k2-c-border-soft);
+  border-radius: var(--k2-r-xl);
+  background: var(--k2-c-surface);
+  box-shadow: var(--k2-shadow-lg);
+}
+
+.k2-modal__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--k2-s-3);
+  padding: var(--k2-s-4) var(--k2-s-5) var(--k2-s-3);
+}
+
+.k2-modal__icon {
+  flex: none;
+  inline-size: 31px;
+  block-size: 31px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--k2-r-sm);
+  background: var(--k2-c-primary-soft);
+  color: var(--k2-c-primary-ink);
+}
+
+.k2-modal__title-line {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+}
+
+.k2-modal__title {
+  font-size: var(--k2-fs-bodyLg);
+  font-weight: var(--k2-fw-regular);
+  letter-spacing: -0.02em;
+  color: var(--k2-c-text);
+}
+
+.k2-modal__count {
+  min-inline-size: 23px;
+  padding: 2px var(--k2-s-2);
+  border-radius: var(--k2-r-sm);
+  background: var(--k2-c-primary-soft);
+  color: var(--k2-c-primary-ink);
+  font-size: var(--k2-fs-caption);
+  font-weight: var(--k2-fw-bold);
+  text-align: center;
+}
+
+.k2-modal__close {
+  flex: none;
+  inline-size: 31px;
+  block-size: 31px;
+  display: grid;
+  place-items: center;
+  margin-inline-start: auto;
+  border: 0;
+  border-radius: var(--k2-r-xs);
+  background: var(--k2-c-surface2);
+  color: var(--k2-c-text-muted);
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-modal__close:hover {
+    background: var(--k2-c-surface3);
+    color: var(--k2-c-text);
+  }
+}
+
+.k2-modal__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-block-size: 42px;
+  padding-inline: var(--k2-s-5);
+  border-block: 1px solid var(--k2-c-border-soft);
+  background: var(--k2-c-surface2);
+}
+
+.k2-modal__filter {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-1);
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+.k2-modal__filter strong {
+  color: var(--k2-c-text);
+  font-weight: var(--k2-fw-semibold);
+}
+
+.k2-modal__clear {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--k2-c-primary);
+  font: inherit;
+  font-size: var(--k2-fs-caption);
+  cursor: pointer;
+}
+
+/* 视口不够高时（小窗，窄屏另有「底部升起」那一档），弹窗的固定窗口让位给头尾，
+   别把底栏顶出屏幕 */
+@media (max-height: 800px) and (min-width: 1184px) {
+  .k2-modal__list {
+    block-size: auto;
+    max-block-size: calc(100vh - 260px);
+  }
+}
+
+.k2-modal__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--k2-s-2);
+  padding: var(--k2-s-3);
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+.k2-modal__more--end {
+  color: var(--k2-c-text-faint, var(--k2-c-text-muted));
+}
+
+.k2-modal__list {
+  /* 弹窗内容也是固定高度 450px（跟活动区面板同一个窗口），翻页时弹窗不会忽高忽低 */
+  flex: none;
+  block-size: 450px;
+  overflow-y: auto;
+  overscroll-behavior: auto;
+  padding: var(--k2-s-1) var(--k2-s-3) var(--k2-s-2);
+  scrollbar-width: thin;
+  scrollbar-color: var(--k2-c-border) transparent;
+}
+
+.k2-modal__list .k2-list__row {
+  min-block-size: 64px;
+  margin-inline: 0;
+  padding: var(--k2-s-3) var(--k2-s-2);
+}
+
+.k2-modal__empty {
+  padding: var(--k2-s-6) var(--k2-s-4);
+  text-align: center;
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-faint);
+}
+
+.k2-modal__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--k2-s-3);
+  min-block-size: 54px;
+  padding-inline: var(--k2-s-5);
+  border-block-start: 1px solid var(--k2-c-border-soft);
+}
+
+.k2-modal__stat {
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-faint);
+}
+
+/* ---------- 事件行 ---------- */
+/* 行比参考（67px）再松一点；行自带的左右 -8px 负边距在这里抵消掉，
+   留白由面板内容区的内边距 + 行自己的内边距一起给 */
+.k2-panel__body .k2-list__row {
+  gap: var(--k2-s-3);
+  min-block-size: 72px;
+  margin-inline: 0;
+  padding: var(--k2-s-3) var(--k2-s-2);
+}
+
+/* 内容区留白：上下各留一条小间隙（第一个、最后一个条目不贴边），
+   左右留白让条目与面板边缘有间距，悬停底色与分线也随之收进来 */
+.k2-panel__body {
+  padding: var(--k2-s-1) var(--k2-s-3);
+}
+
+/* 面板里的卡片之间留出间距（参考的异常列表是 8px） */
+.k2-panel__body .k2-rows {
+  gap: var(--k2-s-2);
+}
+
+/* 面板里的加载骨架：行高 / 留白 / 分隔线都跟真实条目对齐。
+   不这么写的话骨架会挤在窗口顶部（行高只有内容高、组里还有 12px 行距），
+   看着像半个空面板 —— 他的原话是「间隙太小、应该改成全高度」 */
+.k2-panel__body .k2-skeleton-group {
+  gap: 0;
+}
+
+.k2-panel__body .k2-skeleton-row {
+  min-block-size: 72px;
+  padding: var(--k2-s-3) var(--k2-s-2);
+}
+
+.k2-panel__body .k2-skeleton-row + .k2-skeleton-row {
+  box-shadow: inset 0 1px 0 var(--k2-c-border-soft);
+}
+
+.k2-panel__body .k2-row__title,
+.k2-incident .k2-row__title {
+  font-size: var(--k2-fs-caption);
+  font-weight: var(--k2-fw-semibold);
+}
+
+/* 异常卡的第二行是次级说明：字号跟卡内其他文字同级，靠字重与颜色拉开层级 */
+.k2-incident .k2-card__sub {
+  font-size: var(--k2-fs-caption);
+}
+
+.k2-panel__body .k2-list__chevron {
+  inline-size: var(--k2-icon-sm);
+  block-size: var(--k2-icon-sm);
+}
+
+/* 时间：时钟图标 + 相对时间 */
+.k2-row__time {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k2-s-1);
+  font-size: var(--k2-fs-caption);
+}
+
+/* 未读圆点：行右上角，实心 + 一圈品牌浅底光晕（浅底用现成软色，不新增颜色）
+   实心＝从没看过这件事；看过之后不会再因为转载、来源增加、时间刷新亮起来 */
+/* 只作用于面板里的行：生产的仪表盘行不带面板时不受影响 */
+.k2-panel__body .k2-row--link,
+.k2-modal__list .k2-row--link {
+  /* 行相对定位：右上角的圆点靠它定位；漏掉哪个容器，圆点就会飘到最近的可定位祖先上 */
+  position: relative;
+}
+
+.k2-row__dot {
+  position: absolute;
+  inset-block-start: 10px;
+  inset-inline-end: 8px;
+  inline-size: 6px;
+  block-size: 6px;
+  border-radius: var(--k2-r-full);
+  background: var(--k2-c-primary);
+  box-shadow: 0 0 0 3px var(--k2-c-primary-soft);
+}
+
+/* 看过之后又有新条目：空心圈（不退回未读的实心） */
+.k2-row__dot--updated {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--k2-c-primary);
+}
+
+/* ---------- 来源标签组 ---------- */
+/* 类名不用 k2-tags：那是排除词输入框（TagsField）的类，撞上会被套成带边框的输入框 */
+.k2-source-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--k2-s-1);
+  min-inline-size: 0;
+}
+
+.k2-source-tags .k2-chip--tag {
+  padding: 0 var(--k2-s-2);
+  border-radius: var(--k2-r-xs);
+  font-size: var(--k2-fs-caption);
+  text-decoration: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k2-source-tags .k2-chip--tag:hover {
+    color: var(--k2-c-text);
+  }
+}
+
+/* +N 是个按钮，要多清掉浏览器给的 2px 默认边框，否则比旁边的标签高 4px */
+.k2-source-tags__more {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ---------- 异常卡 ---------- */
+/* 左侧状态线跟着色调走；底部几项之间用细线分开 */
+.k2-incident {
+  padding: var(--k2-s-3) var(--k2-s-3) var(--k2-s-2) var(--k2-s-4);
+  border-radius: var(--k2-r-md);
+}
+
+.k2-incident::before {
+  content: '';
+  position: absolute;
+  inset-block: 12px;
+  inset-inline-start: 0;
+  inline-size: 3px;
+  border-start-end-radius: var(--k2-r-sm);
+  border-end-end-radius: var(--k2-r-sm);
+  background: var(--c-ink);
+}
+
+.k2-incident .k2-card__head {
+  gap: var(--k2-s-2);
+}
+
+.k2-incident .k2-iconbtn {
+  box-shadow: inset 0 0 0 1px var(--k2-c-border-soft);
+}
+
+.k2-incident .k2-card__message {
+  margin-block: var(--k2-s-2);
+  font-size: var(--k2-fs-caption);
+  line-height: var(--k2-lh-normal);
+}
+
+/* 副信息：语言无关的诊断片段（30s / HTTP 503 / Unauthorized），比正文淡一档 */
+.k2-incident__detail {
+  margin: 0 0 var(--k2-s-2);
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.k2-incident__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--k2-s-2);
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+/* 状态胶囊跟着这一段的字号收一档 */
+.k2-incident .k2-chip {
+  padding-block: 0;
+  font-size: var(--k2-fs-caption);
+}
+
+/* ---------- 空状态插图（参考稿那两张）---------- */
+/* 事件＝紫环 + 收件箱；异常＝绿环 + 对勾。颜色全部取自语义 token */
+.k2-empty-art {
+  position: relative;
+  inline-size: 92px;
+  block-size: 82px;
+  margin-block-end: var(--k2-s-4);
+  display: grid;
+  place-items: center;
+}
+
+.k2-empty-art__ring {
+  position: absolute;
+  inline-size: 76px;
+  block-size: 76px;
+  border-radius: var(--k2-r-full);
+  background: var(--k2-c-primary-soft);
+  box-shadow: inset 0 0 0 13px color-mix(in srgb, var(--k2-c-primary-soft) 55%, var(--k2-c-surface));
+}
+
+.k2-empty-art__icon {
+  position: relative;
+  z-index: 1;
+  inline-size: 42px;
+  block-size: 42px;
+  border-radius: var(--k2-r-md);
+  color: var(--k2-c-primary-ink);
+  background: var(--k2-c-surface);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--k2-shadow-sm);
+}
+
+.k2-empty-art__spark {
+  position: absolute;
+  z-index: 2;
+  inline-size: 5px;
+  block-size: 5px;
+  border-radius: var(--k2-r-full);
+  background: var(--k2-c-primary);
+  opacity: 0.5;
+}
+
+.k2-empty-art__spark--one {
+  inset-block-start: 8px;
+  inset-inline-end: 6px;
+}
+
+.k2-empty-art__spark--two {
+  inset-block-end: 12px;
+  inset-inline-start: 4px;
+  inline-size: 4px;
+  block-size: 4px;
+  opacity: 0.35;
+}
+
+/* 异常那一张换成绿色（成功语义） */
+.k2-empty-art--incidents .k2-empty-art__ring {
+  background: var(--k2-c-success-soft);
+  box-shadow: inset 0 0 0 13px color-mix(in srgb, var(--k2-c-success-soft) 55%, var(--k2-c-surface));
+}
+
+.k2-empty-art--incidents .k2-empty-art__icon {
+  color: var(--k2-c-success-ink);
+}
+
+.k2-empty-art--incidents .k2-empty-art__spark {
+  background: var(--k2-c-success);
+}
+
+/* ---------- 模型调用顺序：一行一个下拉，横向尽量省地方（移动端不挤） ---------- */
+.k2-order {
+  display: flex;
+  flex-direction: column;
+}
+
+.k2-order__head {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+  padding-block-end: var(--k2-s-3);
+}
+
+.k2-order__headtext {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.k2-order__sub {
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+  min-inline-size: 0;
+}
+
+.k2-order__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-2);
+}
+
+.k2-order__row {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+  min-inline-size: 0;
+  padding: var(--k2-s-1) var(--k2-s-2);
+  border-radius: var(--k2-r-md);
+  background: var(--k2-c-surface2);
+  box-shadow: inset 0 0 0 1px var(--k2-c-border-soft);
+}
+
+/* 拖到哪一行，哪一行给个框，松手就落在这儿 */
+.k2-order__row.is-over {
+  box-shadow: inset 0 0 0 1px var(--k2-c-primary);
+}
+
+.k2-order__no {
+  flex: none;
+  inline-size: 12px;
+  text-align: center;
+  font-size: var(--k2-fs-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--k2-c-text-muted);
+}
+
+/* 抓手：六个点，纯 CSS 画，不占字体子集 */
+.k2-order__grip {
+  flex: none;
+  inline-size: 12px;
+  block-size: 14px;
+  cursor: grab;
+  background-image: radial-gradient(currentColor 1px, transparent 1.2px);
+  background-size: 6px 5px;
+  color: var(--k2-c-text-muted);
+  opacity: 0.7;
+}
+
+.k2-order__grip:active {
+  cursor: grabbing;
+}
+
+.k2-order__main {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+/* 选中的模型名可能很长：给省略号，别把行撑破 */
+.k2-order__pick {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.k2-order__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-3);
+  padding-block-start: var(--k2-s-4);
+}
+
+.k2-order__hint {
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 窄屏：这句话整行换行说完整，保存按钮落到文字下面（桌面仍是文字在左、按钮在右）。
+   说明文字比按钮长得多，窄屏挤在一行只会变成省略号。 */
+@media (max-width: 1183px) {
+  .k2-order__foot {
+    flex-wrap: wrap;
+    row-gap: var(--k2-s-3);
+  }
+
+  .k2-order__hint {
+    flex: 1 1 100%;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .k2-order__foot .app-spacer {
+    display: none;
+  }
+
+  .k2-order__foot .app-btn {
+    inline-size: 100%;
+  }
+}

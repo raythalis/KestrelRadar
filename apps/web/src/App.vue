@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import AppShell from '@/layouts/AppShell.vue'
 </script>
 
 <template>
-  <DefaultLayout />
+  <AppShell />
 </template>

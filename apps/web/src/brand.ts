@@ -1,0 +1,9 @@
+// 品牌资源：只在这里写路径，其余地方都从这里取。
+//
+// 换 logo：把图片放进 apps/web/public/，然后把下面的路径改成对应文件名即可
+// （不需要改组件；生产构建里 public/ 会被原样拷到 dist/，也可以直接替换 dist 里的文件）。
+// 设成空字符串则只显示文字标，不显示图片。
+
+/** 左上角品牌标（顶部导航栏 / 抽屉里共用） */
+export const BRAND_LOGO = '/kestrel-logo-light.svg'
+export const BRAND_LOGO_DARK = '/kestrel-logo-dark.svg'

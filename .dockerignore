@@ -1,0 +1,13 @@
+# 镜像里不需要的东西（构建上下文越小越快，也避免把本机内容带进镜像）
+.git
+.gitignore
+.ai
+local
+node_modules
+**/node_modules
+dist
+**/dist
+**/*.log
+**/coverage
+apps/api/data
+data

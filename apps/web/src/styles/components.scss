@@ -1,0 +1,479 @@
+// Design System · App* 组件视觉层
+//
+// 这是组件样式的唯一来源：页面与业务组件只组合 App*（P1 把它们包成 Vue 组件），
+// 不自己写按钮/卡片/弹窗/间距。
+//
+// 硬规矩：
+// - 只消费 design/v2/tokens.ts 发出的正式 token（--k2-*），不出现 #色值、不出现随手写死的 px 间距；
+// - 卡片靠"细边框 + 底色"分层，不用阴影；阴影只给浮层（菜单/弹窗/抽屉）；
+// - 间距只用 --k2-s-*（4 的倍数）；
+// - 字号只用 --k2-fs-*，字重只用 --k2-fw-*；
+// - 本批（Design Token 收口）只迁移了现役组件的规则；下面仍出现 --k-* 的规则属于那 12 个零生产引用的
+//   App 组件，值来自 design/v2/tokens.ts 的兼容别名表（--k-* → var(--k2-*)），B 批处理掉组件后一并删除。
+
+/* ---------- AppPage：页面容器与内容宽度策略 ---------- */
+
+/* AppPage 的头部：标题 + 说明 + 右侧操作 */
+
+/* 页面自带内边距的宽度档位：把粘住的那条拉到通栏，内容不会从两侧漏出来 */
+@media (max-width: 599px) {
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+}
+
+/* ---------- AppSection：页面内的分节 ---------- */
+
+/* ---------- AppCard / Surface ---------- */
+
+.app-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-3);
+}
+
+.app-row {
+  display: flex;
+  align-items: center;
+  gap: var(--k2-s-2);
+}
+
+.app-spacer {
+  flex: 1;
+}
+
+/* 主题圆形扩散（View Transitions API）：新主题那层贴在上面，由 utils/theme-reveal.ts
+   用 clip-path 从点击位置把它"圆"出来；两层自己的动画都关掉，免得跟扩散打架。 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  z-index: 1;
+}
+
+/* ---------- AppButton ---------- */
+
+.app-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--k2-s-1);
+  height: var(--k2-control-h);
+  padding-inline: var(--k2-s-3);
+  border: 1px solid var(--k2-c-border);
+  border-radius: var(--k2-r-md);
+  background: var(--k2-c-surface2);
+  color: var(--k2-c-text);
+  font: inherit;
+  font-size: var(--k2-fs-body);
+  font-weight: var(--k2-fw-medium);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-btn:hover {
+    background: color-mix(in srgb, var(--k2-c-surface2) 90%, var(--k2-c-text) 6%);
+  }
+}
+
+.app-btn--primary {
+  background: var(--k2-c-primary);
+  border-color: transparent;
+  color: var(--k2-c-on-primary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-btn--primary:hover {
+    background: color-mix(in srgb, var(--k2-c-primary) 88%, #000 12%);
+  }
+}
+
+.app-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--k2-c-text-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-btn--ghost:hover {
+    background: var(--k2-c-surface2);
+    color: var(--k2-c-text);
+  }
+}
+
+.app-btn--danger {
+  background: transparent;
+  border-color: transparent;
+  color: var(--k2-c-danger);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-btn--danger:hover {
+    background: color-mix(in srgb, var(--k2-c-danger) 10%, transparent);
+  }
+}
+
+.app-btn--soft {
+  border-color: color-mix(in srgb, var(--k2-c-primary) 28%, transparent);
+  background: var(--k2-c-primary-soft);
+  color: var(--k2-c-primary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-btn--soft:hover {
+    background: color-mix(in srgb, var(--k2-c-primary) 20%, transparent);
+  }
+}
+
+.app-btn--danger-solid {
+  border-color: transparent;
+  background: var(--k2-c-danger);
+  color: #ffffff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-btn--danger-solid:hover {
+    background: color-mix(in srgb, var(--k2-c-danger) 85%, #000000);
+  }
+}
+
+.app-btn--sm {
+  height: 26px;
+  padding-inline: var(--k2-s-2);
+  font-size: var(--k2-fs-caption);
+}
+
+/* 真禁用一律去色（连主色的蓝也去掉），跟「加载中保持主色 + 转圈」一眼区分 */
+.app-btn:disabled {
+  filter: grayscale(1);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- 表单：标签 + 控件 + 说明 ---------- */
+
+.app-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--k2-s-3);
+  min-height: var(--k2-row-h);
+}
+
+/* ---------- AppStatus / Badge / Tag ---------- */
+
+@media (hover: hover) and (pointer: fine) {
+}
+
+/* 圆点与文字同一个语义色：状态不再只靠那个 7px 的点表达 */
+
+/* soft：柔底档，给卡片上的运行状态用（不抢标题，又能一眼看到） */
+
+/* 状态档：soft 底 + 语义色文字（颜色表达含义，但文字本身也在说状态，不靠颜色单独区分） */
+
+/* ---------- EmptyState ---------- */
+
+/* ---------- Skeleton：不用渐变，用呼吸的底色 ---------- */
+
+/* ---------- Hint / Toast ---------- */
+
+/* ---------- 浮层：弹窗与抽屉（阴影只有这一层用） ---------- */
+
+.app-iconbtn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: var(--k-radius-md);
+  background: none;
+  color: var(--k-muted);
+  cursor: pointer;
+}
+
+/* 危险图标按钮（分组删除这种紧挨常用操作的，颜色常显，但不做成实心红块） */
+.app-iconbtn--danger {
+  color: var(--k-err);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-iconbtn:hover {
+    background: var(--k-panel-2);
+    color: var(--k-text);
+  }
+
+  .app-iconbtn--danger:hover {
+    background: color-mix(in srgb, var(--k-err) 12%, transparent);
+    color: var(--k-err);
+  }
+}
+
+/* 开关：关态轨道与描边都和面板底拉开一档，一眼分得清开/关。
+   圆点必须带投影 —— 圆点是白的、卡片底也是白的（亮色下 --k-panel 与 --k-on-accent 都是 #ffffff），
+   圆点又比轨道高（20 > 14）会探出轨道，没有投影就会和卡片底糊在一起。
+   阴影色跟 ELEVATION 用同一套色相：亮色 rgba(13,15,26)、暗色 rgba(0,0,0)。 */
+.app-switch-row .v-switch .v-switch__track {
+  opacity: 1;
+  background: color-mix(in srgb, var(--k2-c-text-muted) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--k2-c-text-muted) 45%, transparent);
+}
+
+.app-switch-row .v-selection-control--dirty .v-switch__track {
+  background: var(--k2-c-primary);
+  border-color: transparent;
+}
+
+.app-switch-row .v-switch .v-switch__thumb {
+  background: var(--k2-c-surface);
+  border: 1px solid color-mix(in srgb, var(--k2-c-text-muted) 45%, transparent);
+  box-shadow:
+    0 1px 2px rgba(13, 15, 26, 0.22),
+    0 2px 6px rgba(13, 15, 26, 0.12);
+}
+
+.app-switch-row .v-selection-control--dirty .v-switch__thumb {
+  background: var(--k2-c-on-primary);
+  border-color: transparent;
+}
+
+/* 暗色：圆点本身就是比底色亮的一档，投影只用来收边 */
+html[data-theme='dark'] .app-switch-row .v-switch .v-switch__thumb {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- 组件补件：转圈、骨架行、只读态、弹窗状态 ---------- */
+
+.app-spinner {
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentcolor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: k-ds-spin 0.7s linear infinite;
+}
+
+.app-btn--block {
+  width: 100%;
+}
+
+.app-btn.is-loading {
+  /* 加载中不变灰：转圈 + 主色，跟真禁用区分开 */
+  opacity: 1;
+  cursor: progress;
+}
+
+.v-field.is-readonly .v-field__input {
+  color: var(--k2-c-text-muted);
+}
+
+.app-switch-row__text {
+  min-width: 0;
+}
+
+.app-switch-row.is-disabled {
+  opacity: 0.6;
+}
+
+@media (hover: hover) and (pointer: fine) {
+}
+
+/* 字段多的弹窗：头尾留在原位，中间那层自己滚。
+   缺了 min-height: 0，flex 子项不肯缩，内容多的时候会把脚（取消/保存）顶到视口外面点不到。 */
+
+/* ---------- Vuetify 对齐：DS 是唯一来源，Vuetify 默认值在这里被拉回来 ---------- */
+/* 输入框高度：Vuetify 的 density 才是有效开关（comfortable 48 / compact 40），
+   触摸端直接给撑到 --k2-touch-h（48），别让手指点不到 */
+/* 圆角：输入框/卡片走 --k2-r-md（12），浮层走 --k2-r-lg（16）；
+   Vuetify 的 rounded 属性只认自己的档位，所以用变量覆盖 */
+.v-field,
+.v-card {
+  border-radius: var(--k2-r-md);
+}
+
+.v-overlay__content > .v-card,
+.v-overlay__content > .v-list,
+.v-overlay__content > .v-sheet,
+.v-menu > .v-overlay__content > .v-list,
+.v-menu > .v-overlay__content > .v-card,
+.v-menu > .v-overlay__content > .v-sheet {
+  border-radius: var(--k2-r-lg);
+}
+
+/* 列表行高跟 --k2-row-h 走 */
+.v-list-item {
+  min-height: var(--k2-row-h);
+}
+
+@media (max-width: 899px) {
+  .v-input .v-field {
+    min-height: var(--k2-touch-h);
+  }
+
+  .v-list-item {
+    min-height: var(--k2-touch-h);
+  }
+}
+
+@keyframes k-ds-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes k-ds-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ---------- AppTabs：标签切换（下划线式） ---------- */
+
+/* ---------- 响应式：组件自己的规矩，不是只有一个开关 ---------- */
+
+@media (max-width: 599px) {
+  /* 小屏：卡片与页面内边距收紧一档 */
+}
+
+@media (min-width: 600px) {
+}
+
+@media (max-width: 899px) {
+  /* 触摸端：一律抬到触摸档（--k2-touch-h = 48px，不低于 44px 可用下限）。
+     桌面上的 40px 控件只在指针设备按紧凑密度显示；手指点的地方不小于 48px。 */
+  /* 可点状态（AppStatus 的 action 档）、导航项、开关：手指点的地方不小于 48px */
+  .k2-chip--action,
+  .k2-nav__item,
+  .v-switch {
+    min-height: var(--k2-touch-h);
+  }
+
+  .k2-chip--action {
+    padding-inline: var(--k2-s-4);
+  }
+
+  .app-btn,
+  .app-btn--sm {
+    height: var(--k2-touch-h);
+    padding-inline: var(--k2-s-4);
+  }
+
+  .app-iconbtn {
+    width: var(--k2-touch-h);
+    height: var(--k2-touch-h);
+  }
+}
+
+@media (min-width: 900px) {
+  /* ≥900：外壳已经给了 24px 边距，页面不再叠加第二层留白（避免双重 gutter） */
+}
+
+@keyframes k-brand-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+
+  50% {
+    filter: drop-shadow(0 0 7px color-mix(in srgb, var(--k2-c-primary) 55%, transparent));
+  }
+}
+
+@keyframes k-ds-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (min-width: 1440px) {
+  /* 宽屏只放宽内容宽度上限（AppPage 的 width 档位），不再叠加第二层留白 */
+}
+
+/* 下拉项：图标与文字之间收紧一点（Vuetify 默认塞了 32px 的间隔，看着太散） */
+.app-select-menu .v-list-item__prepend > .v-list-item__spacer,
+.app-select-menu .v-list-item__append > .v-list-item__spacer {
+  width: var(--k2-s-2);
+}
+
+/* ---------- app-field：AppSelect / AppSwitch / ChannelDialog 仍在用（B2 未删除） ---------- */
+.app-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-space-1);
+}
+
+.app-field__label {
+  font-size: var(--k-fs-body);
+  font-weight: var(--k-fw-medium);
+}
+
+.app-field__hint {
+  font-size: var(--k-fs-meta);
+  color: var(--k-muted);
+}
+
+.app-field__error {
+  font-size: var(--k-fs-meta);
+  color: var(--k-err);
+}
+
+.app-field__group {
+  display: flex;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.app-field__prefix {
+  display: flex;
+  align-items: center;
+  max-width: 55%;
+  padding: 0 var(--k-space-2);
+  border: 1px solid var(--k-border);
+  border-right: 0;
+  border-radius: var(--k-radius-md) 0 0 var(--k-radius-md);
+  background: var(--k-panel-2);
+  color: var(--k-muted);
+  font-family: var(--k-font-mono);
+  font-size: var(--k-fs-meta);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-field__group.is-prefixed .v-field {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+
+.app-field__row {
+  display: flex;
+  align-items: center;
+  gap: var(--k-space-2);
+}
+
+.app-field__row > .v-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.app-field__req {
+  margin-left: 2px;
+  color: var(--k-err);
+}

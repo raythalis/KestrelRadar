@@ -1,63 +1,215 @@
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { API_BASE } from '@/api/http'
-import type { AppLocale } from '@/plugins/i18n'
-import { useUiStore } from '@/stores/ui'
+import AboutPanel from '@/components/settings/AboutPanel.vue'
+import SettingsForm from '@/components/settings/SettingsForm.vue'
+import TemplateList from '@/components/settings/TemplateList.vue'
+import type { SettingsCard } from '@/components/settings/types'
+import { useConfigStore } from '@/stores/config'
 
+const store = useConfigStore()
 const { t } = useI18n()
-const ui = useUiStore()
 
-const version = __APP_VERSION__
+const tab = ref('general')
+
+onMounted(() => {
+  void store.load()
+})
+
+const judgeModeOptions = computed(() =>
+  (['algorithm', 'algorithm_llm'] as const).map((value) => ({
+    value,
+    title: t(`monitor.mode.${value}`),
+    llmPlus: value === 'algorithm_llm',
+  })),
+)
+/** 消息语言：只影响固定文案（标记与来源分隔符），正文仍是模板那套 */
+const languageOptions = computed(() =>
+  (['zh', 'en'] as const).map((value) => ({ value, title: t(`settings.language.${value}`) })),
+)
+const fallbackOptions = computed(() =>
+  (['fallback', 'error'] as const).map((value) => ({
+    value,
+    title: t(`settings.fallback.${value}`),
+  })),
+)
+/** 时区下拉：第一项是「跟随服务器」，其余用浏览器给出的全球时区表 */
+const timezoneOptions = computed(() => {
+  // 时区表来自浏览器的 Intl；老 lib 定义里没有 supportedValuesOf，取出来先判存在再用
+  const supported = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] })
+    .supportedValuesOf
+  const zones: string[] = typeof supported === 'function' ? supported('timeZone') : []
+  return [
+    { value: 'system', title: t('settings.timezone.system') },
+    ...zones.map((zone) => ({ value: zone, title: zone })),
+  ]
+})
+
+/** 每个 tab 下按“一件事一张卡”分组，改动即自动写回，没有保存与恢复默认按钮 */
+const cardsByTab = computed<Record<string, SettingsCard[]>>(() => ({
+  general: [
+    {
+      id: 'region',
+      titleKey: 'settings.card.region',
+      noteKey: 'settings.cardNote.region',
+      fields: [
+        {
+          key: 'locale',
+          kind: 'locale',
+          options: [
+            { value: 'zh-CN', title: '中文' },
+            { value: 'en', title: 'English' },
+          ],
+        },
+        { key: 'timezone', kind: 'select', options: timezoneOptions.value },
+      ],
+    },
+  ],
+  judge: [
+    {
+      id: 'judgeRules',
+      titleKey: 'settings.card.judgeRules',
+      noteKey: 'settings.cardNote.judgeRules',
+      fields: [
+        { key: 'judgeMode', kind: 'select', options: judgeModeOptions.value },
+        {
+          key: 'scoreHighLine',
+          kind: 'scoreBands',
+          lowKey: 'scoreLowLine',
+          labelKey: 'settings.bandField.medium',
+          hintKey: '',
+        },
+        {
+          key: 'looseHighLine',
+          kind: 'scoreBands',
+          lowKey: 'looseLowLine',
+          labelKey: 'settings.bandField.loose',
+          hintKey: '',
+        },
+        {
+          key: 'strictHighLine',
+          kind: 'scoreBands',
+          lowKey: 'strictLowLine',
+          labelKey: 'settings.bandField.strict',
+          hintKey: '',
+        },
+      ],
+    },
+    {
+      id: 'model',
+      titleKey: 'settings.card.model',
+      noteKey: 'settings.cardNote.model',
+      fields: [
+        { key: 'llmTimeoutSeconds', kind: 'number', min: 5, max: 300 },
+        { key: 'llmMaxRetries', kind: 'number', min: 0, max: 5 },
+        { key: 'llmFallbackMode', kind: 'select', options: fallbackOptions.value },
+      ],
+    },
+    {
+      id: 'filters',
+      titleKey: 'settings.card.filters',
+      noteKey: 'settings.cardNote.filters',
+      fields: [{ key: 'globalExcludeKeywords', kind: 'keywords' }],
+    },
+  ],
+  collection: [
+    {
+      id: 'collect',
+      titleKey: 'settings.card.collect',
+      noteKey: 'settings.cardNote.collect',
+      fields: [
+        { key: 'concurrency', kind: 'number', min: 1, max: 20 },
+        { key: 'requestTimeoutSeconds', kind: 'number', min: 5, max: 300 },
+        { key: 'maxRetries', kind: 'number', min: 0, max: 5 },
+      ],
+    },
+    {
+      id: 'retention',
+      titleKey: 'settings.card.retention',
+      noteKey: 'settings.cardNote.retention',
+      fields: [
+        { key: 'retentionDays', kind: 'number', min: 7, max: 3650 },
+        { key: 'eventArchiveDays', kind: 'number', min: 1, max: 365 },
+        { key: 'freshnessWindowDays', kind: 'number', min: 0, max: 365 },
+      ],
+    },
+    {
+      id: 'rsshub',
+      titleKey: 'settings.card.rsshub',
+      noteKey: 'settings.cardNote.rsshub',
+      fields: [
+        { key: 'rsshubBaseUrl', kind: 'text', max: 500 },
+        { key: 'rsshubAccessKey', kind: 'text', max: 200 },
+        {
+          key: 'rsshubBaseUrl',
+          id: 'rsshubTest',
+          kind: 'rsshubTest',
+          labelKey: '',
+          hintKey: 'settings.hint.rsshubTest',
+        },
+      ],
+    },
+  ],
+  delivery: [
+    {
+      id: 'delivery',
+      titleKey: 'settings.card.delivery',
+      noteKey: 'settings.cardNote.delivery',
+      fields: [
+        { key: 'language', kind: 'select', options: languageOptions.value },
+        { key: 'dailyDeliveryLimit', kind: 'number', min: 0, max: 1000 },
+        { key: 'deliveryTimeoutSeconds', kind: 'number', min: 5, max: 120 },
+      ],
+    },
+  ],
+}))
+
+const tabs = computed(() => [
+  { value: 'general', icon: 'mdi-cog-outline', title: t('settings.tab.general') },
+  { value: 'judge', icon: 'mdi-filter-variant', title: t('settings.tab.judge') },
+  { value: 'collection', icon: 'mdi-tray-arrow-down', title: t('settings.tab.collection') },
+  { value: 'delivery', icon: 'mdi-send-outline', title: t('settings.tab.delivery') },
+  { value: 'about', icon: 'mdi-information-outline', title: t('settings.tab.about') },
+])
+
+const activeCards = computed(() => cardsByTab.value[tab.value] ?? [])
 </script>
 
 <template>
-  <div>
-    <h1 class="text-h5 font-weight-bold">{{ t('settings.title') }}</h1>
-    <p class="text-body-2 text-medium-emphasis mb-4">{{ t('settings.subtitle') }}</p>
+  <div class="k2-page k2-page--wide" data-test="settings-page">
+    <div class="k2-page__head">
+      <div class="k2-page__lead">
+        <h1 class="k2-page__title">{{ t('nav.settings') }}</h1>
+        <p class="k2-page__note">{{ t('settings.subtitle') }}</p>
+      </div>
+    </div>
 
-    <v-card max-width="640">
-      <v-card-text>
-        <div class="mb-4">
-          <div class="text-subtitle-2 mb-2">{{ t('settings.theme') }}</div>
-          <v-btn-toggle
-            :model-value="ui.theme"
-            mandatory
-            density="comfortable"
-            @update:model-value="(value) => ui.setTheme(value as 'kestrelLight' | 'kestrelDark')"
-          >
-            <v-btn value="kestrelLight" prepend-icon="mdi-weather-sunny">
-              {{ t('settings.themeLight') }}
-            </v-btn>
-            <v-btn value="kestrelDark" prepend-icon="mdi-weather-night">
-              {{ t('settings.themeDark') }}
-            </v-btn>
-          </v-btn-toggle>
-        </div>
+    <div class="k2-sets-layout">
+      <nav class="k2-subnav" data-test="settings-tabs">
+        <button
+          v-for="item in tabs"
+          :key="item.value"
+          type="button"
+          class="k2-subnav__item"
+          :class="{ 'k2-subnav__item--on': tab === item.value }"
+          :data-test="`tab-${item.value}`"
+          @click="tab = item.value"
+        >
+          <i class="mdi" :class="item.icon" />
+          <span>{{ item.title }}</span>
+        </button>
+      </nav>
 
-        <div class="mb-4">
-          <div class="text-subtitle-2 mb-2">{{ t('settings.language') }}</div>
-          <v-btn-toggle
-            :model-value="ui.locale"
-            mandatory
-            density="comfortable"
-            @update:model-value="(value) => ui.setLocale(value as AppLocale)"
-          >
-            <v-btn value="zh-CN">简体中文</v-btn>
-            <v-btn value="en">English</v-btn>
-          </v-btn-toggle>
-        </div>
-      </v-card-text>
-
-      <v-divider />
-
-      <v-card-text>
-        <div class="text-subtitle-2 mb-2">{{ t('settings.runtime') }}</div>
-        <v-list density="compact">
-          <v-list-item :title="t('settings.apiBase')" :subtitle="API_BASE" />
-          <v-list-item :title="t('settings.frontendVersion')" :subtitle="version" />
-        </v-list>
-      </v-card-text>
-    </v-card>
+      <div class="k2-sets-pane">
+        <SettingsForm
+          v-if="activeCards.length > 0"
+          :cards="activeCards"
+          :data-test="`pane-${tab}`"
+        />
+        <TemplateList v-if="tab === 'delivery'" data-test="pane-templates" />
+        <AboutPanel v-if="tab === 'about'" />
+      </div>
+    </div>
   </div>
 </template>

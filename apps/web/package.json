@@ -1,9 +1,9 @@
 {
   "name": "kestrel-web",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Kestrel web 前端：Vue 3 + Vuetify 4 + TypeScript",
+  "description": "Kestrel Radar web 前端：Vue 3 + Vuetify 4 + TypeScript",
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
@@ -19,16 +19,17 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@mdi/font": "^7.4.47",
+    "@kestrel/contracts": "workspace:*",
+    "@vue-js-cron/vuetify": "^5.1.2",
     "axios": "^1.20.0",
     "pinia": "^4.0.3",
-    "pinia-plugin-persistedstate": "^4.7.1",
     "vue": "^3.5.42",
     "vue-i18n": "^11.4.12",
     "vue-router": "^5.3.1",
     "vuetify": "^4.2.3"
   },
   "devDependencies": {
+    "@mdi/font": "^7.4.47",
     "@tsconfig/node24": "^24.0.5",
     "@types/jsdom": "^30.0.0",
     "@types/node": "^24.13.4",
@@ -58,5 +59,6 @@
   },
   "engines": {
     "node": "^22.18.0 || >=24.12.0"
-  }
+  },
+  "license": "GPL-3.0-only"
 }

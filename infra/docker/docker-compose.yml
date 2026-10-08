@@ -1,0 +1,25 @@
+# Kestrel Radar —— 单容器：界面与 API 同一个进程
+#
+# 用法（在仓库根目录）：
+#   docker compose -f infra/docker/docker-compose.yml up -d --build
+#   docker compose -f infra/docker/docker-compose.yml logs -f
+#   docker compose -f infra/docker/docker-compose.yml down
+#
+# 数据落在本文件旁边的 ./data（数据库 + 图标），删容器不删数据。
+services:
+  kestrel:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    image: kestrelradar:latest
+    container_name: kestrelradar
+    restart: unless-stopped
+    ports:
+      - '8765:8765'
+    environment:
+      KESTREL_HOST: 0.0.0.0
+      KESTREL_PORT: '8765'
+      KESTREL_DB_PATH: /data/kestrel.db
+      KESTREL_STATIC_DIR: /app/apps/web/dist
+    volumes:
+      - ./data:/data

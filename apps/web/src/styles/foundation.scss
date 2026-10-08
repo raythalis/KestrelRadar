@@ -1,0 +1,54 @@
+// Design System · Foundation（基础层）：全局排版、焦点、滚动等"无类名"的规矩。
+// 只消费 --k2-* 变量（唯一 source：src/design/v2/tokens.ts），不写任何色值、不针对具体页面。
+//
+// 一处例外：body 的正文字号仍是 13px 字面值 —— v2 的正文字号是 14px，但那只作用于 .k2 作用域内；
+// 直接把基准抬到 14px 会让全站继承文字整体大一号，属于单独决策，不在 token 收口这一批里动。
+//
+// 分层顺序（main.ts 里的引入顺序也照此）：
+//   main.scss（旧样式，P6 才清理）→ foundation.scss（本文件）→ components.scss（App* 组件）
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  font-family: var(--k2-font-sans);
+  font-size: var(--k2-fs-body);
+  line-height: var(--k2-lh-normal);
+  color: var(--k2-c-text);
+  background: var(--k2-c-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 数字、路径、时间戳一律等宽 + 等宽数字，方便竖向对齐扫描 */
+.font-mono {
+  font-family: var(--k2-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+/* 焦点可见：键盘操作看得出在哪（鼠标点击不出现外圈） */
+:focus-visible {
+  outline: 2px solid var(--k2-c-primary);
+  outline-offset: 1px;
+  border-radius: var(--k2-r-xs);
+}
+
+/* 触摸端不要 300ms 延迟与双击缩放 */
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}

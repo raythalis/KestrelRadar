@@ -1,9 +1,66 @@
+// Kestrel 界面基准：只保留基础形状与仍被现役页面使用的通用类。
+// 色值与排版一律走 CSS 变量，唯一 source 是 src/design/v2/tokens.ts（注入到 <html>，见 AppShell）。
+// v1 外壳与 v1 组件的样式已于 Batch 5-A 随 v1 UI 一起删除。
+// 这里留下的 .counts / .template-card 已迁到 v2 变量；.empty-state 当前只被 style-lab 用，
+// 先留在兼容别名上（--k-* → var(--k2-*)），等 Style Lab 重构时一起处理。
+
+/* ---------- 基础 ---------- */
+
 html,
 body,
 #app {
   height: 100%;
 }
 
+body {
+  font-family: var(--k2-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 a {
   color: inherit;
+}
+
+.font-mono,
+.mono {
+  font-family: var(--k2-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 通用小件（仍被现役页面使用） ---------- */
+
+.counts {
+  display: flex;
+  gap: 6px;
+  font-size: var(--k2-fs-caption);
+  color: var(--k2-c-text-muted);
+}
+
+.counts span {
+  padding: 2px 8px;
+  border: 1px solid var(--k2-c-border);
+  border-radius: var(--k2-r-xs);
+  background: var(--k2-c-surface2);
+  white-space: nowrap;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 36px 16px;
+  border-radius: var(--k-radius);
+  border: 1px dashed var(--k-border);
+  color: var(--k-faint);
+  font-size: 13px;
+}
+
+.template-card {
+  border-color: var(--k2-c-border) !important;
+  border-radius: var(--k2-r-md) !important;
+  background: var(--k2-c-surface) !important;
 }

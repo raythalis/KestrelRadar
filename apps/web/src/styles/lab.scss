@@ -1,0 +1,131 @@
+/* `/style-lab` 的版式类：预览页与它下面的样例子组件共用。
+   注意：写在 StyleLabView 的 `<style scoped>` 里对子组件无效（scoped 会加 data-v 属性），
+   所以凡是被子组件用到的类都必须放这里。只在 DEV 路由下加载。 */
+.lab__h3 {
+  margin-block-end: var(--k2-s-2);
+  color: var(--k2-c-text-muted);
+  font-size: var(--k2-fs-caption);
+}
+
+.lab__meta {
+  color: var(--k2-c-text-muted);
+  font-size: var(--k2-fs-caption);
+}
+
+.lab__note {
+  margin: 0;
+  max-inline-size: 62ch;
+  color: var(--k2-c-text-muted);
+  font-size: var(--k2-fs-body);
+  line-height: var(--k2-lh-relaxed);
+}
+
+.lab__cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--k2-s-6);
+  margin-block-start: var(--k2-s-5);
+}
+
+/* 活跃区两栏：左宽右窄、间距 16，跟参考稿一致（只作用于这一处样例）。
+   align-items: start：两栏各自按内容取高——事件栏多出底栏时就该比异常栏高那一条（异常栏不跟涨） */
+.lab__cols--activity {
+  align-items: start;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: var(--k2-s-4);
+}
+
+/* 两栏并排看对照（列表 / 表单类样例） */
+.lab__cols--wide {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lab__controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--k2-s-3);
+}
+
+.lab__gap-top {
+  margin-block-start: var(--k2-s-5);
+}
+
+@media (max-width: 900px) {
+  .lab__cols--wide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* 手机宽度：活跃区两栏也收成单列（生产页收得更早，≤1183 就收；样例留到 767，
+   方便在 1032 的窗口里继续并排看对照） */
+@media (max-width: 767px) {
+  .lab__cols--activity {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* 设置页：左窄分类栏 + 右宽行列表（设置行需要横向空间，不能塞进三栏） */
+.lab-setgrid {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: var(--k2-s-4);
+  align-items: start;
+}
+
+/* 零件样例：一栏里上下排几个零件 */
+.lab-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--k2-s-3);
+}
+
+/* 弹窗零件要摆在一块遮罩色上才看得出层次（真正的遮罩是 fixed，摆不进这一页） */
+.lab-box-sm {
+  inline-size: 156px;
+}
+
+/* 表单类零件按生产弹窗的宽度摆（FormDialog 的宽度就是 640） */
+.lab-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-4);
+  inline-size: min(640px, 100%);
+}
+
+.lab-row--end {
+  justify-content: flex-end;
+}
+
+.lab-box-md {
+  inline-size: 220px;
+}
+
+.lab-menu {
+  inline-size: 200px;
+}
+
+.lab-truncate {
+  inline-size: 160px;
+}
+
+.lab-panel {
+  padding: var(--k2-s-6);
+  border-radius: var(--k2-r-xl);
+  background: var(--k2-c-surface3);
+}
+
+/* 标签页平时只在窄屏出现（桌面用不到），零件页要一直看得见 */
+
+.lab-parts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k2-s-4);
+}
+
+/* 「控件尺寸」那一排里的输入框与下拉：给个固定宽度，别铺满整行 */
+.lab__controls .k2-input,
+.lab__controls .k2-select {
+  inline-size: 220px;
+}
