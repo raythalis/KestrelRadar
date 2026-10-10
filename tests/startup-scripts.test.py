@@ -125,6 +125,12 @@ class StartupScriptTests(unittest.TestCase):
         self.assertNotIn('pnpm', batch)
         self.assertNotIn('package.json', batch)
 
+    def test_windows_entry_finds_powershell_without_relying_on_path(self):
+        batch = (ROOT / 'start.bat').read_text()
+        # PATH 被精简过的机器按名字找不到 powershell，会先按绝对路径找。
+        self.assertIn(r'%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe', batch)
+        self.assertIn('if not exist "%KESTREL_PS%" set "KESTREL_PS=powershell.exe"', batch)
+
     def test_windows_switches_the_code_page_once_and_does_not_restore_it(self):
         batch = (ROOT / 'start.bat').read_text()
         self.assertIn('chcp 65001', batch)

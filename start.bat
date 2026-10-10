@@ -9,7 +9,13 @@ rem The window switches to UTF-8 and stays there: PowerShell and every tool it
 rem starts speak UTF-8; switching back is what used to wipe the output above.
 chcp 65001 >nul
 
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0start.ps1"
+rem Prefer the absolute Windows PowerShell path: on a machine whose PATH was
+rem trimmed, the plain "powershell" name is not found and cmd fails with 9009.
+rem Fall back to the name if that file is missing.
+set "KESTREL_PS=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+if not exist "%KESTREL_PS%" set "KESTREL_PS=powershell.exe"
+
+"%KESTREL_PS%" -NoProfile -ExecutionPolicy Bypass -File "%~dp0start.ps1"
 set "KESTREL_EXIT=%errorlevel%"
 
 if not "%KESTREL_EXIT%"=="0" (
