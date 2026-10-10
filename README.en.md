@@ -63,7 +63,7 @@ The guides above are available in English. The application UI also supports Chin
 
 ## Quick start
 
-Install Node.js and pnpm, obtain the repository source, then run `./start.sh` on Linux / macOS or `start.bat` on Windows from the repository root. Open <http://127.0.0.1:8765> on the same machine. These scripts run in the foreground and stop when the terminal closes or you press Ctrl+C.
+Obtain the repository source, then run `./start.sh` on Linux / macOS or `start.bat` on Windows from the repository root. If compatible Node.js or pnpm is missing, the scripts ask before installing it inside the project; they then build and start the service. Open <http://127.0.0.1:8765> on the same machine. These scripts run in the foreground and stop when the terminal closes or you press Ctrl+C.
 
 For a persistent deployment, see [Docker Compose and other options](docs/deployment.en.md). The [first-use guide](docs/getting-started.en.md) walks through a discovery, monitor, and action. **Kestrel Radar currently has no user accounts or authentication. Do not expose it directly to the public internet.**
 

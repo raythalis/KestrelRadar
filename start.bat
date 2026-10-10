@@ -1,55 +1,20 @@
 @echo off
-setlocal
-pushd "%~dp0"
-if errorlevel 1 (
-  echo Cannot enter the project directory.
+rem Double-click door for Kestrel Radar: this file only launches start.ps1 in the
+rem current window. Every check, install and the build itself live in start.ps1.
+rem
+rem Keep this file ASCII-only: cmd reads .bat bytes in the OEM code page, so any
+rem non-ASCII text here is echoed as garbage. Chinese messages belong in start.ps1.
+rem
+rem The window switches to UTF-8 and stays there: PowerShell and every tool it
+rem starts speak UTF-8; switching back is what used to wipe the output above.
+chcp 65001 >nul
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0start.ps1"
+set "KESTREL_EXIT=%errorlevel%"
+
+if not "%KESTREL_EXIT%"=="0" (
+  echo.
+  echo Kestrel startup failed ^(exit code %KESTREL_EXIT%^). The reason is printed above.
   pause
-  exit /b 1
+  exit /b %KESTREL_EXIT%
 )
-if not exist package.json (
-  echo package.json not found. Run this script from the Kestrel repository root.
-  popd
-  pause
-  exit /b 1
-)
-
-rem pnpm can panic on mapped network drives while returning exit code 0.
-net use "%CD:~0,2%" >nul 2>nul
-if not errorlevel 1 (
-  echo This project is on a mapped network drive. Copy it to a local drive first.
-  popd
-  pause
-  exit /b 1
-)
-
-where node >nul 2>nul
-if errorlevel 1 (
-  echo Node.js not found. Install Node.js 22.18+ or 24.12+ from https://nodejs.org
-  pause
-  exit /b 1
-)
-
-where pnpm >nul 2>nul
-if errorlevel 1 (
-  echo pnpm not found. Install with corepack enable or npm install -g pnpm
-  pause
-  exit /b 1
-)
-
-if not exist node_modules (
-  echo Installing dependencies...
-  call pnpm install --frozen-lockfile
-  if errorlevel 1 ( pause & exit /b 1 )
-)
-
-echo Building Kestrel Radar...
-call pnpm build
-if errorlevel 1 ( pause & exit /b 1 )
-
-if "%KESTREL_HOST%"=="" set KESTREL_HOST=127.0.0.1
-if "%KESTREL_PORT%"=="" set KESTREL_PORT=8765
-echo Starting Kestrel Radar on http://%KESTREL_HOST%:%KESTREL_PORT%
-start "" "http://%KESTREL_HOST%:%KESTREL_PORT%"
-
-call pnpm start
-pause

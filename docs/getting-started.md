@@ -4,7 +4,7 @@
 
 ## 1. 启动并打开界面
 
-先取得项目源码。Linux/macOS 运行 `./start.sh`，Windows 可运行 `start.bat`；脚本需要预先安装 Node.js 和 pnpm，并会在当前终端构建和启动服务（不是后台服务）。详细条件及 Docker 安装方式见[部署](deployment.md)。
+先取得项目源码。Linux/macOS 运行 `./start.sh`，Windows 可运行 `start.bat`；若缺少兼容的 Node.js 或 pnpm，脚本会征求同意后安装到项目目录，再在当前终端构建和启动服务（不是后台服务）。详细条件及 Docker 安装方式见[部署](deployment.md)。
 
 ```bash
 ./start.sh

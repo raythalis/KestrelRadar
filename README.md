@@ -63,7 +63,7 @@ Kestrel Radar 是自托管的信息监听工具：自己决定从哪里采集、
 
 ## 快速开始
 
-准备 Node.js 和 pnpm，取得本仓库源码后，在仓库根目录运行 `./start.sh`（Linux / macOS）或 `start.bat`（Windows）。脚本会构建并启动服务；在运行它的设备上打开 <http://127.0.0.1:8765>。这是前台进程，关闭终端或按 Ctrl+C 就会停止。
+取得本仓库源码后，在仓库根目录运行 `./start.sh`（Linux / macOS）或 `start.bat`（Windows）。缺少兼容的 Node.js 或 pnpm 时，脚本会征求同意后安装到项目目录；随后构建并启动服务。在运行它的设备上打开 <http://127.0.0.1:8765>。这是前台进程，关闭终端或按 Ctrl+C 就会停止。
 
 需要常驻运行或使用镜像？看 [Docker Compose 与其他部署方式](docs/deployment.md)。从第一次配置到收到事件的步骤见[快速开始教程](docs/getting-started.md)。**当前应用没有账号与鉴权，不要直接暴露到公网。**
 

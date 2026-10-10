@@ -4,7 +4,7 @@ This guide takes you from a fresh Kestrel Radar installation to a first configur
 
 ## 1. Start Kestrel Radar and open the interface
 
-First obtain the project source. Run `./start.sh` on Linux/macOS or `start.bat` on Windows. The scripts require Node.js and pnpm to be installed beforehand; they build and start the service in the current terminal, not as a background service. For requirements and Docker installation, see [Deployment](deployment.en.md).
+First obtain the project source. Run `./start.sh` on Linux/macOS or `start.bat` on Windows. If compatible Node.js or pnpm is missing, the scripts ask permission to install it inside the project, then build and start the service in the current terminal (not in the background). For requirements and Docker installation, see [Deployment](deployment.en.md).
 
 ```bash
 ./start.sh

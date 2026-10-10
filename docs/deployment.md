@@ -13,7 +13,7 @@ Linux / macOS：
 
 Windows：双击 `start.bat`。
 
-脚本会检查 Node 与 pnpm 是否可用；若根目录尚无 `node_modules`，安装依赖，然后构建界面并用 `pnpm start` 起服务（默认 8765）。**脚本不会自动安装 Node 或 pnpm**。Node 要满足仓库 `package.json` 的版本要求（22.18+ 或 24.12+）；pnpm 版本由仓库固定。
+脚本会核对 Node 与仓库要求的 pnpm 版本。缺少或版本不兼容时，先提示安装到项目内的 `.kestrel-runtime/`，经终端确认后下载 Node.js 官方安装包并校验 SHA-256，安装项目指定的 pnpm；不会修改系统级安装或全局 PATH。拒绝安装、网络或校验失败时直接退出；非交互环境需预装依赖。自动安装支持 x64、arm64 的 Linux、macOS 和 Windows。Windows 双击 `start.bat` 即可，它只负责在本窗口启动 PowerShell 脚本 `start.ps1`；该窗口会切到 UTF-8 且不再切回（脚本与它启动的工具都按 UTF-8 输出），但不会修改系统区域设置。依赖齐备后按锁定文件校验并安装依赖（失败才重建），再构建界面并启动服务（默认 8765）；启动前若端口已占用，会报告占用进程并退出，不会自动终止它。首次安装需要联网，且本机需有下载/解压工具。
 端口与地址用 `KESTREL_PORT`、`KESTREL_HOST` 覆盖。
 
 ## 方式二：Docker

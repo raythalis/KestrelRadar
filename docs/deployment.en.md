@@ -12,7 +12,7 @@ Linux/macOS:
 
 Windows: double-click `start.bat`.
 
-The scripts check whether Node and pnpm are available. If the root has no `node_modules`, they install dependencies; they then build the interface and start the service with `pnpm start` (port 8765 by default). **The scripts do not install Node or pnpm for you.** Node must meet the version requirements in the repository's `package.json` (22.18+ or 24.12+); the pnpm version is pinned by the repository. Override the port and listen address with `KESTREL_PORT` and `KESTREL_HOST`.
+The scripts check the installed Node version and the pnpm version required by this repository. If either is missing or incompatible, they ask before installing into the project's `.kestrel-runtime/` directory. They download the official Node.js archive and verify its SHA-256 checksum, then install the pinned pnpm version without changing system-wide installations or the global PATH. Declining, a download failure, or a failed checksum stops startup; non-interactive use requires preinstalled dependencies. Automatic installation supports x64 and arm64 on Linux, macOS, and Windows. On Windows, double-click `start.bat`: it only launches the PowerShell script `start.ps1` in that window, which switches the window to UTF-8 and leaves it there (the script and the tools it starts all emit UTF-8) without changing system locale settings. Once the tools are ready, dependencies are verified against the lockfile (rebuilt only if that fails), the interface is built, and the service starts (port 8765 by default). If the port is already in use, the script reports the owning process and exits without terminating it. First-time installation needs internet access and local download/extraction tools.
 
 ## Option 2: Docker
 
