@@ -11,7 +11,7 @@ import type { ChannelType } from '@kestrel/contracts'
 import AppInput from '@/components/app/AppInput.vue'
 import CronPicker from '@/components/biz/CronPicker.vue'
 import FormDialog from '@/components/biz/FormDialog.vue'
-import { CHANNEL_ICONS } from '@/components/biz/icons'
+import ChannelIcon from '@/components/biz/ChannelIcon.vue'
 import type { ActionDialogValues, ActionTrigger } from '@/components/biz/types'
 import { checkCron } from '@/utils/cron'
 
@@ -220,9 +220,11 @@ function submit(): void {
               data-test="action-dialog-channel"
             >
               <span class="k2-card__row">
-                <v-icon v-if="selectedChannel" size="18" data-test="action-dialog-channel-icon">{{
-                  CHANNEL_ICONS[selectedChannel.type]
-                }}</v-icon>
+                <ChannelIcon
+                  v-if="selectedChannel"
+                  :type="selectedChannel.type"
+                  data-test="action-dialog-channel-icon"
+                />
                 <span :class="{ 'k2-select__ph': !channelSummary }">
                   {{ channelSummary || t('action.channelMissing') }}
                 </span>
@@ -237,9 +239,7 @@ function submit(): void {
             class="k2-menu__item"
             @click="channelId = channel.id"
           >
-            <v-icon size="18" data-test="action-dialog-channel-icon">
-              {{ CHANNEL_ICONS[channel.type] }}
-            </v-icon>
+            <ChannelIcon :type="channel.type" data-test="action-dialog-channel-icon" />
             {{ channel.name }}
             <span v-if="!channel.enabled" class="k2-menu__hint">
               <span class="k2-chip k2-t-danger" data-test="action-dialog-channel-off">

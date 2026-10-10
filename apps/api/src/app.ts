@@ -83,7 +83,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     if (maintenance) clearInterval(maintenance)
     // 关服务前把攒在合并窗口里的消息发掉，别丢
     await container.batcher.flush().catch(() => undefined)
-    container.scheduler.stop()
+    await container.scheduler.stop()
     db.close()
   })
 

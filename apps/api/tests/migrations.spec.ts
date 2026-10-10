@@ -35,6 +35,8 @@ describe('数据库迁移', () => {
       const tables = tableNames(conn)
       for (const table of CONFIG_TABLES) expect(tables).toContain(table)
       expect(userVersion(conn)).toBe(MIGRATIONS.length)
+      const cols = conn.prepare('pragma table_info(channels)').all() as { name: string }[]
+      expect(cols.map((row) => row.name)).toContain('channel_type')
     } finally {
       conn.close()
       db.cleanup()
@@ -101,9 +103,8 @@ describe('数据库迁移', () => {
         "insert into event_items (event_id, item_id, discovery_id, added_at) values ('e1', 'i1', 'd1', 't'), ('e1', 'i2', 'd1', 't'), ('e2', 'i2', 'd1', 't'), ('e3', 'i3', 'd1', 't'), ('e4', 'i3', 'd1', 't')",
       )
 
-      // 退回第 11 版，让 012 再跑一次
-      conn.exec('pragma user_version = 11')
-      runMigrations(conn)
+      // 只重跑 012，验证它对已清理数据仍然安全
+      conn.exec(MIGRATIONS[11]?.sql ?? '')
 
       const events = conn.prepare('select id, last_item_at from events order by id').all() as {
         id: string

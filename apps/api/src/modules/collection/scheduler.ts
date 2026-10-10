@@ -62,6 +62,12 @@ export function createScheduler(deps: SchedulerDeps) {
   const nextRuns = new Map<string, string | null>()
   let active = 0
   const waiting: Array<() => void> = []
+  const inFlight = new Set<Promise<void>>()
+
+  function track(task: Promise<void>): void {
+    inFlight.add(task)
+    void task.finally(() => inFlight.delete(task))
+  }
 
   /** 有限并发：同时在跑的任务不超过设置里的上限 */
   async function withSlot<T>(work: () => Promise<T>): Promise<T> {
@@ -162,8 +168,8 @@ export function createScheduler(deps: SchedulerDeps) {
     for (const [key, job] of wanted) {
       if (jobs.has(key)) continue
       const created = new Cron(job.pattern, { protect: true }, () => {
-        if (job.digest) void runDigest(key, job.id)
-        else void runCollect(key, job.id)
+        if (job.digest) track(runDigest(key, job.id))
+        else track(runCollect(key, job.id))
       })
       jobs.set(key, { job: created, pattern: job.pattern })
     }
@@ -176,10 +182,11 @@ export function createScheduler(deps: SchedulerDeps) {
     start(): void {
       sync()
     },
-    stop(): void {
+    async stop(): Promise<void> {
       for (const entry of jobs.values()) entry.job.stop()
       jobs.clear()
       nextRuns.clear()
+      await Promise.allSettled(inFlight)
     },
     /** 卡片上的「下次采集时间」；没安排任务就是 null */
     nextRunAt(id: string): string | null {

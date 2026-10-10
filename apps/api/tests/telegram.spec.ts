@@ -4,6 +4,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { buildContainer, type Container } from '../src/container.ts'
 
 import { createDeliverySender } from '../src/modules/delivery/dispatcher.ts'
+import {
+  createDingtalkSender,
+  createFeishuSender,
+  createWecomSender,
+} from '../src/modules/delivery/extra-senders.ts'
 import { DeliveryError, createWebhookSender } from '../src/modules/delivery/sender.ts'
 import { createTelegramGateway } from '../src/modules/delivery/telegram.ts'
 import { createTempDb, openTestDatabase } from './helpers/temp-db.ts'
@@ -128,6 +133,31 @@ describe('发送分发', () => {
 
     expect(calls[0]?.url).toContain('api.telegram.org')
     expect(calls[1]?.url).toBe('https://hook.example.com/x')
+  })
+
+  it('企业微信、钉钉、飞书使用各自的文本 Webhook 格式', async () => {
+    const calls: Call[] = []
+    const fetchImpl = fakeFetch(calls, [{ errcode: 0 }, { errcode: 0 }, { code: 0 }])
+    await createWecomSender({ fetchImpl }).send({
+      ...message,
+      channel: channel({ type: 'wecom', config: { url: 'https://wecom.example/hook' } }),
+    })
+    await createDingtalkSender({ fetchImpl }).send({
+      ...message,
+      channel: channel({ type: 'dingtalk', config: { url: 'https://ding.example/hook' } }),
+    })
+    await createFeishuSender({ fetchImpl }).send({
+      ...message,
+      channel: channel({ type: 'feishu', config: { url: 'https://feishu.example/hook' } }),
+    })
+    expect(calls.map((call) => call.url)).toEqual([
+      'https://wecom.example/hook',
+      'https://ding.example/hook',
+      'https://feishu.example/hook',
+    ])
+    expect(calls[0]?.body).toMatchObject({ msgtype: 'text' })
+    expect(calls[1]?.body).toMatchObject({ msgtype: 'text' })
+    expect(calls[2]?.body).toMatchObject({ msg_type: 'text' })
   })
 
   it('Webhook 收到非 2xx 算失败', async () => {

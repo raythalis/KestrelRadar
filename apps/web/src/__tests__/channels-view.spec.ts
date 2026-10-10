@@ -129,7 +129,7 @@ describe('通知渠道页', () => {
 
     const telegram = wrapper.get('[data-test="new-channel-telegram"]')
     const webhook = wrapper.get('[data-test="new-channel-webhook"]')
-    expect(telegram.find('i.mdi-send').exists()).toBe(true)
+    expect(telegram.find('[data-test="channel-brand-icon"]').exists()).toBe(true)
     expect(webhook.find('i.mdi-webhook').exists()).toBe(true)
   })
 

@@ -4,12 +4,19 @@
 /** 渠道弹窗交出去的值（页面负责拼成 create/update 入参） */
 export interface ChannelDialogValues {
   name: string
-  type: 'telegram' | 'webhook'
+  type: 'telegram' | 'webhook' | 'wecom' | 'dingtalk' | 'feishu' | 'email'
   enabled: boolean
   /** Telegram 用 */
   chatId: string
   /** Webhook 用 */
   url: string
+  sign?: boolean
+  host?: string
+  port?: string
+  secure?: boolean
+  from?: string
+  to?: string
+  username?: string
   /** 密钥输入框的当前值；空字符串＝不改动已保存的密钥 */
   secret: string
 }

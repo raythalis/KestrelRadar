@@ -19,6 +19,10 @@ export const LLM_PLUS_ICON = 'mdi-shimmer'
 export const CHANNEL_ICONS: Record<ChannelType, string> = {
   telegram: 'mdi-send',
   webhook: 'mdi-webhook',
+  wecom: 'mdi-volume-high',
+  dingtalk: 'mdi-bell-alert-outline',
+  feishu: 'mdi-send-outline',
+  email: 'mdi-paperclip',
 }
 
 /** 模型供应商 → 图标（v1.0 的供应商卡只留名称、图标、类型胶囊与两个按钮） */

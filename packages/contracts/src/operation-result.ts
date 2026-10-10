@@ -49,6 +49,13 @@ export const FAILURE_TO_OPERATION: Record<FailureCode, OperationCode> = {
   'delivery.telegramTimeout': 'TIMEOUT',
   'delivery.telegramAuth': 'AUTH_FAILED',
   'delivery.telegramFailed': 'UNAVAILABLE',
+  'delivery.wecomFailed': 'UNAVAILABLE',
+  'delivery.dingtalkFailed': 'UNAVAILABLE',
+  'delivery.feishuFailed': 'UNAVAILABLE',
+  'delivery.emailFailed': 'UNAVAILABLE',
+  'delivery.emailAuth': 'AUTH_FAILED',
+  'delivery.emailTimeout': 'TIMEOUT',
+  'delivery.emailTls': 'UNAVAILABLE',
   'delivery.channelUnavailable': 'UNAVAILABLE',
   'delivery.failed': 'UNAVAILABLE',
 }

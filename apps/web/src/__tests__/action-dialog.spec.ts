@@ -230,9 +230,8 @@ describe('ActionDialog', () => {
       '新建通知渠道',
     ])
 
-    // 类型图标：telegram → mdi-send、webhook → mdi-webhook
-    // （v-icon 用字体连字，名字在 class 上，不在文字里）
-    expect(items[0]?.querySelector('.v-icon')?.className).toContain('mdi-send')
+    // 平台图标走本地品牌资源；通用 Webhook 仍走语义字形。
+    expect(items[0]?.querySelector('[data-test="action-dialog-channel-icon"]')).not.toBeNull()
     expect(items[1]?.querySelector('.v-icon')?.className).toContain('mdi-webhook')
 
     // 停用的那个才有「未启用」

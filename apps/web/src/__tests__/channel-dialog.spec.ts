@@ -127,6 +127,76 @@ describe('ChannelDialog', () => {
     })
   })
 
+  it.each(['dingtalk', 'feishu'])('新建 %s 开启加签时须填密钥，关闭则不必填', async (type) => {
+    const wrapper = mountDialog({ name: '测试渠道', type, url: 'https://example.com/hook' })
+    await flushPromises()
+    expect(submit().disabled).toBe(false)
+    const toggle = document.querySelector(
+      '[data-test="app-switch"] input[type="checkbox"]',
+    ) as HTMLInputElement
+    toggle.click()
+    await flushPromises()
+    expect(toggle.checked).toBe(true)
+    const secretField = input('channel-dialog-secret').closest('[data-test="app-input"]')
+    expect(secretField?.querySelector('.k2-field__req')?.textContent).toBe('*')
+    expect(submit().disabled).toBe(true)
+    input('channel-dialog-secret').value = '  '
+    input('channel-dialog-secret').dispatchEvent(new Event('input'))
+    await flushPromises()
+    expect(submit().disabled).toBe(true)
+    input('channel-dialog-secret').value = 'new-secret'
+    input('channel-dialog-secret').dispatchEvent(new Event('input'))
+    await flushPromises()
+    expect(submit().disabled).toBe(false)
+    await click(submit())
+    expect(wrapper.emitted('submit')?.[0]?.[0]).toMatchObject({ sign: true, secret: 'new-secret' })
+  })
+
+  it.each(['dingtalk', 'feishu'])('编辑已有密钥的 %s 可以留空沿用并开启加签', async (type) => {
+    const wrapper = mountDialog({
+      name: '测试渠道',
+      type,
+      url: 'https://example.com/hook',
+      hasSecret: true,
+      sign: true,
+    })
+    await flushPromises()
+    expect(input('channel-dialog-secret').value).toBe('')
+    expect(
+      input('channel-dialog-secret')
+        .closest('[data-test="app-input"]')
+        ?.querySelector('.k2-field__req'),
+    ).toBeNull()
+    expect(submit().disabled).toBe(false)
+    await click(submit())
+    expect(wrapper.emitted('submit')?.[0]?.[0]).toMatchObject({ sign: true, secret: '' })
+  })
+
+  it('飞书开启加签后提交 true，重新编辑仍保持开启', async () => {
+    const first = mountDialog({
+      name: '飞书',
+      type: 'feishu',
+      url: 'https://example.com/hook',
+      sign: true,
+      hasSecret: true,
+    })
+    await flushPromises()
+    await click(submit())
+    expect(first.emitted('submit')?.[0]?.[0]).toMatchObject({ type: 'feishu', sign: true })
+    document.body.innerHTML = ''
+    mountDialog({
+      name: '飞书',
+      type: 'feishu',
+      url: 'https://example.com/hook',
+      sign: true,
+      hasSecret: true,
+    })
+    await flushPromises()
+    expect((document.querySelector('input[type="checkbox"]') as HTMLInputElement).checked).toBe(
+      true,
+    )
+  })
+
   it('没填全时保存按钮不可点', async () => {
     mountDialog()
     await flushPromises()
