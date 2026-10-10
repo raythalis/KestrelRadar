@@ -137,6 +137,8 @@ describe('ChannelDialog', () => {
     toggle.click()
     await flushPromises()
     expect(toggle.checked).toBe(true)
+    const secretField = input('channel-dialog-secret').closest('[data-test="app-input"]')
+    expect(secretField?.querySelector('.k2-field__req')?.textContent).toBe('*')
     expect(submit().disabled).toBe(true)
     input('channel-dialog-secret').value = '  '
     input('channel-dialog-secret').dispatchEvent(new Event('input'))
@@ -160,6 +162,11 @@ describe('ChannelDialog', () => {
     })
     await flushPromises()
     expect(input('channel-dialog-secret').value).toBe('')
+    expect(
+      input('channel-dialog-secret')
+        .closest('[data-test="app-input"]')
+        ?.querySelector('.k2-field__req'),
+    ).toBeNull()
     expect(submit().disabled).toBe(false)
     await click(submit())
     expect(wrapper.emitted('submit')?.[0]?.[0]).toMatchObject({ sign: true, secret: '' })

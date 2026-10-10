@@ -286,6 +286,7 @@ function submit(): void {
           type="password"
           autocomplete="off"
           :label="type === 'webhook' ? t('channel.secret') : t('channel.secretRequired')"
+          :required="type !== 'webhook' && !hasSecret"
           :placeholder="hasSecret ? t('channel.secretKept') : undefined"
           :hint="type === 'webhook' ? t('channel.secretHint') : undefined"
           :maxlength="500"
