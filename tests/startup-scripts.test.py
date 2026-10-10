@@ -175,6 +175,15 @@ class StartupScriptTests(unittest.TestCase):
     def test_stale_logs_from_older_versions_stay_ignored(self):
         self.assertIn('.kestrel-start*.log', (ROOT / '.gitignore').read_text())
 
+    def test_windows_script_puts_the_bundled_node_first_on_path(self):
+        script = (ROOT / 'start.ps1').read_text(encoding='utf-8-sig')
+        # npm/pnpm 拉起的子进程用 PATH 找 node；本机没装 Node 时只能靠项目内这份。
+        self.assertIn("$env:PATH = (Split-Path -Parent $nodeExe) + ';' + $env:PATH", script)
+
+    def test_bash_script_puts_the_bundled_node_first_on_path(self):
+        script = (ROOT / 'start.sh').read_text()
+        self.assertIn('export PATH="$RUNTIME/node/bin:$PATH"', script)
+
     def test_windows_checks_port_before_dependency_install_and_build(self):
         script = (ROOT / 'start.ps1').read_text(encoding='utf-8-sig')
         port_check = script.index('$portInUse = Get-NetTCPConnection')

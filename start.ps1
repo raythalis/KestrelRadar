@@ -97,6 +97,9 @@ try {
     }
 
     $localPnpm = Join-Path $runtime 'pnpm\node_modules\pnpm\bin\pnpm.mjs'
+    # npm/pnpm 拉起的子进程（例如包里的 install 脚本）是用 PATH 找 node 的：
+    # 本机没装 Node 时，必须让项目内的 node 排在前面，否则会报 'node' is not recognized。
+    $env:PATH = (Split-Path -Parent $nodeExe) + ';' + $env:PATH
     function Invoke-Pnpm {
         param([switch]$Quiet, [Parameter(ValueFromRemainingArguments = $true)][string[]]$PnpmArgs)
         if (Test-Path $localPnpm) { Invoke-Logged -FilePath $nodeExe -Arguments (@($localPnpm) + @($PnpmArgs)) -Quiet:$Quiet }
