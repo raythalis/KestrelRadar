@@ -47,6 +47,11 @@ class StartupScriptTests(unittest.TestCase):
         result = self.run_script()
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
         self.assertEqual(self.calls.read_text().splitlines()[-3:], [str(local / 'pnpm.mjs') + ' install --frozen-lockfile', str(local / 'pnpm.mjs') + ' build', str(local / 'pnpm.mjs') + ' start'])
+        # 根构建脚本会递归调用 pnpm：项目内 shim 必须落盘、可执行，且指向项目内 pnpm。
+        shim = self.root / '.kestrel-runtime' / 'bin' / 'pnpm'
+        self.assertTrue(shim.is_file(), '项目内 pnpm 需要 shim 给递归调用的子进程')
+        self.assertTrue(os.access(shim, os.X_OK))
+        self.assertIn('.kestrel-runtime/pnpm/node_modules/pnpm/bin/pnpm.mjs', shim.read_text())
 
     def test_node_22_18_is_accepted(self):
         self.shim('node', 'echo "v22.18.0"')
@@ -124,6 +129,12 @@ class StartupScriptTests(unittest.TestCase):
         # All real work (checks, installs, build) lives in the PowerShell script.
         self.assertNotIn('pnpm', batch)
         self.assertNotIn('package.json', batch)
+
+    def test_windows_script_exposes_a_pnpm_shim_to_child_processes(self):
+        script = (ROOT / 'start.ps1').read_text(encoding='utf-8-sig')
+        # 根 package.json 的构建脚本递归调用 pnpm，子进程只能靠 PATH 找到它。
+        self.assertIn("Set-Content -LiteralPath (Join-Path $shimDir 'pnpm.cmd')", script)
+        self.assertIn("$env:PATH = $shimDir + ';' + $env:PATH", script)
 
     def test_windows_entry_finds_powershell_without_relying_on_path(self):
         batch = (ROOT / 'start.bat').read_text()

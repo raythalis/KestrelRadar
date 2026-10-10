@@ -123,6 +123,16 @@ try {
         if ((Invoke-Pnpm -Quiet --version) -ne $pnpmVersion) { throw 'pnpm 版本校验失败。' }
     }
 
+    # 根 package.json 的构建脚本会递归调用 pnpm：子进程要在 PATH 上找到它。
+    # 系统里没装 pnpm 时，用指向项目内 pnpm 的 shim 顶上（node 也固定到当前这份）。
+    if (Test-Path $localPnpm) {
+        $shimDir = Join-Path $runtime 'bin'
+        New-Item -ItemType Directory -Force -Path $shimDir | Out-Null
+        $shimBody = '@"' + $nodeExe + '" "' + $localPnpm + '" %*'
+        Set-Content -LiteralPath (Join-Path $shimDir 'pnpm.cmd') -Value $shimBody -Encoding ASCII
+        $env:PATH = $shimDir + ';' + $env:PATH
+    }
+
     if (-not $env:KESTREL_HOST) { $env:KESTREL_HOST = '127.0.0.1' }
     if (-not $env:KESTREL_PORT) { $env:KESTREL_PORT = '8765' }
     $portInUse = Get-NetTCPConnection -LocalPort ([int]$env:KESTREL_PORT) -State Listen -ErrorAction SilentlyContinue

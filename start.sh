@@ -88,6 +88,7 @@ if [ -f "$RUNTIME/pnpm/node_modules/pnpm/bin/pnpm.mjs" ]; then
 else
   pnpm_start() { exec pnpm start; }
 fi
+
 if ! pnpm_ok; then
   echo "未找到项目要求的 pnpm $PNPM_VERSION。"
   confirm_install 'pnpm'
@@ -97,6 +98,16 @@ if ! pnpm_ok; then
   pnpm() { node "$RUNTIME/pnpm/node_modules/pnpm/bin/pnpm.mjs" "$@"; }
   pnpm_start() { exec node "$RUNTIME/pnpm/node_modules/pnpm/bin/pnpm.mjs" start; }
   pnpm_ok || { echo 'pnpm 版本校验失败。' >&2; exit 1; }
+fi
+
+# 根 package.json 的构建脚本会递归调用 pnpm：子进程要在 PATH 上找到它。
+# 系统里没装 pnpm 时，用指向项目内 pnpm 的 shim 顶上（node 也固定到当前这份）。
+if [ -f "$RUNTIME/pnpm/node_modules/pnpm/bin/pnpm.mjs" ]; then
+  mkdir -p "$RUNTIME/bin"
+  printf '#!/bin/sh\nexec "%s" "%s" "$@"\n' \
+    "$(command -v node)" "$RUNTIME/pnpm/node_modules/pnpm/bin/pnpm.mjs" > "$RUNTIME/bin/pnpm"
+  chmod +x "$RUNTIME/bin/pnpm"
+  export PATH="$RUNTIME/bin:$PATH"
 fi
 
 HOST="${KESTREL_HOST:-127.0.0.1}"
