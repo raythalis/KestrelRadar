@@ -37,6 +37,14 @@ export const FAILURE_CODES = [
   'delivery.telegramTimeout',
   'delivery.telegramAuth',
   'delivery.telegramFailed',
+  // 投递：企业微信 / 钉钉 / 飞书 / 邮件
+  'delivery.wecomFailed',
+  'delivery.dingtalkFailed',
+  'delivery.feishuFailed',
+  'delivery.emailFailed',
+  'delivery.emailAuth',
+  'delivery.emailTimeout',
+  'delivery.emailTls',
   // 投递：其他
   'delivery.channelUnavailable',
   'delivery.failed',
@@ -78,6 +86,13 @@ const COPY: Record<FailureCode, (params: FailureCopyParams) => string> = {
   'delivery.telegramTimeout': () => 'Telegram 超时',
   'delivery.telegramAuth': ({ reason }) => `bot token 不对：${reason ?? 'Unauthorized'}`,
   'delivery.telegramFailed': () => 'Telegram 请求失败',
+  'delivery.wecomFailed': () => '企业微信投递失败',
+  'delivery.dingtalkFailed': () => '钉钉投递失败',
+  'delivery.feishuFailed': () => '飞书投递失败',
+  'delivery.emailFailed': () => '邮件投递失败',
+  'delivery.emailAuth': () => 'SMTP 认证失败',
+  'delivery.emailTimeout': () => 'SMTP 连接超时',
+  'delivery.emailTls': () => 'SMTP TLS 连接失败',
   'delivery.channelUnavailable': () => '通知渠道不可用',
   'delivery.failed': () => '投递失败',
 }

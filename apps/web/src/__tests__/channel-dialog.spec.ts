@@ -127,6 +127,31 @@ describe('ChannelDialog', () => {
     })
   })
 
+  it('飞书开启加签后提交 true，重新编辑仍保持开启', async () => {
+    const first = mountDialog({
+      name: '飞书',
+      type: 'feishu',
+      url: 'https://example.com/hook',
+      sign: true,
+      hasSecret: true,
+    })
+    await flushPromises()
+    await click(submit())
+    expect(first.emitted('submit')?.[0]?.[0]).toMatchObject({ type: 'feishu', sign: true })
+    document.body.innerHTML = ''
+    mountDialog({
+      name: '飞书',
+      type: 'feishu',
+      url: 'https://example.com/hook',
+      sign: true,
+      hasSecret: true,
+    })
+    await flushPromises()
+    expect((document.querySelector('input[type="checkbox"]') as HTMLInputElement).checked).toBe(
+      true,
+    )
+  })
+
   it('没填全时保存按钮不可点', async () => {
     mountDialog()
     await flushPromises()

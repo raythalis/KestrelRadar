@@ -8,7 +8,7 @@ import type { Channel, ChannelType } from '@kestrel/contracts'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { CHANNEL_ICONS } from '@/components/biz/icons'
+import ChannelIcon from '@/components/biz/ChannelIcon.vue'
 
 import { readTelegramChats, testChannel } from '@/api/config'
 import ChannelCard from '@/components/biz/ChannelCard.vue'
@@ -91,13 +91,29 @@ async function readChats(values: { token: string; channelId?: string }): Promise
 
 async function submitChannel(values: ChannelDialogValues): Promise<void> {
   const config: Record<string, string> =
-    values.type === 'telegram' ? { chatId: values.chatId.trim() } : { url: values.url.trim() }
+    values.type === 'telegram'
+      ? { chatId: values.chatId.trim() }
+      : values.type === 'email'
+        ? {
+            host: (values.host ?? '').trim(),
+            port: (values.port ?? '').trim(),
+            secure: String(values.secure),
+            from: (values.from ?? '').trim(),
+            to: (values.to ?? '').trim(),
+            username: (values.username ?? '').trim(),
+          }
+        : {
+            url: values.url.trim(),
+            ...(['dingtalk', 'feishu'].includes(values.type) ? { sign: String(values.sign) } : {}),
+          }
   const payload = {
     name: values.name.trim(),
     type: values.type,
     enabled: values.enabled,
     config,
-    ...(values.secret.trim().length > 0 ? { secret: values.secret.trim() } : {}),
+    ...(values.secret.trim().length > 0 && values.type !== 'wecom'
+      ? { secret: values.secret.trim() }
+      : {}),
   }
   const ok = editing.value
     ? await store.saveChannel(editing.value.id, payload)
@@ -155,7 +171,7 @@ async function confirmDelete(): Promise<void> {
               data-test="new-channel-telegram"
               @click="openCreate('telegram')"
             >
-              <v-icon size="18">{{ CHANNEL_ICONS.telegram }}</v-icon>
+              <ChannelIcon type="telegram" />
               {{ t('channel.type.telegram') }}
             </button>
             <button
@@ -164,8 +180,44 @@ async function confirmDelete(): Promise<void> {
               data-test="new-channel-webhook"
               @click="openCreate('webhook')"
             >
-              <v-icon size="18">{{ CHANNEL_ICONS.webhook }}</v-icon>
+              <ChannelIcon type="webhook" />
               {{ t('channel.type.webhook') }}
+            </button>
+            <button
+              type="button"
+              class="k2-menu__item"
+              data-test="new-channel-wecom"
+              @click="openCreate('wecom')"
+            >
+              <ChannelIcon type="wecom" />
+              {{ t('channel.type.wecom') }}
+            </button>
+            <button
+              type="button"
+              class="k2-menu__item"
+              data-test="new-channel-dingtalk"
+              @click="openCreate('dingtalk')"
+            >
+              <ChannelIcon type="dingtalk" />
+              {{ t('channel.type.dingtalk') }}
+            </button>
+            <button
+              type="button"
+              class="k2-menu__item"
+              data-test="new-channel-feishu"
+              @click="openCreate('feishu')"
+            >
+              <ChannelIcon type="feishu" />
+              {{ t('channel.type.feishu') }}
+            </button>
+            <button
+              type="button"
+              class="k2-menu__item"
+              data-test="new-channel-email"
+              @click="openCreate('email')"
+            >
+              <ChannelIcon type="email" />
+              {{ t('channel.type.email') }}
             </button>
           </div>
         </div>
@@ -203,6 +255,13 @@ async function confirmDelete(): Promise<void> {
       :enabled="editing?.enabled ?? true"
       :chat-id="editing?.config.chatId ?? ''"
       :url="editing?.config.url ?? ''"
+      :sign="editing?.config.sign === 'true'"
+      :host="editing?.config.host ?? ''"
+      :port="editing?.config.port ?? '587'"
+      :secure="editing?.config.secure === 'true'"
+      :from="editing?.config.from ?? ''"
+      :to="editing?.config.to ?? ''"
+      :username="editing?.config.username ?? ''"
       :has-secret="editing?.hasSecret ?? false"
       :chats="chats"
       :chats-loading="chatsLoading"

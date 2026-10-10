@@ -8,7 +8,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ChannelType } from '@kestrel/contracts'
 
-import { CHANNEL_ICONS } from './icons'
+import ChannelIcon from './ChannelIcon.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -30,7 +30,6 @@ const emit = defineEmits<{ edit: []; test: []; delete: [] }>()
 
 const { t } = useI18n()
 
-const icon = computed(() => CHANNEL_ICONS[props.type])
 const kindLabel = computed(() => t(`channel.type.${props.type}`))
 /** tone 到 v2 色调类的映射（只有这四个，页面不传别的） */
 const toneClass = computed(
@@ -67,7 +66,7 @@ const lastPushText = computed(() => {
   >
     <div class="k2-card__head">
       <span class="k2-tile k2-tile--sm" data-test="channel-icon">
-        <i class="mdi" :class="icon" />
+        <ChannelIcon :type="type" :size="18" />
       </span>
       <span class="k2-card__heading">
         <span class="k2-row__title" data-test="channel-name">{{ name }}</span>

@@ -23,7 +23,14 @@ import {
 const idSchema = z.string().min(1)
 
 /** 渠道 config 里属于用户输入的键与长度上限；其它键不设限（不粗暴限制整个 record） */
-const CHANNEL_CONFIG_MAX: Record<string, number> = { url: 500, chatId: 120 }
+const CHANNEL_CONFIG_MAX: Record<string, number> = {
+  url: 500,
+  chatId: 120,
+  host: 255,
+  from: 320,
+  to: 2000,
+  username: 320,
+}
 
 const channelConfigSchema = z
   .record(z.string(), z.string())

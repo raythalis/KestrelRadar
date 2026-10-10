@@ -26,11 +26,18 @@ describe('ChannelCard', () => {
     expect(mountCard({ type: 'webhook' }).find('[data-test="channel-kind"]').text()).toBe('Webhook')
   })
 
-  it('图标跟类型走，且都真的存在于图标字体里（写错名字会是空白）', () => {
-    expect(mountCard().find('[data-test="channel-icon"] .mdi').classes()).toContain('mdi-send')
+  it('品牌渠道使用统一规格的本地图标，通用渠道保留语义图标', () => {
+    for (const type of ['telegram', 'wecom', 'dingtalk', 'feishu']) {
+      const icon = mountCard({ type }).find(
+        '[data-test="channel-icon"] [data-test="channel-brand-icon"]',
+      )
+      expect(icon.exists()).toBe(true)
+      expect(icon.attributes('style')).toContain(`/channel-icons/${type}.svg`)
+    }
     expect(
       mountCard({ type: 'webhook' }).find('[data-test="channel-icon"] .mdi').classes(),
     ).toContain('mdi-webhook')
+    expect(mountCard({ type: 'email' }).find('[data-test="channel-icon"] .mdi').exists()).toBe(true)
   })
 
   it('卡上不写「被几个动作用着」这类影响面信息', () => {

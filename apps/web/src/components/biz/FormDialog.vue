@@ -14,6 +14,7 @@ const props = withDefaults(
     note?: string
     /** 桌面宽度上限 */
     width?: number | string
+    dialogClass?: string
     loading?: boolean
     error?: string
     /** 保存中：按钮转圈并锁住取消 */
@@ -29,6 +30,7 @@ const props = withDefaults(
   {
     note: undefined,
     width: 480,
+    dialogClass: '',
     loading: false,
     error: undefined,
     busy: false,
@@ -68,7 +70,12 @@ function submit(): void {
 </script>
 
 <template>
-  <v-dialog v-model="open" :max-width="width" :persistent="persistent" content-class="k2-dialog">
+  <v-dialog
+    v-model="open"
+    :max-width="width"
+    :persistent="persistent"
+    :content-class="['k2-dialog', dialogClass]"
+  >
     <div class="k2-dialog__head" data-test="form-dialog">
       <span class="k2-card__heading">
         <span class="k2-card__title">{{ title }}</span>

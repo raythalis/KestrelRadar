@@ -9,6 +9,7 @@ interface ChannelRow {
   id: string
   name: string
   type: string
+  channel_type: string
   config: string
   secret: string | null
   enabled: number
@@ -20,7 +21,7 @@ function toChannel(row: ChannelRow): Channel {
   return {
     id: row.id,
     name: row.name,
-    type: row.type as Channel['type'],
+    type: row.channel_type as Channel['type'],
     config: parseStringRecord(row.config),
     hasSecret: Boolean(row.secret),
     enabled: toBool(row.enabled),
@@ -33,11 +34,11 @@ export function createChannelRepo(db: Db) {
   const selectAll = db.prepare('select * from channels order by created_at, id')
   const selectOne = db.prepare('select * from channels where id = ?')
   const insertOne = db.prepare(
-    `insert into channels (id, name, type, config, secret, enabled, created_at, updated_at)
-     values (?, ?, ?, ?, ?, ?, ?, ?)`,
+    `insert into channels (id, name, type, channel_type, config, secret, enabled, created_at, updated_at)
+     values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
   const updateOne = db.prepare(
-    `update channels set name = ?, type = ?, config = ?, secret = ?, enabled = ?, updated_at = ? where id = ?`,
+    `update channels set name = ?, type = ?, channel_type = ?, config = ?, secret = ?, enabled = ?, updated_at = ? where id = ?`,
   )
 
   function find(id: string): ChannelRow | undefined {
@@ -65,6 +66,7 @@ export function createChannelRepo(db: Db) {
       insertOne.run(
         id,
         input.name,
+        input.type === 'telegram' || input.type === 'webhook' ? input.type : 'webhook',
         input.type,
         JSON.stringify(input.config),
         input.secret && input.secret.length > 0 ? input.secret : null,
@@ -88,6 +90,9 @@ export function createChannelRepo(db: Db) {
             : patch.secret || null
       updateOne.run(
         patch.name ?? current.name,
+        patch.type && (patch.type === 'telegram' || patch.type === 'webhook')
+          ? patch.type
+          : 'webhook',
         patch.type ?? current.type,
         JSON.stringify(patch.config ?? parseStringRecord(current.config)),
         secret,

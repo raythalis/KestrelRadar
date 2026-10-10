@@ -1,6 +1,6 @@
 {
   "name": "kestrel-web",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "Kestrel Radar web 前端：Vue 3 + Vuetify 4 + TypeScript",

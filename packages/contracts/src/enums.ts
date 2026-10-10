@@ -9,7 +9,14 @@ export const JUDGE_BANDS = ['high', 'gray', 'low'] as const
 /** 结论定在哪一层：关键词门槛 / 排除词 / 打分 / 模型复核 */
 export const JUDGE_LAYERS = ['keywords', 'excludes', 'score', 'llm'] as const
 export const ACTION_TRIGGERS = ['instant', 'digest'] as const
-export const CHANNEL_TYPES = ['telegram', 'webhook'] as const
+export const CHANNEL_TYPES = [
+  'telegram',
+  'webhook',
+  'wecom',
+  'dingtalk',
+  'feishu',
+  'email',
+] as const
 export const PROVIDER_KINDS = ['openai_compatible', 'ollama'] as const
 
 export const discoveryKindSchema = z.enum(DISCOVERY_KINDS)

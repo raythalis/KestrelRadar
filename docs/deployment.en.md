@@ -103,6 +103,12 @@ server {
 
 ## Upgrades and data
 
+### From v1.0.0 to v1.1.0
+
+- This version adds WeCom, DingTalk, Feishu bot webhooks, and SMTP email channels. Signing is optional for DingTalk and Feishu. Existing Telegram and generic Webhook channels, their actions, and delivery history remain; no reconfiguration is required. A WeChat channel is not included.
+- Stop the service and back up the entire data directory before switching to the target version and starting it. Startup adds a channel type field automatically. Verify existing channels, actions, and delivery history before adding new channels. Testing a channel actually sends a message.
+- To return to v1.0.0, stop the service, restore the **pre-upgrade** backup of the entire data directory, and then start the older version. Do not simply switch back the program while keeping the migrated database. Restoring the backup loses configurations and records added or changed afterward; first preserve a separate copy of the current data directory in case you need to upgrade again or recover data.
+
 - Upgrade the program or image without deleting the data directory. For scripts, update the source and rebuild. For a local Docker build, switch to the target source version and rebuild. For the GitHub image, back up data first, then run `docker compose pull` and `docker compose up -d`. If using `latest`, record the current image ID before upgrading so you can roll back if necessary.
 - Back up the entire data directory, including the database, related files, and sibling `icons/` directory.
 - Database migrations run automatically on service startup; no manual script is needed. **Stop the service and back up the whole data directory before upgrading**, including icons and database-related files. For online backups use a consistent SQLite backup method; do not copy only `.db`.

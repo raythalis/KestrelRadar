@@ -32,6 +32,7 @@ declare module 'vue' {
     AppTextarea: typeof import('./components/app/AppTextarea.vue')['default']
     ChannelCard: typeof import('./components/biz/ChannelCard.vue')['default']
     ChannelDialog: typeof import('./components/biz/ChannelDialog.vue')['default']
+    ChannelIcon: typeof import('./components/biz/ChannelIcon.vue')['default']
     ConfirmDialog: typeof import('./components/biz/ConfirmDialog.vue')['default']
     CronPicker: typeof import('./components/biz/CronPicker.vue')['default']
     EventRow: typeof import('./components/biz/EventRow.vue')['default']

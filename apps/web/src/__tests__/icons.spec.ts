@@ -5,6 +5,7 @@ import {
   SEMANTIC_ICONS,
 } from '@/components/biz/icons'
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
 
 /**
  * 图标语义表守卫：**一个字形只表示一个意思**。
@@ -14,6 +15,11 @@ import { describe, expect, it } from 'vitest'
  * Telegram 渠道、动作、今日已投递。这条用例就是拦住这种复发。
  */
 describe('图标语义表', () => {
+  it('渠道图标都存在于裁剪字体中', () => {
+    const css = readFileSync('src/styles/mdi.scss', 'utf8')
+    for (const icon of Object.values(CHANNEL_ICONS)) expect(css).toContain(`.${icon}:before`)
+  })
+
   it('同一个字形不允许挂在两个不同语义上', () => {
     const groups: Record<string, Record<string, string>> = {
       渠道类型: CHANNEL_ICONS,

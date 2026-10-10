@@ -63,6 +63,19 @@
   font-size: var(--k2-fs-subtitle);
 }
 
+/* 渠道品牌轮廓与通用图标同色；SVG 本地加载，不随亮暗主题换素材。 */
+.k2-channel-brand {
+  display: inline-block;
+  flex: none;
+  background: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
 /* 网站图标（后端抓回来的图）撑满图标位：外站 favicon 有的给到 512px，
    不限定尺寸会把整块图标位撑成一张大图 */
 .k2-tile__img {
@@ -1802,7 +1815,19 @@ a.k2-row--link {
   scrollbar-color: var(--k2-c-border) transparent;
   /* 焦点圈画在框外 3px + 偏移 2px，滚动容器（手机档正文会滚）会把它左右切掉：
      正文自己留出这块位置，不给负外边距（负的会把正文撑得比弹窗还宽） */
-  padding-inline: 5px;
+  padding: 5px;
+}
+
+.k2-channel-email-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--k2-s-5) var(--k2-s-6);
+}
+
+@media (max-width: 1183px) {
+  .k2-channel-email-form {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* 卡脚在有富余高度时贴到卡片底边（三种卡片同高，矮的那种靠它对齐） */

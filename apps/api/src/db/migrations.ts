@@ -350,6 +350,14 @@ export const MIGRATIONS: readonly Migration[] = [
         and exists (select 1 from event_items where event_items.event_id = events.id);
     `,
   },
+  {
+    name: '013-delivery-channel-types',
+    sql: `
+      -- 保留旧 type 约束列作为兼容值，新增无旧枚举限制的真实渠道类型。
+      alter table channels add column channel_type text not null default 'webhook';
+      update channels set channel_type = type;
+    `,
+  },
 ]
 
 export function runMigrations(conn: DatabaseSync): void {
