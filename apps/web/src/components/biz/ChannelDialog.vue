@@ -125,6 +125,8 @@ const submitDisabled = computed(() => {
   }
   if (props.type === 'email')
     return !(host.value.trim() && port.value.trim() && from.value.trim() && to.value.trim())
+  if ((props.type === 'dingtalk' || props.type === 'feishu') && sign.value)
+    return !isHttpUrl(url.value) || !(props.hasSecret || secret.value.trim())
   return !isHttpUrl(url.value)
 })
 
