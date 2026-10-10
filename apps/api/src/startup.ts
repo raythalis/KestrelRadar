@@ -21,16 +21,16 @@ export interface StartupFacts {
 
 export function startupLines(facts: StartupFacts): string[] {
   return [
-    `Kestrel Radar 启动 · ${facts.version} · node ${facts.node}`,
-    `[1/4] 读取配置 …… 完成（端口 ${facts.port} · 数据库 ${facts.dbPath}）`,
-    `[2/4] 打开数据库 …… 完成（${facts.dbExisted ? '沿用已有库' : '首次创建'}）`,
+    `Kestrel Radar 启动，版本 ${facts.version}，node ${facts.node}`,
+    `[1/4] 读取配置：完成，端口 ${facts.port}，数据库 ${facts.dbPath}`,
+    `[2/4] 打开数据库：完成，${facts.dbExisted ? '沿用已有库' : '首次创建'}`,
     facts.staticReady && facts.staticDir
-      ? `[3/4] 挂载界面产物 …… 完成（${facts.staticDir}）`
-      : '[3/4] 挂载界面产物 …… 跳过（没有构建产物，本次只提供 API）',
+      ? `[3/4] 挂载界面产物：完成，${facts.staticDir}`
+      : '[3/4] 挂载界面产物：跳过，没有构建产物，本次只提供 API',
   ]
 }
 
 export function readyLine(facts: StartupFacts, seconds: number): string {
   const shape = facts.staticReady ? '界面 + API' : '仅 API'
-  return `[4/4] 服务就绪 …… http://${facts.host}:${facts.port}（${shape} · 启动耗时 ${seconds.toFixed(1)}s）`
+  return `[4/4] 服务就绪：${shape}，http://${facts.host}:${facts.port}，启动耗时 ${seconds.toFixed(1)} 秒`
 }

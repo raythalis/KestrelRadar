@@ -49,11 +49,10 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   }
 
   const container = buildContainer(db, {
-    log: (level, message, fields) => {
-      const payload = fields ?? {}
-      if (level === 'warn') app.log.warn(payload, message)
-      else if (level === 'error') app.log.error(payload, message)
-      else app.log.info(payload, message)
+    log: (level, message) => {
+      if (level === 'warn') app.log.warn(message)
+      else if (level === 'error') app.log.error(message)
+      else app.log.info(message)
     },
     telegram: options.telegram,
     fetchImpl: options.fetchImpl,

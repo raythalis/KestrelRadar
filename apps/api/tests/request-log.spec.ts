@@ -25,29 +25,22 @@ async function harness() {
 }
 
 describe('请求行', () => {
-  it('常规接口一行一条：方法、路径、状态码、耗时、请求 id', async () => {
+  it('常规接口一行一条：方法、路径、状态码、耗时', async () => {
     const { app, cleanup, find } = await harness()
     try {
       const res = await app.inject({ method: 'GET', url: '/api/groups' })
       expect(res.statusCode).toBe(200)
 
-      const hits = find('"path":"/api/groups"')
+      const hits = find('GET /api/groups 200')
       expect(hits).toHaveLength(1)
-      const entry = JSON.parse(hits[0]!) as {
-        level: number
-        msg: string
-        path: string
-        status: number
-        method: string
-        duration_ms: number
-        request_id: string
-      }
-      expect(entry.msg).toMatch(/^GET \/api\/groups 200（\d+ms）$/)
+      const entry = JSON.parse(hits[0]!) as { level: number; msg: string }
+      expect(entry.msg).toMatch(/^GET \/api\/groups 200，用时 \d+ms$/)
       expect(entry.level).toBe(30)
-      expect(entry.method).toBe('GET')
-      expect(entry.status).toBe(200)
-      expect(typeof entry.duration_ms).toBe('number')
-      expect(entry.request_id).toBeTruthy()
+      // 行尾不再挂字段：整行就一句人话（pino 自带的那几个除外）
+      const extras = Object.keys(entry).filter(
+        (key) => !['level', 'time', 'pid', 'hostname', 'msg'].includes(key),
+      )
+      expect(extras).toEqual([])
     } finally {
       await cleanup()
     }
@@ -68,19 +61,18 @@ describe('请求行', () => {
     const { app, cleanup, find } = await harness()
     try {
       await app.inject({ method: 'GET', url: '/api/groups/does-not-exist' })
-      const notFound = find('"path":"/api/groups/does-not-exist"')
+      const notFound = find('GET /api/groups/does-not-exist 404')
       expect(notFound).toHaveLength(1)
-      const entry = JSON.parse(notFound[0]!) as { level: number; status: number; code: string }
-      expect(entry.status).toBe(404)
+      const entry = JSON.parse(notFound[0]!) as { level: number; msg: string }
       expect(entry.level).toBe(40)
-      expect(entry.code).toBe('NOT_FOUND')
+      expect(entry.msg).toBe('GET /api/groups/does-not-exist 404，NOT_FOUND')
 
       await app.inject({ method: 'POST', url: '/api/groups', payload: { name: '' } })
-      const invalid = find('"path":"/api/groups"')
-      const entry2 = JSON.parse(invalid[0]!) as { level: number; status: number; code: string }
-      expect(entry2.status).toBe(400)
+      const invalid = find('POST /api/groups 400')
+      expect(invalid).toHaveLength(1)
+      const entry2 = JSON.parse(invalid[0]!) as { level: number; msg: string }
       expect(entry2.level).toBe(40)
-      expect(entry2.code).toBe('VALIDATION_ERROR')
+      expect(entry2.msg).toBe('POST /api/groups 400，VALIDATION_ERROR')
     } finally {
       await cleanup()
     }

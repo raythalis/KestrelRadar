@@ -83,6 +83,8 @@ export function loggerOptions(env: NodeJS.ProcessEnv = process.env): LoggerOptio
         colorize: env.KESTREL_LOG_COLOR !== '0',
         levelFirst: true,
         singleLine: true,
+        // 注意：不要用 hideObject 去藏行尾字段——pino-pretty 13.2.0 里它会把行尾换行
+        // 一起吃掉，整个日志挤成一行（实测）。行干净靠「不传附加字段」，见 request-log.ts。
         translateTime: 'SYS:yyyy-mm-dd HH:MM:ss.l',
         ignore: 'pid,hostname',
       },

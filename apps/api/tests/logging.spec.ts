@@ -20,6 +20,8 @@ describe('运行期日志配置', () => {
     expect(transport.target).toContain('pino-pretty')
     expect(transport.options.levelFirst).toBe(true)
     expect(transport.options.singleLine).toBe(true)
+    // hideObject 不能用：pino-pretty 13.2.0 里它会把行尾换行也吃掉（整份日志挤成一行）
+    expect(transport.options.hideObject).toBeUndefined()
     expect(transport.options.colorize).toBe(true)
     expect(transport.options.translateTime).toBe('SYS:yyyy-mm-dd HH:MM:ss.l')
     // pid/hostname 在容器里没有信息量（Dozzle 自己会标容器名）

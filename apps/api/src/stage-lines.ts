@@ -9,23 +9,21 @@
 export interface StageLine {
   level: 'info' | 'warn' | 'error'
   message: string
-  fields: Record<string, unknown>
 }
 
-/** 耗时写法：不足一分钟保留一位小数（`0.3s`、`12.4s`），跨分钟写成 `1m02s` */
+/** 耗时写法：不足一分钟保留一位小数（`0.3 秒`、`12.4 秒`），跨分钟写成 `1 分 02 秒` */
 export function formatDuration(ms: number | undefined): string {
   if (ms === undefined) return ''
-  if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`
+  if (ms < 60_000) return `${(ms / 1000).toFixed(1)} 秒`
   const totalSeconds = Math.round(ms / 1000)
   const minutes = Math.floor(totalSeconds / 60)
   const seconds = totalSeconds % 60
-  return `${minutes}m${String(seconds).padStart(2, '0')}s`
+  return `${minutes} 分 ${String(seconds).padStart(2, '0')} 秒`
 }
 
-/** 括号里的细节段：有耗时就跟在最后 */
-function detail(parts: string[], durationMs?: number): string {
-  const withDuration = durationMs === undefined ? parts : [...parts, formatDuration(durationMs)]
-  return withDuration.join(' · ')
+/** 有耗时就在句尾补一句「用时 X」，没有就不补 */
+function withDuration(text: string, durationMs?: number): string {
+  return durationMs === undefined ? text : `${text}，用时 ${formatDuration(durationMs)}`
 }
 
 export interface CollectFacts {
@@ -39,30 +37,22 @@ export interface CollectFacts {
 }
 
 export function collectLine(facts: CollectFacts): StageLine {
-  const fields = {
-    stage: 'collect',
-    object: facts.name,
-    result: facts.ok ? 'ok' : 'failed',
-    found: facts.foundCount,
-    new_items: facts.newItemCount,
-    ...(facts.code ? { code: facts.code } : {}),
-    ...(facts.durationMs === undefined ? {} : { duration_ms: facts.durationMs }),
-  }
   if (!facts.ok) {
     return {
       level: 'warn',
-      message: `采集「${facts.name}」 …… 失败（${facts.message ?? '没说明原因'} · ${formatDuration(facts.durationMs)}）`,
-      fields,
+      message: withDuration(
+        `采集「${facts.name}」失败：${facts.message ?? '没说明原因'}`,
+        facts.durationMs,
+      ),
     }
   }
   const counts =
     facts.newItemCount > 0
-      ? `抓取 ${facts.foundCount} 条 · 新增 ${facts.newItemCount} 条`
-      : `没有新条目（抓取 ${facts.foundCount} 条）`
+      ? `抓取 ${facts.foundCount} 条，新增 ${facts.newItemCount} 条`
+      : `抓取 ${facts.foundCount} 条，没有新条目`
   return {
     level: 'info',
-    message: `采集「${facts.name}」 …… 完成（${detail([counts], facts.durationMs)}）`,
-    fields,
+    message: withDuration(`采集「${facts.name}」完成：${counts}`, facts.durationMs),
   }
 }
 
@@ -75,14 +65,7 @@ export interface JudgeFacts {
 export function judgeLine(facts: JudgeFacts): StageLine {
   return {
     level: 'info',
-    message: `判定「${facts.name}」 …… 完成（新判 ${facts.written} 条 · ${formatDuration(facts.durationMs)}）`,
-    fields: {
-      stage: 'judge',
-      object: facts.name,
-      result: 'ok',
-      judged: facts.written,
-      ...(facts.durationMs === undefined ? {} : { duration_ms: facts.durationMs }),
-    },
+    message: withDuration(`判定「${facts.name}」完成：新判 ${facts.written} 条`, facts.durationMs),
   }
 }
 
@@ -96,15 +79,10 @@ export interface MergeFacts {
 export function mergeLine(facts: MergeFacts): StageLine {
   return {
     level: 'info',
-    message: `归并「${facts.name}」 …… 完成（新建事件 ${facts.created} 个 · 并入 ${facts.merged} 条 · ${formatDuration(facts.durationMs)}）`,
-    fields: {
-      stage: 'merge',
-      object: facts.name,
-      result: 'ok',
-      created: facts.created,
-      merged: facts.merged,
-      ...(facts.durationMs === undefined ? {} : { duration_ms: facts.durationMs }),
-    },
+    message: withDuration(
+      `归并「${facts.name}」完成：新建事件 ${facts.created} 个，并入 ${facts.merged} 条`,
+      facts.durationMs,
+    ),
   }
 }
 
@@ -118,32 +96,27 @@ export interface DeliveryFacts {
 }
 
 export function deliveryLine(facts: DeliveryFacts): StageLine {
-  const fields = {
-    stage: 'delivery',
-    object: facts.label,
-    result: facts.ok ? 'ok' : 'failed',
-    message_count: facts.messageCount,
-    ...(facts.durationMs === undefined ? {} : { duration_ms: facts.durationMs }),
-  }
   if (!facts.ok) {
     return {
       level: 'warn',
-      message: `投递「${facts.label}」 …… 失败（${facts.message ?? '没说明原因'} · ${formatDuration(facts.durationMs)}）`,
-      fields,
+      message: withDuration(
+        `投递「${facts.label}」失败：${facts.message ?? '没说明原因'}`,
+        facts.durationMs,
+      ),
     }
   }
   return {
     level: 'info',
-    message: `投递「${facts.label}」 …… 完成（${facts.messageCount} 条消息 · ${formatDuration(facts.durationMs)}）`,
-    fields,
+    message: withDuration(
+      `投递「${facts.label}」完成：${facts.messageCount} 条消息`,
+      facts.durationMs,
+    ),
   }
 }
 
 export interface StageFailFacts {
   /** 阶段动词：判定 / 归并 / 投递 */
   action: string
-  /** 机器可读的阶段名，进日志字段 */
-  stage: string
   /** 对象名：来源名之类 */
   object: string
   reason: string
@@ -154,7 +127,6 @@ export function stageFailLine(facts: StageFailFacts): StageLine {
   const reason = facts.reason || '没说明原因'
   return {
     level: 'warn',
-    message: `${facts.action}「${facts.object}」 …… 失败（${reason}）`,
-    fields: { stage: facts.stage, object: facts.object, result: 'failed', reason },
+    message: `${facts.action}「${facts.object}」失败：${reason}`,
   }
 }

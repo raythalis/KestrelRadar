@@ -87,12 +87,8 @@ export interface Container {
 }
 
 export interface ContainerOptions {
-  /** 采集与判定的结果写进服务日志，方便排查；fields（阶段、耗时等）会跟在线尾 */
-  log?: (
-    level: 'info' | 'warn' | 'error',
-    message: string,
-    fields?: Record<string, unknown>,
-  ) => void
+  /** 采集与判定的结果写进服务日志，方便排查 */
+  log?: (level: 'info' | 'warn' | 'error', message: string) => void
   /** 判定用的模型实现；不传就按设置里的模型顺序真去调（顺序为空=还没配模型，走降级开关） */
   llm?: JudgeLlm
   /** 调模型用的 fetch；测试里换成假的，平时不传 */
@@ -144,7 +140,7 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
 
   /** 流程行统一交给外部日志口子（没给就什么都不打） */
   const emit = (line: StageLine): void => {
-    options.log?.(line.level, line.message, line.fields)
+    options.log?.(line.level, line.message)
   }
 
   // 异常：三类共一张表；库里与前端同为 hidden.incidentLimit 条（默认 20）
@@ -272,7 +268,6 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
         emit(
           stageFailLine({
             action: '判定',
-            stage: 'judge',
             object: name,
             reason: (error as Error).message,
           }),
@@ -296,7 +291,6 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
         emit(
           stageFailLine({
             action: '归并',
-            stage: 'merge',
             object: name,
             reason: (error as Error).message,
           }),
@@ -328,7 +322,6 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
         emit(
           stageFailLine({
             action: '投递',
-            stage: 'delivery',
             object: name,
             reason: (error as Error).message,
           }),

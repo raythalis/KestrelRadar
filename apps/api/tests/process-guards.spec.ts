@@ -62,8 +62,8 @@ describe('进程级兜底与优雅停机', () => {
 
     await vi.waitFor(() => expect(exit).toHaveBeenCalledWith(0))
     expect(state.closed).toBe(1)
-    expect(state.lines.some((line) => line.startsWith('info:收到停止信号（SIGTERM）'))).toBe(true)
-    expect(state.lines.some((line) => line.includes('已停止（'))).toBe(true)
+    expect(state.lines.some((line) => line.startsWith('info:收到 SIGTERM'))).toBe(true)
+    expect(state.lines.some((line) => line.includes('已停止，耗时'))).toBe(true)
   })
 
   it('连着来两个信号：只关一次、只退一次', async () => {
@@ -119,7 +119,7 @@ describe('进程级兜底与优雅停机', () => {
 
     await vi.waitFor(() => expect(exit).toHaveBeenCalledWith(0))
     expect(state.lines.some((line) => line.includes('停止时出错'))).toBe(true)
-    expect(state.lines.some((line) => line.includes('已停止（'))).toBe(true)
+    expect(state.lines.some((line) => line.includes('已停止，耗时'))).toBe(true)
   })
 
   it('字符串或非 Error 的拒绝原因也能记成人话', async () => {

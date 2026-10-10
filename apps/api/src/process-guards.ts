@@ -46,13 +46,13 @@ export function registerProcessGuards(options: ProcessGuardOptions): void {
       app.log.error({ err: error }, '停止时出错，仍继续退出')
     }
     const seconds = ((Date.now() - startedAt) / 1000).toFixed(1)
-    app.log.info(`${line} …… 已停止（${seconds}s）`)
+    app.log.info(`${line}，已停止，耗时 ${seconds} 秒`)
     exit(code)
   }
 
   for (const signal of SIGNALS) {
     source.on(signal, () => {
-      void shutdown(`收到停止信号（${signal}）`, 0)
+      void shutdown(`收到 ${signal}`, 0)
     })
   }
 
