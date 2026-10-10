@@ -28,7 +28,7 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
-  container.scheduler.stop()
+  await container.scheduler.stop()
   await server.stop()
   cleanupDb()
 })
