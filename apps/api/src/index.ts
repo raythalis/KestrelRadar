@@ -1,5 +1,6 @@
 import { buildApp } from './app.ts'
 import { loadConfig } from './config/index.ts'
+import { registerProcessGuards } from './process-guards.ts'
 
 const config = loadConfig()
 
@@ -8,6 +9,9 @@ const app = await buildApp({
   logger: config.logger,
   ...(config.staticDir ? { staticDir: config.staticDir } : {}),
 })
+
+// 优雅停机 + 进程级兜底：停机信号、未捕获异常、未处理的异步失败都在这里收口
+registerProcessGuards({ app })
 
 try {
   await app.listen({ host: config.host, port: config.port })

@@ -5,6 +5,7 @@ import { API_PREFIX } from '@kestrel/contracts'
 import fastifyStatic from '@fastify/static'
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from 'fastify'
 
+import { runSafely } from './background.ts'
 import { buildContainer } from './container.ts'
 import type { TelegramGateway } from './modules/delivery/telegram.ts'
 import { openDatabase } from './db/index.ts'
@@ -65,16 +66,27 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   if (options.enableScheduler !== false) {
     app.addHook('onReady', async () => {
       container.scheduler.start()
-      // 事件归档这类打扫活儿每小时跑一遍，顺带在启动时先清一次
-      const sweep = (): void => {
-        const archived = container.merger.archiveStale()
-        if (archived > 0) app.log.info(`事件归档：${archived} 个`)
-        // 采集轮次流水也在这个清理任务里收：只保留最近 N 天（隐藏配置项）
-        const runs = container.runs.pruneOlderThan(container.hidden.runRetentionDays())
-        if (runs > 0) app.log.info(`采集流水清理：${runs} 条`)
-      }
-      sweep()
-      maintenance = setInterval(sweep, 60 * 60 * 1000)
+      // 事件归档这类打扫活儿每小时跑一遍，顺带在启动时先清一次。
+      // 走 runSafely：一轮失败只记一条警告，不把进程带走，下一轮照常重试。
+      const sweep = (): Promise<boolean> =>
+        runSafely(
+          '事件归档与采集流水清理',
+          () => {
+            const archived = container.merger.archiveStale()
+            if (archived > 0) app.log.info(`事件归档：${archived} 个`)
+            // 采集轮次流水也在这个清理任务里收：只保留最近 N 天（隐藏配置项）
+            const runs = container.runs.pruneOlderThan(container.hidden.runRetentionDays())
+            if (runs > 0) app.log.info(`采集流水清理：${runs} 条`)
+          },
+          app.log,
+        )
+      await sweep()
+      maintenance = setInterval(
+        () => {
+          void sweep()
+        },
+        60 * 60 * 1000,
+      )
       maintenance.unref()
     })
   }
