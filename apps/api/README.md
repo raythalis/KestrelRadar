@@ -16,6 +16,12 @@ Kestrel Radar 后端：**TypeScript + Fastify + SQLite**。
 | `KESTREL_DB_PATH` | `data/kestrel.db` | 数据库位置，图标目录取它的同级 `icons/` |
 | `KESTREL_STATIC_DIR` | 存在 `apps/web/dist` 就用它 | 设了就同时托管界面；没构建产物就只提供 API |
 | `KESTREL_LOG` | 开启 | 设 `off` 关日志 |
+| `KESTREL_LOG_LEVEL` | `info` | 日志级别（`debug` 更啰嗦） |
+| `KESTREL_LOG_COLOR` | 开启 | 设 `0` 关掉颜色（重定向到文件、或不想看 ANSI 时） |
+
+日志一行一条、级别名在行首（Dozzle 靠这个识别级别、按级别筛选），时间带毫秒，中文人话。
+格式器是 pino-pretty，所以输出是文本而不是 JSON：`grep` 照常好使，但按字段做机器解析不划算
+（以后要接监控再单独开一份 JSON 出口）。
 
 ```bash
 pnpm --filter kestrel-api dev         # node --watch，改动自动重启

@@ -1,6 +1,8 @@
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
+import { loggerOptions, type LoggerOption } from '../logging.ts'
+
 /** 前端构建产物的默认位置（apps/web/dist）：按模块定位，跟当前工作目录无关 */
 const DEFAULT_STATIC_DIR = fileURLToPath(new URL('../../../web/dist', import.meta.url))
 
@@ -9,7 +11,8 @@ export interface AppConfig {
   dbPath: string
   host: string
   port: number
-  logger: boolean
+  /** 日志配置：pino 选项，或 false（KESTREL_LOG=off 时关闭） */
+  logger: LoggerOption
   /** 静态托管的目录；没给、也没有构建产物时为 undefined（只提供 API） */
   staticDir?: string
 }
@@ -22,7 +25,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     dbPath: env.KESTREL_DB_PATH ?? 'data/kestrel.db',
     host: env.KESTREL_HOST ?? '127.0.0.1',
     port: Number(env.KESTREL_PORT ?? 8765),
-    logger: env.KESTREL_LOG !== 'off',
+    logger: loggerOptions(env),
     ...(staticDir ? { staticDir } : {}),
   }
 }
