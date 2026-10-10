@@ -7,9 +7,11 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from 'fastif
 
 import { runSafely } from './background.ts'
 import { buildContainer } from './container.ts'
+import { quietLogController } from './logging.ts'
 import type { TelegramGateway } from './modules/delivery/telegram.ts'
 import { openDatabase } from './db/index.ts'
 import { registerErrorHandler } from './plugins/errors.ts'
+import { registerRequestLog } from './plugins/request-log.ts'
 import { registerRoutes } from './routes/index.ts'
 
 export interface BuildAppOptions {
@@ -28,7 +30,8 @@ export interface BuildAppOptions {
 
 export async function buildApp(options: BuildAppOptions): Promise<FastifyInstance> {
   const db = openDatabase(options.dbPath)
-  const app = Fastify({ logger: options.logger ?? false })
+  // 请求行自己打（见 plugins/request-log.ts）；Fastify 自带的请求日志在这里关掉
+  const app = Fastify({ logger: options.logger ?? false, logController: quietLogController() })
 
   // 生产形态：界面与 API 同一个进程、同源，不需要反代，也不会有跨域
   const staticDir =
@@ -38,6 +41,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   }
 
   registerErrorHandler(app, { spaFallback: Boolean(staticDir) })
+  registerRequestLog(app)
 
   if (staticDir) {
     await app.register(fastifyStatic, { root: staticDir, index: ['index.html'] })
@@ -45,9 +49,11 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   }
 
   const container = buildContainer(db, {
-    log: (level, message) => {
-      if (level === 'warn') app.log.warn(message)
-      else app.log.info(message)
+    log: (level, message, fields) => {
+      const payload = fields ?? {}
+      if (level === 'warn') app.log.warn(payload, message)
+      else if (level === 'error') app.log.error(payload, message)
+      else app.log.info(payload, message)
     },
     telegram: options.telegram,
     fetchImpl: options.fetchImpl,

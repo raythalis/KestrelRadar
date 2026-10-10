@@ -1,11 +1,29 @@
 import { createRequire } from 'node:module'
 
-import type { FastifyServerOptions } from 'fastify'
+import { LogController, type FastifyServerOptions } from 'fastify'
 
 /** 传给 Fastify 的 logger 配置：对象即 pino 配置，false 表示不打日志 */
 export type LoggerOption = FastifyServerOptions['logger']
 
 const LEVELS = ['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent'] as const
+
+/**
+ * Fastify 自己那行英文的「Server listening at ...」：我们的 [4/4] 就绪行已经说清楚了，
+ * 留着只会一行变两行。文本匹配够用——真要改文案，最多是多出一行英文，不影响功能。
+ */
+const SILENT_FASTIFY_LINES = ['Server listening at']
+
+/**
+ * 关掉 Fastify 自带的请求日志（incoming request / request completed）：
+ * 请求行自己打（见 plugins/request-log.ts），更短、能跳过健康检查、带错误码。
+ * 用新的 logController——顶层的 `disableRequestLogging` 已标记弃用，fastify@6 会删掉。
+ * 类型上写的是「类」，运行时要的是实例，这里按运行时来。
+ */
+export function quietLogController(): FastifyServerOptions['logController'] {
+  return new LogController({
+    disableRequestLogging: true,
+  }) as unknown as FastifyServerOptions['logController']
+}
 
 const require = createRequire(import.meta.url)
 
@@ -47,6 +65,18 @@ export function loggerOptions(env: NodeJS.ProcessEnv = process.env): LoggerOptio
 
   return {
     level,
+    hooks: {
+      logMethod(args, method) {
+        const [first] = args
+        if (
+          typeof first === 'string' &&
+          SILENT_FASTIFY_LINES.some((prefix) => first.startsWith(prefix))
+        ) {
+          return
+        }
+        method.apply(this, args)
+      },
+    },
     transport: {
       target,
       options: {

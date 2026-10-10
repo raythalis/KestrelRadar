@@ -88,9 +88,10 @@ export function createScheduler(deps: SchedulerDeps) {
   }
 
   async function runCollect(key: string, discoveryId: string): Promise<void> {
+    const startedAt = Date.now()
     try {
       const outcome = await withSlot(() => deps.collector.collectDiscovery(discoveryId))
-      deps.onResult?.(outcome)
+      deps.onResult?.({ ...outcome, durationMs: Date.now() - startedAt })
     } catch (error) {
       // 单个源炸了不能拖死调度器，也不能影响别的源
       deps.onResult?.({
@@ -102,6 +103,7 @@ export function createScheduler(deps: SchedulerDeps) {
         newItemCount: 0,
         code: 'collection.failed',
         message: (error as Error).message || failureCopy('collection.failed'),
+        durationMs: Date.now() - startedAt,
       })
     } finally {
       refreshNextRun(key)

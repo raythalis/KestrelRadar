@@ -23,6 +23,10 @@ Kestrel Radar 后端：**TypeScript + Fastify + SQLite**。
 格式器是 pino-pretty，所以输出是文本而不是 JSON：`grep` 照常好使，但按字段做机器解析不划算
 （以后要接监控再单独开一份 JSON 出口）。
 
+接口请求一行一条：`GET /api/config 200（1ms）`，4xx 记 warn、5xx 记 error，并带上错误码；
+健康检查与前端静态资源不逐条打（不然每 30 秒一行，把有用的刷走）。
+采集、判定、归并、投递各阶段也各留一行：`采集「HN 头条」 …… 完成（抓取 20 条 · 新增 20 条 · 5.0s）`。
+
 ```bash
 pnpm --filter kestrel-api dev         # node --watch，改动自动重启
 pnpm --filter kestrel-api start       # 生产跑法（可配合已构建的界面）

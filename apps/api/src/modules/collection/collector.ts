@@ -28,6 +28,8 @@ export interface CollectOutcome {
   /** 失败时的错误码；成功与「成功但没条目」见下 */
   code: FailureCode | null
   message: string
+  /** 这一轮花了多久；由调度器补上，日志用（采集内部不关心时间） */
+  durationMs?: number
 }
 
 export interface CollectorDeps {

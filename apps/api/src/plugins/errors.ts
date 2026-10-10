@@ -4,6 +4,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { ZodError } from 'zod'
 
 import { DeliveryError } from '../modules/delivery/sender.ts'
+import { noteRequestError } from '../request-context.ts'
 
 /**
  * API Error：只表示「这次 HTTP 请求没成功」。
@@ -65,9 +66,12 @@ export function firstIssueDetails(error: ZodError): ApiErrorDetails | undefined 
   }
 }
 
-/** 4xx 也留一条痕：按码统计、按请求上下文排查，不打堆栈免得刷屏 */
-function logClientError(request: FastifyRequest, status: number, code: ApiErrorCode): void {
-  request.log.warn({ code, status, method: request.method, url: request.url }, 'request failed')
+/**
+ * 4xx 也留一条痕：错误码挂到请求上，由请求行一行带走（状态码 + 错误码），
+ * 不另起一行、也不打堆栈，免得同一个请求占两行。
+ */
+function noteClientError(request: FastifyRequest, code: ApiErrorCode): void {
+  noteRequestError(request, code)
 }
 
 /** 只要不是 /api、也不是要具体文件（带扩展名），就当它是前端页面路由 */
@@ -101,11 +105,11 @@ export function registerErrorHandler(
 
   app.setErrorHandler((error, request, reply) => {
     if (error instanceof AppError) {
-      if (error.status < 500) logClientError(request, error.status, error.code)
+      if (error.status < 500) noteClientError(request, error.code)
       return send(reply, error.status, error.code, error.message, error.details)
     }
     if (error instanceof ZodError) {
-      logClientError(request, 400, 'VALIDATION_ERROR')
+      noteClientError(request, 'VALIDATION_ERROR')
       return send(reply, 400, 'VALIDATION_ERROR', describeIssues(error), firstIssueDetails(error))
     }
     // 发送失败本该由业务结果接口自己接住；漏到这里说明那条路径没收拾，按服务异常兜底并留下证据
@@ -119,16 +123,16 @@ export function registerErrorHandler(
     const statusCode = (error as { statusCode?: number }).statusCode
     if (typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500) {
       // 框架自己抛的客户端错误（请求体不合法之类）不该报成 500
-      logClientError(request, statusCode, 'VALIDATION_ERROR')
+      noteClientError(request, 'VALIDATION_ERROR')
       return send(reply, statusCode, 'VALIDATION_ERROR', '请求不合法，请检查后重试')
     }
     const message = (error as Error).message ?? ''
     if (message.includes('UNIQUE constraint failed')) {
-      logClientError(request, 409, 'CONFLICT')
+      noteClientError(request, 'CONFLICT')
       return send(reply, 409, 'CONFLICT', '已经存在同样的记录')
     }
     if (message.includes('FOREIGN KEY constraint failed')) {
-      logClientError(request, 409, 'CONFLICT')
+      noteClientError(request, 'CONFLICT')
       return send(reply, 409, 'CONFLICT', '还有别的地方在引用它，先解除引用再删')
     }
     // 兜底：日志里必须带错误码、堆栈与请求上下文，不能只有一句 message
@@ -143,6 +147,7 @@ export function registerErrorHandler(
     if (options.spaFallback && request.method === 'GET' && isPageRoute(request)) {
       return reply.sendFile('index.html')
     }
+    noteClientError(request, 'NOT_FOUND')
     return send(reply, 404, 'NOT_FOUND', '没有这个接口')
   })
 }

@@ -45,4 +45,24 @@ describe('运行期日志配置', () => {
     expect(loggerOptions({ KESTREL_LOG_LEVEL: '啰嗦' })).toMatchObject({ level: 'info' })
     expect(loggerOptions({})).toMatchObject({ level: 'info' })
   })
+
+  it('丢掉 Fastify 自己的英文行，别的照常放过', () => {
+    const options = loggerOptions({})
+    const hook = (
+      options as unknown as {
+        hooks: { logMethod: (args: unknown[], method: (...rest: unknown[]) => void) => void }
+      }
+    ).hooks.logMethod
+    const passed: unknown[][] = []
+    const method = (...args: unknown[]): void => {
+      passed.push(args)
+    }
+
+    hook(['Server listening at http://127.0.0.1:8765'], method)
+    expect(passed).toHaveLength(0)
+
+    hook(['[1/4] 读取配置 …… 完成（端口 8765）'], method)
+    hook([{ status: 200 }, 'GET /api/config 200（1ms）'], method)
+    expect(passed).toHaveLength(2)
+  })
 })

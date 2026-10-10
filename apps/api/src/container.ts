@@ -47,6 +47,14 @@ import { createHiddenSettings, type HiddenSettings } from './modules/settings/hi
 import { createStatsService, type StatsService } from './modules/stats/stats.service.ts'
 import { createSettingsRepo } from './modules/settings/settings.repo.ts'
 import { createSettingsService } from './modules/settings/settings.service.ts'
+import {
+  collectLine,
+  deliveryLine,
+  judgeLine,
+  mergeLine,
+  stageFailLine,
+  type StageLine,
+} from './stage-lines.ts'
 
 export interface Container {
   groups: ReturnType<typeof createGroupService>
@@ -79,8 +87,12 @@ export interface Container {
 }
 
 export interface ContainerOptions {
-  /** 采集与判定的结果写进服务日志，方便排查 */
-  log?: (level: 'info' | 'warn', message: string) => void
+  /** 采集与判定的结果写进服务日志，方便排查；fields（阶段、耗时等）会跟在线尾 */
+  log?: (
+    level: 'info' | 'warn' | 'error',
+    message: string,
+    fields?: Record<string, unknown>,
+  ) => void
   /** 判定用的模型实现；不传就按设置里的模型顺序真去调（顺序为空=还没配模型，走降级开关） */
   llm?: JudgeLlm
   /** 调模型用的 fetch；测试里换成假的，平时不传 */
@@ -129,6 +141,11 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
   })
   const hidden = createHiddenSettings(settingsRepo)
   const runs = createRunRepo(db)
+
+  /** 流程行统一交给外部日志口子（没给就什么都不打） */
+  const emit = (line: StageLine): void => {
+    options.log?.(line.level, line.message, line.fields)
+  }
 
   // 异常：三类共一张表；库里与前端同为 hidden.incidentLimit 条（默认 20）
   const incidents = createIncidentService({
@@ -245,35 +262,77 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     groups: groupRepo,
     // 采到新条目就顺手判一遍：判定失败不影响采集结果
     onCollected: async (discoveryId) => {
+      const name = discoveryRepo.get(discoveryId)?.name ?? discoveryId
+
       try {
+        const startedAt = Date.now()
         const written = await judge.judgePendingItems(discoveryId)
-        if (written > 0) options.log?.('info', `判定完成：新判 ${written} 条`)
+        if (written > 0) emit(judgeLine({ name, written, durationMs: Date.now() - startedAt }))
       } catch (error) {
-        options.log?.('warn', `判定失败：${(error as Error).message}`)
+        emit(
+          stageFailLine({
+            action: '判定',
+            stage: 'judge',
+            object: name,
+            reason: (error as Error).message,
+          }),
+        )
       }
+
       try {
+        const startedAt = Date.now()
         const merged = await merger.mergePendingItems(discoveryId)
         if (merged.created > 0 || merged.merged > 0) {
-          options.log?.(
-            'info',
-            `归并完成：新建事件 ${merged.created} 个，并入已有事件 ${merged.merged} 条`,
+          emit(
+            mergeLine({
+              name,
+              created: merged.created,
+              merged: merged.merged,
+              durationMs: Date.now() - startedAt,
+            }),
           )
         }
       } catch (error) {
-        options.log?.('warn', `归并失败：${(error as Error).message}`)
+        emit(
+          stageFailLine({
+            action: '归并',
+            stage: 'merge',
+            object: name,
+            reason: (error as Error).message,
+          }),
+        )
       }
+
       // 「发现即发」的动作：归并完顺手投递一次
       try {
         const groupId = discoveryRepo.get(discoveryId)?.groupId
         if (groupId) {
+          const startedAt = Date.now()
           const outcomes = await delivery.deliverInstantForGroup(groupId)
+          const durationMs = Date.now() - startedAt
           for (const outcome of outcomes) {
-            if (outcome.messageCount > 0) options.log?.('info', `投递完成：${outcome.message}`)
-            else if (!outcome.ok) options.log?.('warn', `投递异常：${outcome.message}`)
+            // 没发出去也没出错的不占一行：每轮都打会把有用的行刷走
+            if (outcome.messageCount === 0 && outcome.ok) continue
+            emit(
+              deliveryLine({
+                label: actionRepo.get(outcome.actionId)?.name ?? outcome.actionId,
+                ok: outcome.ok,
+                messageCount: outcome.messageCount,
+                message: outcome.message,
+                durationMs,
+              }),
+            )
           }
         }
       } catch (error) {
-        options.log?.('warn', `投递失败：${(error as Error).message}`)
+        emit(
+          stageFailLine({
+            action: '投递',
+            stage: 'delivery',
+            object: name,
+            reason: (error as Error).message,
+          }),
+        )
       }
     },
   })
@@ -313,17 +372,34 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
           (groupRepo.get(action.groupId)?.enabled ?? false),
       })),
     onDigest: async (actionId) => {
+      const label = actionRepo.get(actionId)?.name ?? actionId
+      const startedAt = Date.now()
       const outcome = await delivery.deliverForAction(actionId, 'digest')
-      if (outcome.messageCount > 0) options.log?.('info', `汇总投递完成：${outcome.message}`)
+      if (outcome.messageCount === 0 && outcome.ok) return
+      emit(
+        deliveryLine({
+          label,
+          ok: outcome.ok,
+          messageCount: outcome.messageCount,
+          message: outcome.message,
+          durationMs: Date.now() - startedAt,
+        }),
+      )
     },
     concurrency: () => settings.get().concurrency,
     onResult: (outcome) => {
       const name = discoveryRepo.get(outcome.discoveryId)?.name ?? outcome.discoveryId
-      if (!outcome.ok) {
-        options.log?.('warn', `采集失败：${name} — ${outcome.message}`)
-      } else if (outcome.newItemCount > 0) {
-        options.log?.('info', `采集完成：${name} 新增 ${outcome.newItemCount} 条`)
-      }
+      emit(
+        collectLine({
+          name,
+          ok: outcome.ok,
+          foundCount: outcome.foundCount,
+          newItemCount: outcome.newItemCount,
+          ...(outcome.code ? { code: outcome.code } : {}),
+          message: outcome.message,
+          ...(outcome.durationMs === undefined ? {} : { durationMs: outcome.durationMs }),
+        }),
+      )
     },
   })
 
