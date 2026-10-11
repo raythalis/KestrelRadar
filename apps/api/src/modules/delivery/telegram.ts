@@ -6,6 +6,8 @@ import {
   type TimeoutOption,
 } from './sender.ts'
 
+import { tracedFetch, type OutboundLog } from '../../outbound.ts'
+
 export interface TelegramChat {
   id: string
   title: string
@@ -42,7 +44,7 @@ function chatTitle(chat: NonNullable<TelegramUpdate['message']>['chat']): string
 
 /** Telegram：bot token 当密钥，chat id 放渠道参数里 */
 export function createTelegramGateway(
-  options: { fetchImpl?: typeof fetch; timeoutSeconds?: TimeoutOption } = {},
+  options: { fetchImpl?: typeof fetch; timeoutSeconds?: TimeoutOption; log?: OutboundLog } = {},
 ): TelegramGateway {
   const doFetch = options.fetchImpl ?? fetch
 
@@ -51,12 +53,18 @@ export function createTelegramGateway(
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), timeoutSeconds * 1000)
     try {
-      const response = await doFetch(`https://api.telegram.org/bot${token}/${method}`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      })
+      const response = await tracedFetch(
+        doFetch,
+        options.log,
+        '投递 Telegram',
+        `https://api.telegram.org/bot${token}/${method}`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        },
+      )
       const payload = (await response.json().catch(() => null)) as TelegramResponse<T> | null
       if (!response.ok || !payload?.ok) {
         const reason = payload?.description ?? `HTTP ${response.status}`

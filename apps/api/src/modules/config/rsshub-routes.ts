@@ -1,10 +1,13 @@
 import { effectiveRsshubBaseUrl } from '@kestrel/contracts'
 
 import type { SettingsService } from '../settings/settings.service.ts'
+import { tracedFetch, warnOnly, type OutboundLog } from '../../outbound.ts'
 
 export interface RsshubRoutesDeps {
   settings: SettingsService
   fetchImpl?: typeof fetch
+  /** 出站日志口子：这类元数据反查只记失败（成功太频繁，没信息量） */
+  log?: OutboundLog
   /** 元数据缓多久（毫秒）：路由表很少变，默认 10 分钟 */
   cacheMs?: number
   timeoutMs?: number
@@ -77,10 +80,16 @@ export function createRsshubRoutes(deps: RsshubRoutesDeps) {
       const url = new URL(`/api/namespace/${encodeURIComponent(namespace)}`, baseUrl)
       const accessKey = deps.settings.get().rsshubAccessKey.trim()
       if (accessKey) url.searchParams.set('key', accessKey)
-      const response = await doFetch(url, {
-        signal: AbortSignal.timeout(timeoutMs),
-        headers: { accept: 'application/json' },
-      })
+      const response = await tracedFetch(
+        doFetch,
+        warnOnly(deps.log),
+        '查 RSSHub 路由',
+        url.toString(),
+        {
+          signal: AbortSignal.timeout(timeoutMs),
+          headers: { accept: 'application/json' },
+        },
+      )
       if (response.ok) {
         const body = (await response.json()) as {
           routes?: RouteTable

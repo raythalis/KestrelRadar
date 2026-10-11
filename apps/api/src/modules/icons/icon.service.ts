@@ -6,12 +6,16 @@ import { join } from 'node:path'
 import type { DiscoveryKind } from '@kestrel/contracts'
 
 import type { DiscoveryRepo } from '../discoveries/discovery.repo.ts'
+import type { OutboundLog } from '../../outbound.ts'
+import { formatDuration } from '../../stage-lines.ts'
 
 export interface IconServiceDeps {
   discoveries: DiscoveryRepo
   /** 图标存哪：与数据库同级目录下的 icons/ */
   dir: string
   fetchImpl?: typeof fetch
+  /** 出站日志口子：按主机记一行结果（图标候选有好几个，逐个记会刷屏） */
+  log?: OutboundLog
   /** 单次抓取超时（毫秒）：前台最多等 waitMs，后台这次请求自己也别吊太久 */
   timeoutMs?: number
   /** 单张图标大小上限（字节） */
@@ -129,7 +133,17 @@ export function createIconService(deps: IconServiceDeps) {
   }
 
   async function fetchAndStore(id: string, host: string): Promise<string | null> {
+    const startedAt = Date.now()
     const found = await download(host)
+    if (deps.log) {
+      const seconds = formatDuration(Date.now() - startedAt)
+      deps.log(
+        found ? 'info' : 'warn',
+        found
+          ? `抓取图标 ${host}：完成，用时 ${seconds}`
+          : `抓取图标 ${host}：没找到，用时 ${seconds}`,
+      )
+    }
     if (!found) {
       deps.discoveries.setIcon(id, null)
       return null

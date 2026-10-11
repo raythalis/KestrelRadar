@@ -1,10 +1,13 @@
 import { effectiveRsshubBaseUrl, failureCopy, type StatsRsshub } from '@kestrel/contracts'
 
 import type { SettingsService } from '../settings/settings.service.ts'
+import { tracedFetch, warnOnly, type OutboundLog } from '../../outbound.ts'
 
 export interface RsshubStatusDeps {
   settings: SettingsService
   fetchImpl?: typeof fetch
+  /** 出站日志口子：手动测试全记，后台每 20 秒的探测只记失败 */
+  log?: OutboundLog
   /** 结果在内存里缓多久（毫秒）；默认 20 秒，探测不写日志、不落库 */
   cacheMs?: number
   timeoutMs?: number
@@ -34,11 +37,17 @@ export function createRsshubStatus(deps: RsshubStatusDeps) {
 
     let status: StatsRsshub
     try {
-      const response = await doFetch(baseUrl, {
-        method: 'GET',
-        signal: AbortSignal.timeout(timeoutMs),
-        headers: { accept: 'text/html,*/*' },
-      })
+      const response = await tracedFetch(
+        doFetch,
+        force ? deps.log : warnOnly(deps.log),
+        force ? '测试 RSSHub' : '检查 RSSHub',
+        baseUrl,
+        {
+          method: 'GET',
+          signal: AbortSignal.timeout(timeoutMs),
+          headers: { accept: 'text/html,*/*' },
+        },
+      )
       status = {
         configured: true,
         ok: response.ok,

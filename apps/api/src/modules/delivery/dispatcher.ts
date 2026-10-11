@@ -1,5 +1,6 @@
 import type { DeliverySender } from './sender.ts'
 import { createWebhookSender, type TimeoutOption } from './sender.ts'
+import type { OutboundLog } from '../../outbound.ts'
 import { createTelegramGateway } from './telegram.ts'
 import {
   createDingtalkSender,
@@ -13,7 +14,7 @@ import {
  * 要加新渠道（企业微信、Server酱之类）就在这里多一个分支。
  */
 export function createDeliverySender(
-  options: { fetchImpl?: typeof fetch; timeoutSeconds?: TimeoutOption } = {},
+  options: { fetchImpl?: typeof fetch; timeoutSeconds?: TimeoutOption; log?: OutboundLog } = {},
 ): DeliverySender {
   const webhook = createWebhookSender(options)
   const telegram = createTelegramGateway(options)

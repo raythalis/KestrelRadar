@@ -12,7 +12,16 @@ import {
   type TimeoutOption,
 } from './sender.ts'
 
+import { describeFailure, emitOutbound, tracedFetch, type OutboundLog } from '../../outbound.ts'
+
 type FetchLike = typeof fetch
+
+/** 渠道类型对应日志里的自称 */
+const CHANNEL_ACTOR: Record<'wecom' | 'dingtalk' | 'feishu', string> = {
+  wecom: '投递 企业微信',
+  dingtalk: '投递 钉钉',
+  feishu: '投递 飞书',
+}
 
 function requireType(message: DeliverableMessage, type: Channel['type']): void {
   if (message.channel.type !== type)
@@ -21,7 +30,7 @@ function requireType(message: DeliverableMessage, type: Channel['type']): void {
 
 function webhookSender(
   type: 'wecom' | 'dingtalk' | 'feishu',
-  options: { fetchImpl?: FetchLike; timeoutSeconds?: TimeoutOption } = {},
+  options: { fetchImpl?: FetchLike; timeoutSeconds?: TimeoutOption; log?: OutboundLog } = {},
 ): DeliverySender {
   const doFetch = options.fetchImpl ?? fetch
   return {
@@ -59,7 +68,7 @@ function webhookSender(
         resolveTimeout(options.timeoutSeconds, 15) * 1000,
       )
       try {
-        const response = await doFetch(target, {
+        const response = await tracedFetch(doFetch, options.log, CHANNEL_ACTOR[type], target, {
           method: 'POST',
           headers,
           body: JSON.stringify(body),
@@ -188,7 +197,11 @@ function smtpConnection(
 }
 
 export function createEmailSender(
-  options: { timeoutSeconds?: TimeoutOption; connect?: typeof smtpConnection } = {},
+  options: {
+    timeoutSeconds?: TimeoutOption
+    connect?: typeof smtpConnection
+    log?: OutboundLog
+  } = {},
 ): DeliverySender {
   const connect = options.connect ?? smtpConnection
   return {
@@ -198,6 +211,7 @@ export function createEmailSender(
       const password = message.secret
       if (!host || !from || !to || !password)
         throw new DeliveryError('delivery.emailFailed', '邮件 SMTP 配置不完整')
+      const startedAt = Date.now()
       const smtp = await connect(
         host,
         Number(port),
@@ -238,7 +252,20 @@ export function createEmailSender(
         )
         await expect('250')
         await smtp.write('QUIT')
+        emitOutbound(options.log, {
+          actor: '投递 邮件',
+          url: `smtp://${host}:${port}`,
+          method: '',
+          durationMs: Date.now() - startedAt,
+        })
       } catch (error) {
+        emitOutbound(options.log, {
+          actor: '投递 邮件',
+          url: `smtp://${host}:${port}`,
+          method: '',
+          failure: describeFailure(error),
+          durationMs: Date.now() - startedAt,
+        })
         const detail = (error as Error).message || ''
         const code = /timeout/i.test(detail)
           ? 'delivery.emailTimeout'

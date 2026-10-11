@@ -1,5 +1,7 @@
 import { failureCopy, type Channel, type FailureCode } from '@kestrel/contracts'
 
+import { tracedFetch, type OutboundLog } from '../../outbound.ts'
+
 export interface DeliverableMessage {
   channel: Channel
   /** 渠道密钥，只在这里用一次，不外传 */
@@ -45,7 +47,7 @@ export class DeliveryError extends Error {
 
 /** Webhook：往渠道里配的地址 POST 一个 JSON；密钥放在 Authorization: Bearer 头里 */
 export function createWebhookSender(
-  options: { fetchImpl?: typeof fetch; timeoutSeconds?: TimeoutOption } = {},
+  options: { fetchImpl?: typeof fetch; timeoutSeconds?: TimeoutOption; log?: OutboundLog } = {},
 ): DeliverySender {
   const doFetch = options.fetchImpl ?? fetch
 
@@ -64,7 +66,7 @@ export function createWebhookSender(
       const controller = new AbortController()
       const timer = setTimeout(() => controller.abort(), timeoutSeconds * 1000)
       try {
-        const response = await doFetch(url, {
+        const response = await tracedFetch(doFetch, options.log, '投递 Webhook', url, {
           method: 'POST',
           headers: {
             'content-type': 'application/json',

@@ -212,23 +212,31 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
   const templates = createTemplateService({ repo: templateRepo, builtin: builtinTemplates() })
 
   // RSSHub 相对路由的源站反查：给图标抓取用（实例地址跟着设置走）
-  const rsshubRoutes = createRsshubRoutes({ settings, fetchImpl: options.fetchImpl })
+  const rsshubRoutes = createRsshubRoutes({
+    settings,
+    fetchImpl: options.fetchImpl,
+    log: options.log,
+  })
 
   const icons = options.iconDir
     ? createIconService({
         discoveries: discoveryRepo,
         dir: options.iconDir,
         fetchImpl: options.fetchImpl,
+        log: options.log,
         rsshubHost: (target) => rsshubRoutes.resolveHost(target),
       })
     : undefined
-  const rsshub = createRsshubStatus({ settings, fetchImpl: options.fetchImpl })
+  const rsshub = createRsshubStatus({ settings, fetchImpl: options.fetchImpl, log: options.log })
 
-  const telegram = options.telegram ?? createTelegramGateway()
+  const telegram = options.telegram ?? createTelegramGateway({ log: options.log })
   // 推送超时跟着设置走：改了立刻生效，不用重启
   const sender =
     options.sender ??
-    createDeliverySender({ timeoutSeconds: () => settings.get().deliveryTimeoutSeconds })
+    createDeliverySender({
+      timeoutSeconds: () => settings.get().deliveryTimeoutSeconds,
+      log: options.log,
+    })
   const batcher = options.batcher ?? createChannelBatcher(sender)
   const delivery = createDeliveryService({
     actions: actionRepo,
@@ -256,6 +264,8 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
     incidents,
     runs,
     groups: groupRepo,
+    // 出站日志（抓了谁、什么结果）与流程行走同一个口子
+    log: options.log,
     // 采到新条目就顺手判一遍：判定失败不影响采集结果
     onCollected: async (discoveryId) => {
       const name = discoveryRepo.get(discoveryId)?.name ?? discoveryId

@@ -1,5 +1,6 @@
 import type { JudgeLlm, JudgeLlmInput, JudgeLlmResult } from './llm.ts'
 import { JudgeLlmUnavailableError } from './llm.ts'
+import { tracedFetch } from '../../outbound.ts'
 
 /** 一个可以调的模型：模型名 + 它所属供应商的地址与密钥 */
 export interface LlmTarget {
@@ -75,7 +76,7 @@ export function createProviderLlm(deps: ProviderLlmDeps): JudgeLlm {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), timeoutMs)
     try {
-      const response = await doFetch(chatUrl(target.baseUrl), {
+      const response = await tracedFetch(doFetch, deps.log, '判定', chatUrl(target.baseUrl), {
         method: 'POST',
         signal: controller.signal,
         headers: {

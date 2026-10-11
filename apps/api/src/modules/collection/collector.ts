@@ -6,6 +6,7 @@ import {
   type FailureCode,
 } from '@kestrel/contracts'
 
+import type { OutboundLog } from '../../outbound.ts'
 import type { IncidentService } from '../incidents/incident.service.ts'
 import type { SettingsService } from '../settings/settings.service.ts'
 import type { DiscoveryRepo } from '../discoveries/discovery.repo.ts'
@@ -43,6 +44,8 @@ export interface CollectorDeps {
   /** 取分组名字，做异常记录里的分组快照 */
   groups?: GroupRepo
   fetchImpl?: typeof fetch
+  /** 出站日志口子（谁在抓、抓了谁、什么结果） */
+  log?: OutboundLog
   /** 采集完的通知口子（判定层用它补判新条目），失败不影响采集 */
   onCollected?: (discoveryId: string, newItemCount: number) => void | Promise<void>
 }
@@ -117,6 +120,12 @@ export function createCollector(deps: CollectorDeps) {
     return { code: 'collection.failed', message: message || failureCopy('collection.failed') }
   }
 
+  /** 日志里的对象名：取来源名字，取不到就退回目标地址 */
+  function actorOf(discoveryId: string): string {
+    const record = deps.discoveries.get(discoveryId)
+    return `采集「${record?.name || record?.target || discoveryId}」`
+  }
+
   /** 取一次内容并解析：试抓与正式采集共用这一段 */
   async function loadEntries(discoveryId: string): Promise<LoadResult> {
     const settings = deps.settings.get()
@@ -135,6 +144,8 @@ export function createCollector(deps: CollectorDeps) {
       timeoutSeconds: settings.requestTimeoutSeconds,
       maxRetries: settings.maxRetries,
       fetchImpl: deps.fetchImpl,
+      log: deps.log,
+      actor: actorOf(discoveryId),
     }
 
     let feedUrl = target.url

@@ -1,5 +1,7 @@
 import type { ModelProvider } from '@kestrel/contracts'
 
+import { tracedFetch } from '../../outbound.ts'
+
 export interface RemoteModelsDeps {
   /** 单次请求最多等多久（毫秒） */
   timeoutMs: () => number
@@ -25,19 +27,25 @@ export function createRemoteModels(deps: RemoteModelsDeps) {
       const controller = new AbortController()
       const timer = setTimeout(() => controller.abort(), Math.max(1, deps.timeoutMs()))
       try {
-        const response = await doFetch(modelsUrl(provider.baseUrl), {
-          method: 'GET',
-          signal: controller.signal,
-          headers: apiKey ? { authorization: `Bearer ${apiKey}` } : undefined,
-        })
+        const response = await tracedFetch(
+          doFetch,
+          deps.log,
+          '模型列表',
+          modelsUrl(provider.baseUrl),
+          {
+            method: 'GET',
+            signal: controller.signal,
+            headers: apiKey ? { authorization: `Bearer ${apiKey}` } : undefined,
+          },
+        )
         if (!response.ok) throw new Error(`供应商返回 HTTP ${response.status}`)
         const payload = (await response.json()) as { data?: { id?: unknown }[] }
         const names = (payload.data ?? [])
           .map((item) => (typeof item.id === 'string' ? item.id.trim() : ''))
           .filter((name) => name.length > 0)
         return [...new Set(names)].sort()
-      } catch (error) {
-        deps.log?.('info', `问 ${provider.name} 的模型清单失败：${(error as Error).message}`)
+      } catch {
+        // 出站那一行已经记了（含状态码/失败原因），这里只管安静地返回空清单
         return []
       } finally {
         clearTimeout(timer)

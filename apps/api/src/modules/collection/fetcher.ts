@@ -1,5 +1,7 @@
 import { failureCopy, type FailureCode } from '@kestrel/contracts'
 
+import { tracedFetch, type OutboundLog } from '../../outbound.ts'
+
 export type FetchFailureKind = 'network' | 'timeout' | 'http_status'
 
 export class FetchError extends Error {
@@ -35,6 +37,10 @@ export interface FetchOptions {
   maxRetries: number
   fetchImpl?: typeof fetch
   headers?: Record<string, string>
+  /** 出站日志口子；给了就每次请求（重试也算一次）记一行 */
+  log?: OutboundLog
+  /** 日志里这条请求是谁在发：`采集「HN 头条」` */
+  actor?: string
 }
 
 const RETRY_BASE_DELAY_MS = 200
@@ -57,7 +63,7 @@ export async function fetchText(
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      const response = await fetchImpl(url, {
+      const response = await tracedFetch(fetchImpl, options.log, options.actor ?? '采集', url, {
         redirect: 'follow',
         signal: AbortSignal.timeout(options.timeoutSeconds * 1000),
         headers: {
