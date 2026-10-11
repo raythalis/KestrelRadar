@@ -51,6 +51,38 @@ function addDiscovery(overrides: Record<string, unknown> = {}) {
   })
 }
 
+describe('测试采集与定时采集分开标', () => {
+  it('手动测试标成「测试采集」，定时采集还是「采集」', async () => {
+    const lines: string[] = []
+    const db = createTempDb()
+    const box = buildContainer(openTestDatabase(db.path), {
+      log: (level, message) => lines.push(`${level}:${message}`),
+    })
+    try {
+      box.settings.update({ requestTimeoutSeconds: 5, maxRetries: 2 })
+      const group = box.groups.create({ name: 'G', description: '', enabled: true })
+      const discovery = box.discoveries.create({
+        groupId: group.id,
+        name: '源',
+        kind: 'rss',
+        target: `${server.baseUrl}/rss`,
+        cronExpression: '0 * * * *',
+        enabled: true,
+      })
+
+      await box.collector.probeDiscovery(discovery.id)
+      expect(lines.some((line) => line.startsWith('info:测试采集「源」：GET '))).toBe(true)
+
+      lines.length = 0
+      await box.collector.collectDiscovery(discovery.id)
+      expect(lines.some((line) => line.startsWith('info:采集「源」：GET '))).toBe(true)
+      expect(lines.some((line) => line.includes('测试采集'))).toBe(false)
+    } finally {
+      db.cleanup()
+    }
+  })
+})
+
 describe('采集', () => {
   it('首次采集建基线：条目入库、记下基线时间与条数', async () => {
     const discovery = addDiscovery()

@@ -68,7 +68,8 @@ function webhookSender(
         resolveTimeout(options.timeoutSeconds, 15) * 1000,
       )
       try {
-        const response = await tracedFetch(doFetch, options.log, CHANNEL_ACTOR[type], target, {
+        const actor = `${message.test ? '测试' : ''}${CHANNEL_ACTOR[type]}`
+        const response = await tracedFetch(doFetch, options.log, actor, target, {
           method: 'POST',
           headers,
           body: JSON.stringify(body),
@@ -253,14 +254,14 @@ export function createEmailSender(
         await expect('250')
         await smtp.write('QUIT')
         emitOutbound(options.log, {
-          actor: '投递 邮件',
+          actor: `${message.test ? '测试' : ''}投递 邮件`,
           url: `smtp://${host}:${port}`,
           method: '',
           durationMs: Date.now() - startedAt,
         })
       } catch (error) {
         emitOutbound(options.log, {
-          actor: '投递 邮件',
+          actor: `${message.test ? '测试' : ''}投递 邮件`,
           url: `smtp://${host}:${port}`,
           method: '',
           failure: describeFailure(error),

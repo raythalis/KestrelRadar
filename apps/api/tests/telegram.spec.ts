@@ -71,6 +71,33 @@ describe('Telegram 渠道', () => {
     expect(calls[0]?.body.text).toBe('\u6b63\u6587')
   })
 
+  it('手动测试的请求在日志里标成「测试投递 Telegram」', async () => {
+    const lines: string[] = []
+    const gateway = createTelegramGateway({
+      fetchImpl: fakeFetch([], [{ ok: true, result: {} }]),
+      log: (level, text) => lines.push(`${level}:${text}`),
+    })
+
+    await gateway.send({ ...message, test: true })
+
+    expect(lines).toHaveLength(1)
+    expect(lines[0]).toMatch(
+      /^info:测试投递 Telegram：POST https:\/\/api\.telegram\.org\/bot\*\*\*\/sendMessage 200，用时 /,
+    )
+  })
+
+  it('实际投递不带「测试」两个字', async () => {
+    const lines: string[] = []
+    const gateway = createTelegramGateway({
+      fetchImpl: fakeFetch([], [{ ok: true, result: {} }]),
+      log: (level, text) => lines.push(`${level}:${text}`),
+    })
+
+    await gateway.send(message)
+
+    expect(lines[0]).toMatch(/^info:投递 Telegram：POST /)
+  })
+
   it('没 token 或没 chat id 直接报错，不去打接口', async () => {
     const calls: Call[] = []
     const gateway = createTelegramGateway({ fetchImpl: fakeFetch(calls, [{ ok: true }]) })

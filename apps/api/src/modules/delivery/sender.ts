@@ -12,6 +12,8 @@ export interface DeliverableMessage {
   sourceCount: number
   eventCount: number
   hitAt: string | null
+  /** 手动测试发的消息：日志里标成「测试」，与实际投递分开 */
+  test?: boolean
 }
 
 export interface DeliverySender {
@@ -66,7 +68,8 @@ export function createWebhookSender(
       const controller = new AbortController()
       const timer = setTimeout(() => controller.abort(), timeoutSeconds * 1000)
       try {
-        const response = await tracedFetch(doFetch, options.log, '投递 Webhook', url, {
+        const actor = message.test ? '测试投递 Webhook' : '投递 Webhook'
+        const response = await tracedFetch(doFetch, options.log, actor, url, {
           method: 'POST',
           headers: {
             'content-type': 'application/json',

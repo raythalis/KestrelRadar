@@ -48,7 +48,7 @@ export function createTelegramGateway(
 ): TelegramGateway {
   const doFetch = options.fetchImpl ?? fetch
 
-  async function call<T>(token: string, method: string, body: unknown): Promise<T> {
+  async function call<T>(token: string, method: string, body: unknown, test = false): Promise<T> {
     const timeoutSeconds = resolveTimeout(options.timeoutSeconds, 15)
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), timeoutSeconds * 1000)
@@ -56,7 +56,7 @@ export function createTelegramGateway(
       const response = await tracedFetch(
         doFetch,
         options.log,
-        '投递 Telegram',
+        test ? '测试投递 Telegram' : '投递 Telegram',
         `https://api.telegram.org/bot${token}/${method}`,
         {
           method: 'POST',
@@ -94,11 +94,16 @@ export function createTelegramGateway(
       if (!token) throw new DeliveryError('delivery.telegramNoToken')
       const chatId = message.channel.config.chatId
       if (!chatId) throw new DeliveryError('delivery.telegramNoChat')
-      await call(token, 'sendMessage', {
-        chat_id: chatId,
-        text: message.text,
-        disable_web_page_preview: true,
-      })
+      await call(
+        token,
+        'sendMessage',
+        {
+          chat_id: chatId,
+          text: message.text,
+          disable_web_page_preview: true,
+        },
+        message.test === true,
+      )
     },
 
     async listChats(token: string): Promise<TelegramChat[]> {

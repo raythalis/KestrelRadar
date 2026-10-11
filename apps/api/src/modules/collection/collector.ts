@@ -120,14 +120,15 @@ export function createCollector(deps: CollectorDeps) {
     return { code: 'collection.failed', message: message || failureCopy('collection.failed') }
   }
 
-  /** 日志里的对象名：取来源名字，取不到就退回目标地址 */
-  function actorOf(discoveryId: string): string {
+  /** 日志里的对象名：手动测试与定时采集分开标，取来源名字，取不到就退回目标地址 */
+  function actorOf(discoveryId: string, probe: boolean): string {
     const record = deps.discoveries.get(discoveryId)
-    return `采集「${record?.name || record?.target || discoveryId}」`
+    const name = record?.name || record?.target || discoveryId
+    return `${probe ? '测试采集' : '采集'}「${name}」`
   }
 
-  /** 取一次内容并解析：试抓与正式采集共用这一段 */
-  async function loadEntries(discoveryId: string): Promise<LoadResult> {
+  /** 取一次内容并解析：试抓与正式采集共用这一段（probe 只影响日志里的自称） */
+  async function loadEntries(discoveryId: string, probe = false): Promise<LoadResult> {
     const settings = deps.settings.get()
     const target = resolveUrl(discoveryId)
     if ('error' in target) {
@@ -145,7 +146,7 @@ export function createCollector(deps: CollectorDeps) {
       maxRetries: settings.maxRetries,
       fetchImpl: deps.fetchImpl,
       log: deps.log,
-      actor: actorOf(discoveryId),
+      actor: actorOf(discoveryId, probe),
     }
 
     let feedUrl = target.url
@@ -232,7 +233,7 @@ export function createCollector(deps: CollectorDeps) {
         details: { reason: 'discovery.missing' },
       }
     }
-    const result = await loadEntries(discoveryId)
+    const result = await loadEntries(discoveryId, true)
     const probeLatest = latestPublishedAt(result.entries)
     deps.discoveries.updateState(discoveryId, {
       lastCheckedAt: new Date().toISOString(),

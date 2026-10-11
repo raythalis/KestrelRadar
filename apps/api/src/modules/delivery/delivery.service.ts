@@ -326,6 +326,7 @@ export function createDeliveryService(deps: DeliveryDeps) {
           sourceCount: 0,
           eventCount: 0,
           hitAt: null,
+          test: true,
         })
         return {
           ok: true,
