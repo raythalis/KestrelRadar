@@ -25,6 +25,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
 import i18n from '@/plugins/i18n'
+import { setDisplayTimezone } from '@/utils/format'
 
 import {
   createAction as createActionApi,
@@ -125,8 +126,11 @@ export const useConfigStore = defineStore('config', () => {
       fetchCardStats(),
     ])
     try {
-      if (snapshotResult.status === 'fulfilled') snapshot.value = snapshotResult.value
-      else throw snapshotResult.reason
+      if (snapshotResult.status === 'fulfilled') {
+        snapshot.value = snapshotResult.value
+        // 界面时间跟设置里的时区走（'system' = 浏览器时区），与后端定时任务同一口径
+        setDisplayTimezone(snapshotResult.value.settings.timezone)
+      } else throw snapshotResult.reason
     } catch (error) {
       // 不是 ApiError（请求根本没到后端那类）才走这句；文案同样出自语言包
       errorMessage.value =

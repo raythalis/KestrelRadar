@@ -366,7 +366,7 @@ export default {
   settings: {
     range: '{min} – {max} allowed',
     timezone: {
-      system: 'System (server time)',
+      system: 'System time zone',
     },
     band: {
       range: 'Low 0-95, high 5-100; keep them at least 5 points apart',

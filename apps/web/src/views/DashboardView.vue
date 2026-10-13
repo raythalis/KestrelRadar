@@ -20,7 +20,7 @@ import EventRow from '@/components/biz/EventRow.vue'
 import IncidentCard from '@/components/biz/IncidentCard.vue'
 import { SEMANTIC_ICONS } from '@/components/biz/icons'
 import { useDashboardStore } from '@/stores/dashboard'
-import { formatDateTime, formatShortDateTime, timeAgo } from '@/utils/format'
+import { currentHour, formatDateTime, formatShortDateTime, timeAgo } from '@/utils/format'
 import { incidentDetail, incidentReasonKey } from '@/utils/incident'
 
 type Tone = 'success' | 'warning' | 'danger' | 'info' | 'primary' | 'neutral'
@@ -284,7 +284,8 @@ const greeting = computed(() =>
 )
 
 function timeSlot(): 'morning' | 'noon' | 'afternoon' | 'evening' {
-  const hour = new Date().getHours()
+  // 按设置里的时区判断时段（跟卡片上的时间同一口径）
+  const hour = currentHour()
   if (hour >= 5 && hour < 11) return 'morning'
   if (hour >= 11 && hour < 13) return 'noon'
   if (hour >= 13 && hour < 18) return 'afternoon'

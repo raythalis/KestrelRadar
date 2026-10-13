@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchConfig } from '@/api/config'
 import { ApiError } from '@/api/http'
 import { useConfigStore } from '@/stores/config'
+import { formatShortDateTime, getDisplayTimezone, setDisplayTimezone } from '@/utils/format'
 
 vi.mock('@/api/config')
 
@@ -79,5 +80,30 @@ describe('配置 store', () => {
 
     expect(store.errorMessage).toBe('连不上后端（/api）')
     expect(store.snapshot).toBeNull()
+  })
+
+  it('加载配置时把界面时间切到设置里的时区', async () => {
+    vi.mocked(fetchConfig).mockResolvedValue({
+      ...snapshot,
+      settings: { ...SETTINGS_DEFAULTS, timezone: 'Asia/Shanghai' },
+    })
+    const store = useConfigStore()
+
+    await store.load()
+
+    expect(getDisplayTimezone()).toBe('Asia/Shanghai')
+    expect(formatShortDateTime('2026-10-13T11:00:00.000Z')).toBe('10-13 19:00')
+
+    setDisplayTimezone(undefined)
+  })
+
+  it('设置里是 system 时界面按浏览器时区显示', async () => {
+    vi.mocked(fetchConfig).mockResolvedValue(snapshot)
+    const store = useConfigStore()
+
+    await store.load()
+
+    expect(SETTINGS_DEFAULTS.timezone).toBe('system')
+    expect(getDisplayTimezone()).toBeUndefined()
   })
 })

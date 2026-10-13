@@ -364,7 +364,7 @@ export default {
   settings: {
     range: '可填 {min} – {max}',
     timezone: {
-      system: '系统（跟随服务器）',
+      system: '系统时区',
     },
     band: {
       range: '低线 0–95、高线 5–100，两条线至少差 5 分',
