@@ -390,6 +390,8 @@ export function buildContainer(db: Db, options: ContainerOptions = {}): Containe
       )
     },
     concurrency: () => settings.get().concurrency,
+    // 定时任务按设置里的时区算；'system' 跟随进程时区（容器里就是 compose 给的 TZ）
+    timezone: () => settings.get().timezone,
     onResult: (outcome) => {
       const name = discoveryRepo.get(outcome.discoveryId)?.name ?? outcome.discoveryId
       emit(

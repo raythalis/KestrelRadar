@@ -157,3 +157,65 @@ describe('调度：每个发现一个 cron 任务', () => {
     expect(server.maxConcurrent).toBe(1)
   }, 20000)
 })
+
+describe('定时任务按时区算', () => {
+  const from = new Date('2026-10-13T11:43:00.000Z')
+
+  it('指定时区时按那个时区算：19:42 就是当地的 19:42', () => {
+    // 北京 19:42 = 11:42Z；从 11:43Z 起算，下一次是第二天 19:00
+    expect(nextRunAt('0,42 19 * * *', from, 'Asia/Shanghai')?.toISOString()).toBe(
+      '2026-10-14T11:00:00.000Z',
+    )
+    // UTC 下同一个表达式就是 19:00Z
+    expect(nextRunAt('0,42 19 * * *', from, 'UTC')?.toISOString()).toBe('2026-10-13T19:00:00.000Z')
+  })
+
+  it('system 与不传时区等价：跟随进程时区', () => {
+    const expected = nextRunAt('0 3 * * *', from)?.toISOString()
+    expect(expected).toBeTruthy()
+    expect(nextRunAt('0 3 * * *', from, 'system')?.toISOString()).toBe(expected)
+  })
+
+  it('时区名写坏了也不影响排期：回落到进程时区', () => {
+    const expected = nextRunAt('0 3 * * *', from)?.toISOString()
+    expect(nextRunAt('0 3 * * *', from, 'Not/AZone')?.toISOString()).toBe(expected)
+    expect(isValidCron('0 * * * *', 'Not/AZone')).toBe(true)
+  })
+
+  it('卡片上的「下次采集时间」按设置里的时区算', () => {
+    const discovery = addDiscovery({ cronExpression: '0 19 * * *' })
+    container.settings.update({ timezone: 'Asia/Shanghai' })
+
+    container.scheduler.sync()
+
+    // 北京 19:00 = 11:00Z，界面上不再显示成凌晨 3 点
+    expect(container.scheduler.nextRunAt(discovery.id)).toMatch(/T11:00:00\.000Z$/)
+    expect(container.discoveries.get(discovery.id)?.nextRunAt).toMatch(/T11:00:00\.000Z$/)
+  })
+
+  it('改了时区就重排：同一条表达式算出的时间跟着变', () => {
+    const discovery = addDiscovery({ cronExpression: '0 19 * * *' })
+    container.settings.update({ timezone: 'Asia/Shanghai' })
+    container.scheduler.sync()
+    const shanghai = container.scheduler.nextRunAt(discovery.id)
+
+    container.settings.update({ timezone: 'UTC' })
+    container.scheduler.sync()
+    const utc = container.scheduler.nextRunAt(discovery.id)
+
+    expect(shanghai).toMatch(/T11:00:00\.000Z$/)
+    expect(utc).toMatch(/T19:00:00\.000Z$/)
+    expect(utc).not.toBe(shanghai)
+  })
+
+  it('时区没变时不重排：任务对象还是原来那个', () => {
+    const discovery = addDiscovery({ cronExpression: '0 19 * * *' })
+    container.settings.update({ timezone: 'Asia/Shanghai' })
+    container.scheduler.sync()
+    const before = container.scheduler.nextRunAt(discovery.id)
+
+    container.scheduler.sync()
+
+    expect(container.scheduler.nextRunAt(discovery.id)).toBe(before)
+  })
+})

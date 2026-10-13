@@ -9,10 +9,29 @@ import type { CollectOutcome, Collector } from './collector.ts'
  * 目标有两类：发现（到点采集）与汇总动作（到点投递）。
  */
 
-/** 算下一次该跑的时间；cron 不合法返回 null */
-export function nextRunAt(cronExpression: string, from: Date): Date | null {
+/**
+ * 时区解析：'system' 与空值都表示跟随进程时区（容器里就是 compose 给的 TZ）。
+ * 名字写坏了也回落 —— 否则整批任务会因为一个坏时区算不出时间而被静默停掉。
+ */
+export function resolveTimezone(timezone?: string): string | undefined {
+  if (!timezone || timezone === 'system') return undefined
   try {
-    const job = new Cron(cronExpression, { paused: true })
+    new Intl.DateTimeFormat('en-US', { timeZone: timezone })
+    return timezone
+  } catch {
+    return undefined
+  }
+}
+
+function timezoneOption(timezone?: string): { timezone?: string } {
+  const resolved = resolveTimezone(timezone)
+  return resolved ? { timezone: resolved } : {}
+}
+
+/** 算下一次该跑的时间；cron 不合法返回 null */
+export function nextRunAt(cronExpression: string, from: Date, timezone?: string): Date | null {
+  try {
+    const job = new Cron(cronExpression, { paused: true, ...timezoneOption(timezone) })
     const next = job.nextRun(from)
     job.stop()
     return next
@@ -21,8 +40,8 @@ export function nextRunAt(cronExpression: string, from: Date): Date | null {
   }
 }
 
-export function isValidCron(cronExpression: string): boolean {
-  return nextRunAt(cronExpression, new Date()) !== null
+export function isValidCron(cronExpression: string, timezone?: string): boolean {
+  return nextRunAt(cronExpression, new Date(), timezone) !== null
 }
 
 export interface ScheduleTarget {
@@ -40,6 +59,8 @@ export interface SchedulerDeps {
   onDigest?: (actionId: string) => Promise<void> | void
   /** 全局并发上限，运行时读设置 */
   concurrency: () => number
+  /** 定时任务按哪个时区算：设置里的 timezone，'system' 跟随进程时区 */
+  timezone?: () => string
   onResult?: (outcome: CollectOutcome) => void
 }
 
@@ -53,6 +74,8 @@ interface PlannedJob {
 interface JobEntry {
   job: Cron
   pattern: string
+  /** 建这个任务时用的时区：跟当前设置不一致就重排 */
+  timezone?: string
 }
 
 const DIGEST_PREFIX = 'digest:'
@@ -153,15 +176,17 @@ export function createScheduler(deps: SchedulerDeps) {
     return planned
   }
 
-  /** 让任务表跟目标表对齐：该建的建、频率变了的换、停用或删掉的撤 */
+  /** 让任务表跟目标表对齐：该建的建、频率或时区变了的换、停用或删掉的撤 */
   function sync(): void {
+    const timezone = resolveTimezone(deps.timezone?.())
     const wanted = new Map<string, PlannedJob>()
     for (const job of plan()) {
-      if (isValidCron(job.pattern)) wanted.set(job.key, job)
+      if (isValidCron(job.pattern, timezone)) wanted.set(job.key, job)
     }
 
     for (const [key, entry] of jobs) {
-      if (wanted.get(key)?.pattern === entry.pattern) continue
+      const next = wanted.get(key)
+      if (next?.pattern === entry.pattern && entry.timezone === timezone) continue
       entry.job.stop()
       jobs.delete(key)
       nextRuns.delete(key)
@@ -169,11 +194,11 @@ export function createScheduler(deps: SchedulerDeps) {
 
     for (const [key, job] of wanted) {
       if (jobs.has(key)) continue
-      const created = new Cron(job.pattern, { protect: true }, () => {
+      const created = new Cron(job.pattern, { protect: true, ...timezoneOption(timezone) }, () => {
         if (job.digest) track(runDigest(key, job.id))
         else track(runCollect(key, job.id))
       })
-      jobs.set(key, { job: created, pattern: job.pattern })
+      jobs.set(key, { job: created, pattern: job.pattern, timezone })
     }
 
     for (const key of jobs.keys()) refreshNextRun(key)

@@ -32,7 +32,7 @@ export function registerRoutes(app: FastifyInstance, container: Container): void
   registerDeliveryRoutes(app, container.delivery)
   registerTemplateRoutes(app, container.templates)
   registerModelProviderRoutes(app, container.modelProviders)
-  registerSettingsRoutes(app, container.settings)
+  registerSettingsRoutes(app, container.settings, resync)
   registerIncidentRoutes(app, container.incidents)
   registerEventRoutes(app, container.merger)
   registerStatsRoutes(app, container.stats)
