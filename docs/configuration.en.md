@@ -11,6 +11,7 @@ Kestrel Radar configuration has two parts: **startup parameters are environment 
 | `KESTREL_DB_PATH` | `data/kestrel.db` | Database path; the `icons/` directory sits beside the database file |
 | `KESTREL_STATIC_DIR` | Automatically finds `apps/web/dist` when built assets exist | Frontend static directory; without it, only the API is served |
 | `KESTREL_LOG` | `on` | Request logging is enabled by default; `off` disables it. Currently any value other than `off` leaves it enabled |
+| `TZ` | `Asia/Shanghai` inside the container, system time zone elsewhere | Process time zone: log timestamps and scheduled jobs under **System time zone** follow it |
 
 These defaults are defined in `apps/api/src/config/index.ts`. A relative database path is resolved against the **backend process's working directory**; do not assume that is always the repository root. `pnpm start` launches `apps/api` through the package filter. Docker Compose explicitly sets `/data/kestrel.db` and mounts `infra/docker/data/` at `/data`.
 
@@ -21,7 +22,7 @@ These defaults are defined in `apps/api/src/config/index.ts`. A relative databas
 ### General
 
 - **Interface language**: switches this browser's interface between Chinese and English; it does not translate existing content or message templates. Defaults to Chinese.
-- **Time zone**: determines how the interface displays time and how scheduled jobs interpret it. Defaults to **System (server time)**. Before changing it, check whether your digest time still has the intended meaning in the new zone.
+- **Time zone**: both the times shown in the interface and every scheduled job are interpreted in it. Defaults to **System time zone**, i.e. the time zone of the machine running the process (the official image sets `Asia/Shanghai`; override it with `TZ` in your Compose file). After a change, scheduled jobs are re-planned immediately; the trigger right around the change may fire early or be skipped.
 
 ### Judging
 

@@ -26,6 +26,9 @@ ENV NODE_ENV=production \
     KESTREL_PORT=8765 \
     KESTREL_DB_PATH=/data/kestrel.db \
     KESTREL_STATIC_DIR=/app/apps/web/dist
+# 容器默认时区：不设时进程是 UTC，界面按浏览器时区显示、定时任务却按 UTC 算，会差出时差。
+# 这里只是默认值，运行时可用 TZ 环境变量覆盖（compose 里写自己的时区）。
+ENV TZ=Asia/Shanghai
 
 WORKDIR /app
 COPY --from=build /src /app

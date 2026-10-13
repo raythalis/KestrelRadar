@@ -17,6 +17,8 @@ services:
     ports:
       - '8765:8765'
     environment:
+      # 容器时区：不写就是镜像默认的 Asia/Shanghai；改了它，日志时间与定时任务都跟着换
+      TZ: Asia/Shanghai
       KESTREL_HOST: 0.0.0.0
       KESTREL_PORT: '8765'
       KESTREL_DB_PATH: /data/kestrel.db

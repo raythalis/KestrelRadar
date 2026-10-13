@@ -31,6 +31,7 @@ services:
     ports:
       - '8765:8765'
     environment:
+      TZ: Asia/Shanghai
       KESTREL_HOST: 0.0.0.0
       KESTREL_PORT: '8765'
       KESTREL_DB_PATH: /data/kestrel.db
@@ -38,6 +39,8 @@ services:
     volumes:
       - ./data:/data
 ```
+
+`TZ` 决定容器里的时间：日志时间与定时任务都按它算（界面时间则由设置页的「时区」决定，默认跟随它）。镜像里已经有 `Asia/Shanghai` 默认值，这行是显式写出来；不在这个时区就改成自己的。
 
 在该目录运行 `docker compose up -d`。数据库和图标存放在同目录的 `data/`，删除容器不会删除宿主数据。`latest` 是浮动标签，重新拉取时可能变成新版；端口映射会允许其他设备通过主机地址访问，请限制访问范围。
 

@@ -29,6 +29,7 @@ services:
     ports:
       - '8765:8765'
     environment:
+      TZ: Asia/Shanghai
       KESTREL_HOST: 0.0.0.0
       KESTREL_PORT: '8765'
       KESTREL_DB_PATH: /data/kestrel.db
@@ -36,6 +37,8 @@ services:
     volumes:
       - ./data:/data
 ```
+
+`TZ` sets the container's clock: log timestamps and scheduled jobs follow it (interface time comes from the **Time zone** setting, which defaults to following it). The image already defaults to `Asia/Shanghai`; the line above makes it explicit — change it if you are elsewhere.
 
 Run `docker compose up -d` in that directory. The database and icons live in its `data/` directory. Removing the container does not delete host data. `latest` is a moving tag and may point to a newer version when pulled again. Port mapping lets other devices access the service through the host address; restrict access accordingly.
 
